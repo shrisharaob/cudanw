@@ -1,5 +1,7 @@
 #ifndef _DEV_FUNC_PROTOS_
 #define _DEV_FUNC_PROTOS_
+#include "cuda.h"
+#include "mycurand.h"
 
 
 __device__ void rk4(float *y, float *dydx, int n, float rk4X, float h, float *yout, float iSynap);
@@ -13,9 +15,8 @@ __device__ float isynap(float vm, int *dev_conVec);
 
 // ======================= GLOBAL KERNELS ============================================== \\
 
-__global__ void rkdumb(float vstart[], int nvar, float x1, float x2, 
-                       int nstep, int *nSpks, float *spkTimes, int *spkNeuronId, float *y, int *dev_conVec, float *);
-
+__global__ void rkdumb(float x1, float x2, int nstep, int *nSpks, float *spkTimes, 
+                       int *spkNeuronId, float *y, int *dev_conVec, float *isynap, curandState *dev_state);
 
 //__global__ void rkdumb(float vstart[], int nvar, float x1, float x2, 
 //                       int nstep, int *nSpks, float *spkTimes, int *spkNeuronId, float *y, int *dev_conVec, float *, float *);

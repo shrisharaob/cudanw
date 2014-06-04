@@ -3,7 +3,7 @@
 
 #include "devHostConstants.h"
 // time in ms
-#define MAX_SPKS 20
+#define MAX_SPKS (N_NEURONS * 2)
 #define PI 3.14159265359
 
 //#define DT 0.025 // ms
@@ -37,7 +37,7 @@
 #define INV_TAU_SYNAP (1 / TAU_SYNAP)
 #define V_E 0.0
 #define V_I -80.0
-#define G_EE 1.15
+#define G_EE 0.15
 #define G_EI 2.0
 #define G_IE 0.45
 #define G_II 3.0

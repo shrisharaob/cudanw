@@ -82,12 +82,12 @@ __device__ void derivs(float t, float stateVar[], float dydx[], float isynap) {
   int kNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   //  tIdx = (int)(t / dt) + 1;
   if(kNeuron < N_NEURONS) {
-    if(kNeuron == 0 && t >= 30 && t <= 35) {  
-      cur = 10;//input_cur[tIdx];
-    }
-    else {cur = 0.0;}
+    // if(kNeuron == 0 && t >= 30 && t <= 35) {  
+    //   cur = 10;//input_cur[tIdx];
+    // }
+    // else {cur = 0.0;}
     //  cur = 0.25 * sqrt(K);
-    //    cur = 3;
+    cur = 2.8;
     if (kNeuron < NE) { 
       dydx[0] =  1/Cm * (cur 
                                  - G_Na * pow(m_inf(stateVar[0]), 3) * stateVar[3] * (stateVar[0] - E_Na) 
