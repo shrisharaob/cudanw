@@ -33,7 +33,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main() {
-  float tStart = 0.0, tStop = 35.0;
+  float tStart = 0.0, tStop = 100.0;
   float *spkTimes, *vm = NULL, *vstart; // 500 time steps
   int *nSpks, *spkNeuronIds, kNeuron, nSteps, i, k;
   float *dev_vm = NULL, *dev_spkTimes, *dev_vstart;
@@ -47,8 +47,8 @@ int main() {
   cudaError_t devErr;
   /* ================= INITIALIZE ===============================================*/
   nSteps = (tStop - tStart) / DT;
-  nSteps = 800;
-  printf("\n N = %d NE = %d NI = %d nSteps = %d\n\n", N_NEURONS, NE, NI, nSteps);
+  //  nSteps = 800;
+  printf("\n N = %d \n NE = %d \n NI = %d \n K = %d \n nSteps = %d\n\n", N_NEURONS, NE, NI, (int)K, nSteps);
   /* ================== SETUP TIMER EVENTS ON DEVICE ==============================*/
   cudaEventCreate(&stop0); cudaEventCreate(&start0);
   cudaEventRecord(start0, 0);
@@ -72,10 +72,10 @@ int main() {
   cudaCheck(cudaMalloc((void **)&dev_spkNeuronIds, MAX_SPKS * sizeof(*dev_spkNeuronIds)));
   cudaCheck(cudaMalloc((void **)&dev_vstart, N_STATEVARS * N_NEURONS * sizeof(*dev_vstart)));
   cudaCheck(cudaMalloc((void **)&devStates,  N_NEURONS * sizeof(curandState)));
-  printf("GPU memory allocation successful ! \n ");
-  printf("&dev_conVec = %p \n", dev_conVec);
-  printf("&devStates = %p\n", devStates);
-  printf("&conVec = %p\n", conVec); 
+  printf(" GPU memory allocation successful ! \n ");
+  // printf("&dev_conVec = %p \n", dev_conVec);
+  // printf("&devStates = %p\n", devStates);
+  // printf("&conVec = %p\n", conVec); 
   for(kNeuron = 0; kNeuron < N_Neurons; ++kNeuron) {
     int clmNo =  kNeuron * N_STATEVARS;
     vstart[0 + clmNo] = -50; //-70 +  40 * CudaURand(); // Vm(0) ~ U(-70, -30)
@@ -99,14 +99,16 @@ int main() {
   cudaCheck(cudaMemcpy(conVec, dev_conVec, N_NEURONS * N_NEURONS * sizeof(int), cudaMemcpyDeviceToHost));
   /* ==================== INTEGRATE ODEs ON GPU ==========================================*/
     /* invoke device on this block/thread grid */
+  printf("\n launching Simulation kernel ...");
+  fflush(stdout);
   rkdumb <<<BlocksPerGrid,ThreadsPerBlock>>> (dev_vstart, N_STATEVARS, tStart, tStop, nSteps, dev_nSpks, dev_spkTimes, dev_spkNeuronIds, dev_vm, dev_conVec, dev_isynap);
-    cudaCheckLastError("rkdumb kernel failed");
-    printf("kernel done \n");
+  cudaCheckLastError("rkdumb kernel failed");
+  printf("Done ! \n");
   // cpy results 
   cudaCheck(cudaMemcpy(nSpks, dev_nSpks, sizeof(int), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(spkTimes, dev_spkTimes, MAX_SPKS * sizeof(float), cudaMemcpyDeviceToHost));
   printf("\n nSpks = %d\n", *nSpks);
-  printf("MAX SPKS stored on GPU = %d \n", MAX_SPKS); 
+  printf(" MAX SPKS stored on GPU = %d \n", MAX_SPKS); 
  
   // for(i = 0; i< MAX_SPKS; ++i) { 
   //     printf("spk time = %f\n", spkTimes[i]);
@@ -119,11 +121,13 @@ int main() {
   cudaEventRecord(stop0, 0);
   cudaEventSynchronize(stop0);
   if((devErr = cudaEventElapsedTime(&elapsedTime, start0, stop0)) == cudaSuccess) {
-    printf("elapsed time = %fms \n", elapsedTime);
+    printf("\n elapsed time = %fms \n", elapsedTime);
   }
   cudaCheck(cudaEventDestroy(start0));
   cudaCheck(cudaEventDestroy(stop0));
   /* ================= SAVE TO DISK =============================================================*/
+  printf(" saving results to disk ..."); 
+  fflush(stdout);
   fp = fopen("vm", "w");
   for(i = 0; i < nSteps; ++i) {
     for(k = 0; k < N_NEURONS; ++k) {
@@ -131,13 +135,14 @@ int main() {
     }
     fprintf(fp, "\n");
   }
-  printf("\n");
-  for(i = 0; i < N_NEURONS; ++i) {
-    for(k = 0; k < N_NEURONS; ++k) {
-      printf("%d ", conVec[i + N_NEURONS *k]);
-    }
-    printf("\n");
-  }
+  printf("Done!\n");
+  // for(i = 0; i < N_NEURONS; ++i) {
+  //   for(k = 0; k < N_NEURONS; ++k) {
+  //     printf("%d ", conVec[i + N_NEURONS *k]);
+  //   }
+  //   printf("\n");
+  // }
+  printf("\n Simulation completed ! \n");
   /*================== CLEANUP ===================================================================*/
   fclose(fp);
   cudaCheck(cudaFreeHost(vm));
