@@ -42,16 +42,16 @@ int main() {
   float *host_isynap, *dev_isynap;
   int *conVec;
   curandState *devStates;
-  //  cudaEvent_t start0, stop0;
-  //float elapsedTime;
-  //    cudaError_t devErr;
+  cudaEvent_t start0, stop0;
+  float elapsedTime;
+  cudaError_t devErr;
   /* ================= INITIALIZE ===============================================*/
   nSteps = (tStop - tStart) / DT;
   nSteps = 800;
   printf("\n N = %d NE = %d NI = %d nSteps = %d\n\n", N_NEURONS, NE, NI, nSteps);
-  // ================== SETUP TIMER EVENTS ON DEVICE ==============================
-  //  cudaEventCreate(&stop0); cudaEventCreate(&start0);
-  //  cudaEventRecord(start0, 0);
+  /* ================== SETUP TIMER EVENTS ON DEVICE ==============================*/
+  cudaEventCreate(&stop0); cudaEventCreate(&start0);
+  cudaEventRecord(start0, 0);
   /* choose 256 threads per block for high occupancy */
   int ThreadsPerBlock = 128;
   int BlocksPerGrid = (N_NEURONS + ThreadsPerBlock - 1) / ThreadsPerBlock;
@@ -64,7 +64,6 @@ int main() {
   cudaCheck(cudaMallocHost((void **)&vstart, N_STATEVARS * N_NEURONS * sizeof(float)));
   cudaCheck(cudaMallocHost((void **)&conVec, N_NEURONS * N_NEURONS * sizeof(int)));
   /* ================= ALLOCATE GLOBAL MEMORY ON DEVICE ===========================*/
-
   cudaCheck(cudaMalloc((void **)&dev_conVec, N_NEURONS * N_NEURONS * sizeof(int)));
   cudaCheck(cudaMalloc((void **)&dev_vm, nSteps * N_NEURONS * sizeof(float)));
   cudaCheck(cudaMalloc((void **)&dev_isynap, nSteps * N_NEURONS * sizeof(float)));
@@ -74,7 +73,7 @@ int main() {
   cudaCheck(cudaMalloc((void **)&dev_vstart, N_STATEVARS * N_NEURONS * sizeof(*dev_vstart)));
   cudaCheck(cudaMalloc((void **)&devStates,  N_NEURONS * sizeof(curandState)));
   printf("GPU memory allocation successful ! \n ");
-  printf("&dev_vm = %p \n", dev_vm);
+  printf("&dev_conVec = %p \n", dev_conVec);
   printf("&devStates = %p\n", devStates);
   printf("&conVec = %p\n", conVec); 
   for(kNeuron = 0; kNeuron < N_Neurons; ++kNeuron) {
@@ -113,18 +112,17 @@ int main() {
   //     printf("spk time = %f\n", spkTimes[i]);
   // }
   /*==================== COPY RESULTS TO HOST =================================================*/
-  //  if(nSpks > 0) {
-    cudaCheck(cudaMemcpy(spkNeuronIds, dev_spkNeuronIds, MAX_SPKS * sizeof(int), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(spkNeuronIds, dev_spkNeuronIds, MAX_SPKS * sizeof(int), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(vm, dev_vm, nSteps * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(host_isynap, dev_isynap, nSteps * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
-  // ================= RECORD COMPUTE TIME ====================================================\ \
-  // cudaEventRecord(stop0, 0);
-  // cudaEventSynchronize(stop0);
-  // if((devErr = cudaEventElapsedTime(&elapsedTime, start0, stop0)) == cudaSuccess) {
-  //   printf("elapsed time = %fms \n", elapsedTime);
-  // }
-  // cudaCheck(cudaEventDestroy(start0));
-  // cudaCheck(cudaEventDestroy(stop0));
+  /* ================= RECORD COMPUTE TIME ====================================================*/
+  cudaEventRecord(stop0, 0);
+  cudaEventSynchronize(stop0);
+  if((devErr = cudaEventElapsedTime(&elapsedTime, start0, stop0)) == cudaSuccess) {
+    printf("elapsed time = %fms \n", elapsedTime);
+  }
+  cudaCheck(cudaEventDestroy(start0));
+  cudaCheck(cudaEventDestroy(stop0));
   /* ================= SAVE TO DISK =============================================================*/
   fp = fopen("vm", "w");
   for(i = 0; i < nSteps; ++i) {
