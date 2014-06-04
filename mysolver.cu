@@ -73,18 +73,6 @@ int main() {
  /*cudaCheck(cudaMalloc((void **)&dev_vstart, N_STATEVARS * N_NEURONS * sizeof(*dev_vstart)));*/
   cudaCheck(cudaMalloc((void **)&devStates,  N_NEURONS * sizeof(curandState)));
   printf(" GPU memory allocation successful ! \n ");
-  // printf("&dev_conVec = %p \n", dev_conVec);
-  // printf("&devStates = %p\n", devStates);
-  // printf("&conVec = %p\n", conVec); 
-  // for(kNeuron = 0; kNeuron < N_Neurons; ++kNeuron) {
-  //   int clmNo =  kNeuron * N_STATEVARS;
-  //   vstart[0 + clmNo] = -50; //-70 +  40 * CudaURand(); // Vm(0) ~ U(-70, -30)
-  //   vstart[1 + clmNo] = 0.3176;
-  //   vstart[2 + clmNo] = 0.1;
-  //   vstart[3 + clmNo] = 0.5961;
-  // }
-  /* cudaCheck(cudaMemcpy(dev_vstart, vstart, N_STATEVARS * N_Neurons * sizeof(float), cudaMemcpyHostToDevice));*/
-  
   *nSpks = 0;
   cudaCheck(cudaMemcpy(dev_nSpks, nSpks, sizeof(int), cudaMemcpyHostToDevice));
   /*===================== GENERATE CONNECTION MATRIX ====================================*/
@@ -101,7 +89,7 @@ int main() {
     /* invoke device on this block/thread grid */
   printf("\n launching Simulation kernel ...");
   fflush(stdout);
-  setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, time(NULL) + 23);
+  //  setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, time(NULL) + 23);
   rkdumb <<<BlocksPerGrid,ThreadsPerBlock>>> (tStart, tStop, nSteps, dev_nSpks, dev_spkTimes, dev_spkNeuronIds, dev_vm, dev_conVec, dev_isynap, devStates);
   cudaCheckLastError("rkdumb kernel failed");
   /*==================== COPY RESULTS TO HOST =================================================*/
