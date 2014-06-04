@@ -1,5 +1,6 @@
 #include <cuda.h>
-#include "curand_kernel.h"
+//#include "curand_kernel.h"
+#include "mycurand.h"
 #include "devFunctionProtos.h"
 #include "devHostConstants.h"
 
@@ -21,14 +22,15 @@ __device__ float randkernel(curandState *state) {
   return randNumber;
 }
 
-__global__ void kernelGenConMat(curandState *state, int nNeurons, int *dev_conVec){
+
+__global__ void kernelGenConMat(curandState *state, int *dev_conVec){
   int id = threadIdx.x + blockIdx.x * blockDim.x;
   int i;
   float k, n;
   if(id < N_NEURONS) {
     k = (float)K;
     n = (float)N_NEURONS;
-    for(i = 0; i < N_NEURONS; ++i) { 
+    for(i = 0; i < N_NEURONS; ++i) {
       if(k/n >= randkernel(state)) { // neuron[id] receives input from i ?
         dev_conVec[id + i * N_NEURONS] = 1;
       }
