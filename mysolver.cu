@@ -110,6 +110,8 @@ int main(int argc, char *argv[]) {
   if((devErr = cudaEventElapsedTime(&elapsedTime, start0, stop0)) == cudaSuccess) {
     printf("\n elapsed time = %fms \n", elapsedTime);
   }
+  fpElapsedTime = fopen("elapsedTime.csv", "a+");
+  fprintf(fpElapsedTime, "%f %d\n", elapsedTime, *nSpks);
   cudaCheck(cudaEventDestroy(start0));
   cudaCheck(cudaEventDestroy(stop0));
   printf("\n nSpks = %d\n", *nSpks);
@@ -140,8 +142,6 @@ int main(int argc, char *argv[]) {
   if(*nSpks > MAX_SPKS) {
     printf("\n ***** WARNING MAX_SPKS EXCEEDED limit of %d *****\n", MAX_SPKS);
   }
-  fpElapsedTime = fopen("elapsedTime.csv", "a");
-  fprintf(fp, "%f\n", elapsedTime);
   /*================== CLEANUP ===================================================================*/
   fclose(fpElapsedTime);
   fclose(fpSpkTimes);
