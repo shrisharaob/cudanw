@@ -3,7 +3,7 @@
 #include "devHostConstants.h"
 #include "devFunctionProtos.h"
 
-__device__ float isynap(float vm, int *dev_conVec){
+__device__ float isynap(float vm, int *dev_conVec) {
   //
   int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   int i, spkNeuronId[MAX_SPKS], localNSpks = 0;

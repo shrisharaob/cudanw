@@ -32,21 +32,26 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
   }
 }
 
-int main() {
+int main(int argc, char *argv[]) {
   float tStart = 0.0, tStop = 100.0;
   float *spkTimes, *vm = NULL;// *vstart; // 500 time steps
-  int *nSpks, *spkNeuronIds, nSteps, i, k;
+  int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   float *dev_vm = NULL, *dev_spkTimes;
   int *dev_conVec, *dev_nSpks, *dev_spkNeuronIds;
-  FILE *fp, *fpConMat, *fpSpkTimes;
+  FILE *fp, *fpConMat, *fpSpkTimes, *fpElapsedTime;
   float *host_isynap, *dev_isynap;
   int *conVec;
   curandState *devStates;
   cudaEvent_t start0, stop0;
   float elapsedTime;
   cudaError_t devErr;
+  /*PARSE INPUTS*/
+  //  if(argc >1) {
+    //    N_NEURONS = 
+
   /* ================= INITIALIZE ===============================================*/
   nSteps = (tStop - tStart) / DT;
+  lastNStepsToStore = (int)floor(STORE_LAST_T_MILLISEC  / DT);
   //  nSteps = 800;
   printf("\n N  = %d \n NE = %d \n NI = %d \n K  = %d \n nSteps = %d\n\n", N_NEURONS, NE, NI, (int)K, nSteps);
   /* ================== SETUP TIMER EVENTS ON DEVICE ==============================*/
@@ -57,15 +62,15 @@ int main() {
   int BlocksPerGrid = (N_NEURONS + ThreadsPerBlock - 1) / ThreadsPerBlock;
   /* ================= ALLOCATE PAGELOCKED MEMORY ON HOST =========================*/
   cudaCheck(cudaMallocHost((void **)&spkTimes, MAX_SPKS  * sizeof(*spkTimes)));
-  cudaCheck(cudaMallocHost((void **)&host_isynap, nSteps * N_NEURONS * sizeof(*vm)));
-  cudaCheck(cudaMallocHost((void **)&vm, nSteps * N_NEURONS * sizeof(*vm)));
+  cudaCheck(cudaMallocHost((void **)&host_isynap, nSteps * N_NEURONS * sizeof(*host_isynap)));
+  cudaCheck(cudaMallocHost((void **)&vm,  lastNStepsToStore * N_NEURONS * sizeof(*vm)));
   cudaCheck(cudaMallocHost((void **)&nSpks, sizeof(*nSpks)));
   cudaCheck(cudaMallocHost((void **)&spkNeuronIds, MAX_SPKS * sizeof(spkNeuronIds)));
   /*cudaCheck(cudaMallocHost((void **)&vstart, N_STATEVARS * N_NEURONS * sizeof(float)));*/
   cudaCheck(cudaMallocHost((void **)&conVec, N_NEURONS * N_NEURONS * sizeof(int)));
   /* ================= ALLOCATE GLOBAL MEMORY ON DEVICE ===========================*/
   cudaCheck(cudaMalloc((void **)&dev_conVec, N_NEURONS * N_NEURONS * sizeof(int)));
-  cudaCheck(cudaMalloc((void **)&dev_vm, nSteps * N_NEURONS * sizeof(float)));
+  cudaCheck(cudaMalloc((void **)&dev_vm, lastNStepsToStore * N_NEURONS * sizeof(float)));
   cudaCheck(cudaMalloc((void **)&dev_isynap, nSteps * N_NEURONS * sizeof(float)));
   cudaCheck(cudaMalloc((void **)&dev_spkTimes, MAX_SPKS * sizeof(*dev_spkTimes)));
   cudaCheck(cudaMalloc((void **)&dev_nSpks, sizeof(int)));
@@ -96,7 +101,7 @@ int main() {
   cudaCheck(cudaMemcpy(nSpks, dev_nSpks, sizeof(int), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(spkTimes, dev_spkTimes, MAX_SPKS * sizeof(float), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(spkNeuronIds, dev_spkNeuronIds, MAX_SPKS * sizeof(int), cudaMemcpyDeviceToHost));
-  cudaCheck(cudaMemcpy(vm, dev_vm, nSteps * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(vm, dev_vm, lastNStepsToStore * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(host_isynap, dev_isynap, nSteps * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
   /* ================= RECORD COMPUTE TIME ====================================================*/
   cudaEventRecord(stop0, 0);
@@ -113,8 +118,8 @@ int main() {
   /* ================= SAVE TO DISK =============================================================*/
   printf(" saving results to disk ..."); 
   fflush(stdout);
-  fp = fopen("vm", "w");
-  for(i = 0; i < nSteps; ++i) {
+  fp = fopen("vm.csv", "w");
+  for(i = 0; i < lastNStepsToStore; ++i) {
     for(k = 0; k < N_NEURONS; ++k) {
       fprintf(fp, "%f %f ", vm[k + i *  N_NEURONS], host_isynap[k + i * N_NEURONS]);
     }
@@ -128,11 +133,19 @@ int main() {
     fprintf(fpConMat, "\n");
   }
   fpSpkTimes = fopen("spkTimes.csv", "w");
-  for(i = 0; i < *nSpks; ++i) {
-    fprintf(fpSpkTimes, "%f %d\n", spkTimes[i], spkNeuronIds[i]);
+  for(i = 1; i < *nSpks; ++i) {
+    fprintf(fpSpkTimes, "%f %f\n", spkTimes[i], (float)spkNeuronIds[i] + 1);
   }
   printf("Done!\n");  
+  if(*nSpks > MAX_SPKS) {
+    printf("\n ***** WARNING MAX_SPKS EXCEEDED limit of %d *****\n", MAX_SPKS);
+  }
+  fpElapsedTime = fopen("elapsedTime.csv", "a");
+  fprintf(fp, "%f\n", elapsedTime);
   /*================== CLEANUP ===================================================================*/
+  fclose(fpElapsedTime);
+  fclose(fpSpkTimes);
+  fclose(fpConMat);
   fclose(fp);
   cudaCheck(cudaFreeHost(vm));
   cudaCheck(cudaFreeHost(host_isynap));

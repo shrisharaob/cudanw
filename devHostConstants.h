@@ -10,11 +10,13 @@
 #endif
 
 #define NE 0
-#define NI 500
+#define NI 4
 #define N_Neurons (NE+NI)
 #define N_NEURONS N_Neurons
-#define K 50.0
+#define K 1.0
 #define DT 0.025 // ms
 #define TAU_SYNAP 3.0  // ms
 #define EXP_SUM 0.99170129 //exp(-1 * DT / TAU_SYNAP)
 #define MAX_UNI_RANDOM_VEC_LENGTH 10000000 //make constant 1e7
+#define STORE_LAST_T_MILLISEC 100.0
+#define STORE_LAST_N_STEPS (STORE_LAST_T_MILLISEC / DT)

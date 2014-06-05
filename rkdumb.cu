@@ -23,7 +23,6 @@ __global__ void rkdumb(float x1, float x2, int nstep, int *totNSpks, float *spkT
     h = DT; //(x2 - x1) / nstep;
     for (k = 0; k < nstep; k++) 
       {
-       y[mNeuron + N_NEURONS * k] = v[0];
         dev_IF_SPK[mNeuron] = 0;
         vmOld = v[0];
         derivs(x, v, dv, isynapNew);
@@ -35,7 +34,7 @@ __global__ void rkdumb(float x1, float x2, int nstep, int *totNSpks, float *spkT
         for (i = 0; i < N_STATEVARS; ++i) {
           v[i]=vout[i];
         }
-        
+        y[mNeuron + N_NEURONS * k] = v[0];
         if(k > 2) {
           if(v[0] > SPK_THRESH) { 
             if(vmOld <= SPK_THRESH) {
@@ -50,6 +49,14 @@ __global__ void rkdumb(float x1, float x2, int nstep, int *totNSpks, float *spkT
         __syncthreads(); // CRUTIAL step to ensure that dev_IF_spk is updated by all threads 
         isynapNew = isynap(v[0], dev_conVec);
         dev_isynap[mNeuron + N_NEURONS * k] = isynapNew;
+
+        // if(k == (nstep - STORE_LAST_N_STEPS) || (nstep - STORE_LAST_N_STEPS) < 0) {
+        //   y[mNeuron + N_NEURONS * k] = v[0];
+        //   dev_isynap[mNeuron + N_NEURONS * k] = isynapNew;
+        // } 
+
+
+
         //      }
         //      CudaISynap(spkNeuronId); // allocate memore on device for spkNeuronId vector
         //      ISynapCudaAux(vm); // returns current 
