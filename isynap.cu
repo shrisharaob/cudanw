@@ -2,11 +2,11 @@
 #include "globalVars.h"
 #include "devHostConstants.h"
 #include "devFunctionProtos.h"
-
+#define MAX_SPKS_PER_T_STEP 100
 __device__ float isynap(float vm, int *dev_conVec) {
   //
   int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
-  int i, spkNeuronId[MAX_SPKS], localNSpks = 0;
+ int i, spkNeuronId[MAX_SPKS_PER_T_STEP], localNSpks = 0;
   float totIsynap = 0, gE, gI, tempCurE = 0, tempCurI = 0;
   /* compute squares of entries in data array */
   // !!!!! neurons ids start from ZERO  !!!!!! 

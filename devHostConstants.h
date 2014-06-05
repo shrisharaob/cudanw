@@ -7,7 +7,6 @@
 //float *dev_gEI_E, *dev_gEI_I, *dev_conVec, *gEI_E, *gEI_I;
 #ifndef _NEURON_COUNTS
 #define _NEURON_COUNTS
-#endif
 
 #define NE 0
 #define NI 5000
@@ -20,3 +19,4 @@
 #define MAX_UNI_RANDOM_VEC_LENGTH 10000000 //make constant 1e7
 #define STORE_LAST_T_MILLISEC 100.0
 #define STORE_LAST_N_STEPS (STORE_LAST_T_MILLISEC / DT)
+#endif
