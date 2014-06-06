@@ -16,7 +16,7 @@ __device__ float isynap(float vm, int *dev_conVec) {
     gE *= EXP_SUM;
     gI *= EXP_SUM;
     for(i = 0; i < N_NEURONS; ++i) {
-      if(dev_IF_SPK[i]) {
+      if(dev_IF_SPK[i]) { // too many global reads 
         spkNeuronId[localNSpks] = i; 
         localNSpks += 1; // nspks in prev step
       }

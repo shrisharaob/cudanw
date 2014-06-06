@@ -8,7 +8,7 @@ __global__ void rkdumb(float x1, float x2, int nstep, int *totNSpks, float *spkT
   int i, k;
   float x, h, xx, isynapNew = 0;// isynapOld = 0; //vm
   float v[N_STATEVARS], vout[N_STATEVARS], dv[N_STATEVARS], vmOld;
-  int localTotNspks = 0;
+  int localTotNspks = 0, localLastNSteps;
   int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   
   if(mNeuron < N_NEURONS) {
@@ -16,7 +16,7 @@ __global__ void rkdumb(float x1, float x2, int nstep, int *totNSpks, float *spkT
     v[1] = 0.3176;
     v[2] = 0.1;
     v[3] = 0.5961;
-  
+    localLastNSteps = nstep - STORE_LAST_N_STEPS;
     //*** TIMELOOP ***//
     xx = x1;  
     x = x1;
@@ -34,7 +34,10 @@ __global__ void rkdumb(float x1, float x2, int nstep, int *totNSpks, float *spkT
         for (i = 0; i < N_STATEVARS; ++i) {
           v[i]=vout[i];
         }
-        y[mNeuron + N_NEURONS * k] = v[0];
+        if(k > localLastNSteps) {
+          y[mNeuron + N_NEURONS * k] = v[0];
+          dev_isynap[mNeuron + N_NEURONS * k] = isynapNew;
+        }
         if(k > 2) {
           if(v[0] > SPK_THRESH) { 
             if(vmOld <= SPK_THRESH) {
@@ -48,7 +51,7 @@ __global__ void rkdumb(float x1, float x2, int nstep, int *totNSpks, float *spkT
         }
         __syncthreads(); // CRUTIAL step to ensure that dev_IF_spk is updated by all threads 
         isynapNew = isynap(v[0], dev_conVec);
-        dev_isynap[mNeuron + N_NEURONS * k] = isynapNew;
+
 
         // if(k == (nstep - STORE_LAST_N_STEPS) || (nstep - STORE_LAST_N_STEPS) < 0) {
         //   y[mNeuron + N_NEURONS * k] = v[0];
