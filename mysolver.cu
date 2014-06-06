@@ -44,7 +44,6 @@ int main(int argc, char *argv[]) {
   curandState *devStates;
   cudaEvent_t start0, stop0;
   float elapsedTime;
-  cudaError_t devErr;
   /*PARSE INPUTS*/
   //  if(argc >1) {
     //    N_NEURONS = 
@@ -107,9 +106,8 @@ int main(int argc, char *argv[]) {
   cudaEventRecord(stop0, 0);
   cudaEventSynchronize(stop0);
   printf(" Done ! \n");
-  if((devErr = cudaEventElapsedTime(&elapsedTime, start0, stop0)) == cudaSuccess) {
-    printf("\n elapsed time = %fms \n", elapsedTime);
-  }
+  cudaEventElapsedTime(&elapsedTime, start0, stop0);
+  printf("\n elapsed time = %fms \n", elapsedTime);
   fpElapsedTime = fopen("elapsedTime.csv", "a+");
   fprintf(fpElapsedTime, "%f %d\n", elapsedTime, *nSpks);
   cudaCheck(cudaEventDestroy(start0));

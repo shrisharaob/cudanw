@@ -24,10 +24,10 @@ __device__ float isynap(float vm, int *dev_conVec) {
     if(localNSpks > 0){
       for(i = 0; i < localNSpks; ++i) { //  
         if(spkNeuronId[i] < NE) {
-          gE += dev_conVec[spkNeuronId[i] * N_NEURONS + mNeuron];
+          gE += dev_conVec[spkNeuronId[i] + N_NEURONS * mNeuron];
         }
         else {
-          gI += dev_conVec[spkNeuronId[i] * N_NEURONS + mNeuron]; //optimize !!!! gEI_I
+          gI += dev_conVec[spkNeuronId[i] + N_NEURONS * mNeuron]; //optimize !!!! gEI_I
         }
       }
     }
