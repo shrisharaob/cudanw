@@ -21,6 +21,7 @@ __global__ void rkdumb(float x1, float x2, int nstep, int *totNSpks, float *spkT
     xx = x1;  
     x = x1;
     h = DT; //(x2 - x1) / nstep;
+    isynapNew = 0;
     for (k = 0; k < nstep; k++) 
       {
         dev_IF_SPK[mNeuron] = 0;
