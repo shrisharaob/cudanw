@@ -29,10 +29,36 @@ __global__ void kernelGenConMat(curandState *state, int *dev_conVec){
   float k, n;
   if(id < N_NEURONS) {
     k = (float)K;
-    n = (float)N_NEURONS;
-    for(i = 0; i < N_NEURONS; ++i) {
-      if(k/n >= randkernel(state)) { // neuron[id] receives input from i ?
-        dev_conVec[id + i * N_NEURONS] = 1;
+    /* E --> EI */
+    if(id < NE & NE > 0) {
+      n = (float)NE;
+      for(i = 0; i < N_NEURONS; ++i) {
+        if(i < NE) {  /* E --> E */
+          if(k/n >= randkernel(state)) { /* neuron[id] receives input from i ? */
+            dev_conVec[id + i * N_NEURONS] = 1;
+          } 
+        }
+        if(i > NE) { /* E --> I */
+          if(k/n >= randkernel(state)) { /* neuron[id] receives input from i ? */
+            dev_conVec[id + i * N_NEURONS] = 1;
+          } 
+        }
+      }
+    }
+    /* I --> EI */
+    if(id > NE & NI > 0) {
+      n = (float)NI;
+      for(i = 0; i < N_NEURONS; ++i) {
+        if(i < NE) {  /* I --> E */
+          if(k/n >= randkernel(state)) { /* neuron[id] receives input from i ? */
+            dev_conVec[id + i * N_NEURONS] = 4;
+          } 
+        }
+        if(i > NE) { /* I --> I */
+          if(k/n >= randkernel(state)) { /* neuron[id] receives input from i ? */
+            dev_conVec[id + i * N_NEURONS] = 1;
+          } 
+        }
       }
     }
   }

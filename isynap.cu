@@ -2,7 +2,7 @@
 #include "globalVars.h"
 #include "devHostConstants.h"
 #include "devFunctionProtos.h"
-#define MAX_SPKS_PER_T_STEP 100
+#define MAX_SPKS_PER_T_STEP 1000
 __device__ float isynap(float vm, int *dev_conVec) {
   //
   int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;

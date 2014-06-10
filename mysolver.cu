@@ -33,7 +33,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  float tStart = 0.0, tStop = 100.0;
+  float tStart = 0.0, tStop = 10000.0;
   float *spkTimes, *vm = NULL;// *vstart; // 500 time steps
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   float *dev_vm = NULL, *dev_spkTimes;
@@ -89,6 +89,8 @@ int main(int argc, char *argv[]) {
   printf(" Done! \n");
 
   cudaCheck(cudaMemcpy(conVec, dev_conVec, N_NEURONS * N_NEURONS * sizeof(int), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemset(dev_spkTimes, 0, MAX_SPKS * sizeof(*dev_spkTimes)));
+  cudaCheck(cudaMemset(dev_spkNeuronIds, 0.0f, MAX_SPKS * sizeof(*dev_spkNeuronIds)));
   /* ==================== INTEGRATE ODEs ON GPU ==========================================*/
     /* invoke device on this block/thread grid */
   printf("\n launching Simulation kernel ...");
