@@ -109,7 +109,7 @@ int main(int argc, char *argv[]) {
   cudaEventElapsedTime(&elapsedTime, start0, stop0);
   printf("\n elapsed time = %fms \n", elapsedTime);
   fpElapsedTime = fopen("elapsedTime.csv", "a+");
-  fprintf(fpElapsedTime, "%f %d\n", elapsedTime, *nSpks);
+  fprintf(fpElapsedTime, "%d %f %d\n", N_NEURONS, elapsedTime, *nSpks);
   cudaCheck(cudaEventDestroy(start0));
   cudaCheck(cudaEventDestroy(stop0));
   printf("\n nSpks = %d\n", *nSpks);
