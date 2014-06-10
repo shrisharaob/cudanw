@@ -23,10 +23,11 @@ __device__ float randkernel(curandState *state) {
 }
 
 
-__global__ void kernelGenConMat(curandState *state, int *dev_conVec){
+__global__ void kernelGenConMat(curandState *state, int *dev_conVec, int *dev_sparseConVec){
   int id = threadIdx.x + blockIdx.x * blockDim.x;
   int i;
   float k, n;
+  
   if(id < N_NEURONS) {
     k = (float)K;
     /* E --> EI */
@@ -45,6 +46,7 @@ __global__ void kernelGenConMat(curandState *state, int *dev_conVec){
         }
       }
     }
+
     /* I --> EI */
     if(id > NE & NI > 0) {
       n = (float)NI;
@@ -52,11 +54,13 @@ __global__ void kernelGenConMat(curandState *state, int *dev_conVec){
         if(i < NE) {  /* I --> E */
           if(k/n >= randkernel(state)) { /* neuron[id] receives input from i ? */
             dev_conVec[id + i * N_NEURONS] = 4;
+            flag = 1;
           } 
         }
         if(i > NE) { /* I --> I */
           if(k/n >= randkernel(state)) { /* neuron[id] receives input from i ? */
             dev_conVec[id + i * N_NEURONS] = 1;
+            flag = 1;
           } 
         }
       }

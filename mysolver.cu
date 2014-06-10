@@ -44,6 +44,7 @@ int main(int argc, char *argv[]) {
   curandState *devStates;
   cudaEvent_t start0, stop0;
   float elapsedTime;
+  int *dev_sparseConVec, *sparseConVec;
   /*PARSE INPUTS*/
   //  if(argc >1) {
     //    N_NEURONS = 
@@ -67,8 +68,10 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaMallocHost((void **)&spkNeuronIds, MAX_SPKS * sizeof(spkNeuronIds)));
   /*cudaCheck(cudaMallocHost((void **)&vstart, N_STATEVARS * N_NEURONS * sizeof(float)));*/
   cudaCheck(cudaMallocHost((void **)&conVec, N_NEURONS * N_NEURONS * sizeof(int)));
+  cudaCheck(cudaMallocHost((void **)&sparseConVec, N_NEURONS * (K + 2) * sizeof(int)));
   /* ================= ALLOCATE GLOBAL MEMORY ON DEVICE ===========================*/
   cudaCheck(cudaMalloc((void **)&dev_conVec, N_NEURONS * N_NEURONS * sizeof(int)));
+  cudaCheck(cudaMalloc((void **)&dev_sparseConVec, N_NEURONS * (K + 2)* sizeof(int)));
   cudaCheck(cudaMalloc((void **)&dev_vm, lastNStepsToStore * N_NEURONS * sizeof(float)));
   cudaCheck(cudaMalloc((void **)&dev_isynap, nSteps * N_NEURONS * sizeof(float)));
   cudaCheck(cudaMalloc((void **)&dev_spkTimes, MAX_SPKS * sizeof(*dev_spkTimes)));
@@ -89,6 +92,7 @@ int main(int argc, char *argv[]) {
   printf(" Done! \n");
 
   cudaCheck(cudaMemcpy(conVec, dev_conVec, N_NEURONS * N_NEURONS * sizeof(int), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(sparseConVec, dev_spkNeuronIds, N_NEURONS * (K + 2) * sizeof(int), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemset(dev_spkTimes, 0, MAX_SPKS * sizeof(*dev_spkTimes)));
   cudaCheck(cudaMemset(dev_spkNeuronIds, 0.0f, MAX_SPKS * sizeof(*dev_spkNeuronIds)));
   /* ==================== INTEGRATE ODEs ON GPU ==========================================*/
