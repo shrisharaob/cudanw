@@ -62,10 +62,10 @@ __device__ float SparseIsynap(double *vm, int *dev_nPostNeurons, int *dev_sparse
     if(IF_SPK) {  
       for(kNeuron = 0; kNeuron <= dev_nPostNeurons[mNeuron]; ++kNeuron) { 
         if(mNeuron < NE) {       
-          atomicAdd(gE[dev_sparseConVec[kNeuron]], 1);
+          atomicAdd(&gE[dev_sparseConVec[kNeuron]], 1);
         }
         else
-          atomicAdd(gI[dev_sparseConVec[kNeuron]], 1);
+          atomicAdd(&gI[dev_sparseConVec[kNeuron]], 1);
       }
     }
     dev_gE[mNeuron] = gE;

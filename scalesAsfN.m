@@ -13,6 +13,7 @@ function scalesAsfN()
    
    N = 10:20:200;
    for n = 1 : length(N)
+       keyboard;
        system(['sed -i ''s_#define K .*_#define K ', num2str(N(n)), '.0_'' ', 'devHostConstants.h']);
        system('make clean')
        system('make');
