@@ -9,7 +9,7 @@
 #define _NEURON_COUNTS
 
 #define NE 2
-#define NI 2
+#define NI 40
 #define N_Neurons (NE+NI)
 #define N_NEURONS N_Neurons
 #define K 1.0
