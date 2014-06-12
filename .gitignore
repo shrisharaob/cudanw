@@ -2,6 +2,7 @@
 *.o
 *.*~
 *.csv
+*.*#
 
 vm
 spkTimes
