@@ -15,7 +15,7 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
   float v[N_STATEVARS], vout[N_STATEVARS], dv[N_STATEVARS], vmOld;
   int localTotNspks = 0, localLastNSteps;
   int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
-  cd x1 = params.tStart;
+  x1 = params.tStart;
   x2 = params.tStop;
   nstep = params.nSteps;
   totNSpks = devPtrs.dev_nSpks;
