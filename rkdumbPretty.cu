@@ -1,18 +1,32 @@
-#ifndef _RKDUMB_
-#define _RKDUMB_
+#ifndef _RKDUMBPRETTY_
+#define _RKDUMBPRETTY_
 #include <cuda.h>
 #include "globalVars.h"
 #include "devFunctionProtos.h"
 #include "derivs.cu"
 #include "rk4.cu"
 
-__global__ void rkdumb(float x1, float x2, int nstep, int *totNSpks, float *spkTimes, int *spkNeuronId, float *y, int *dev_conVec, float *dev_isynap, curandState *dev_state) { 
+__global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) { 
+  float x1, x2,  *spkTimes, *y,  *dev_isynap;
+  int nstep, *totNSpks, *spkNeuronId, *dev_nPostNeurons, *dev_sparseConVec, *dev_sparseIdx;
+  curandState *dev_state;
   int i, k, IF_SPK;
   float x, h, xx, isynapNew = 0;// isynapOld = 0; //vm
   float v[N_STATEVARS], vout[N_STATEVARS], dv[N_STATEVARS], vmOld;
   int localTotNspks = 0, localLastNSteps;
   int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
-
+  cd x1 = params.tStart;
+  x2 = params.tStop;
+  nstep = params.nSteps;
+  totNSpks = devPtrs.dev_nSpks;
+  dev_isynap = devPtrs.dev_isynap;
+  dev_state = devPtrs.devStates;
+  /*  dev_conVec = devPtrs.dev_conVec;*/
+  spkTimes = devPtrs.dev_spkTimes;
+  spkNeuronId = devPtrs.dev_spkNeuronIds;
+  dev_nPostNeurons = devPtrs.dev_nPostNeurons;
+  dev_sparseConVec = devPtrs.dev_sparseConVec;
+  dev_sparseIdx = devPtrs.dev_sparseIdx;
   if(mNeuron < N_NEURONS) {
     v[0] = (-1 * 70) +  (40 * randkernel(dev_state)); // Vm(0) ~ U(-70, -30)
     v[1] = 0.3176;
@@ -55,8 +69,7 @@ __global__ void rkdumb(float x1, float x2, int nstep, int *totNSpks, float *spkT
           }
         }
         __syncthreads(); // CRUTIAL step to ensure that dev_IF_spk is updated by all threads 
-        isynapNew = isynap(v[0], dev_conVec);
-
+        isynapNew = SparseIsynap(v[0], dev_nPostNeurons, dev_sparseConVec, dev_sparseIdx, IF_SPK);
 
         // if(k == (nstep - STORE_LAST_N_STEPS) || (nstep - STORE_LAST_N_STEPS) < 0) {
         //   y[mNeuron + N_NEURONS * k] = v[0];
@@ -74,7 +87,6 @@ __global__ void rkdumb(float x1, float x2, int nstep, int *totNSpks, float *spkT
         //      Gff(theta, x);
         //      IFF(vm);
         //      __syncthreads();
-
       }
   }
 }

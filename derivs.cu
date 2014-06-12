@@ -1,3 +1,6 @@
+#ifndef _DERIVS_
+#define _DERIVS_
+
 #include "globalVars.h"
 #include "devFunctionProtos.h"
 #include <cuda.h>
@@ -113,3 +116,4 @@ __device__ void derivs(float t, float stateVar[], float dydx[], float isynap) {
   }
 }
 
+#endif

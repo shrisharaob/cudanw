@@ -17,7 +17,7 @@ __device__ float isynap(float vm, int *dev_conVec);
 
 __global__ void rkdumb(float x1, float x2, int nstep, int *nSpks, float *spkTimes, 
                        int *spkNeuronId, float *y, int *dev_conVec, float *isynap, curandState *dev_state);
-
+__global__ void rkdumbPretty(kernelParams_t, devPtr_t);
 //__global__ void rkdumb(float vstart[], int nvar, float x1, float x2, 
 //                       int nstep, int *nSpks, float *spkTimes, int *spkNeuronId, float *y, int *dev_conVec, float *, float *);
 

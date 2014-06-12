@@ -12,7 +12,7 @@
 #define NI 100
 #define N_Neurons (NE+NI)
 #define N_NEURONS N_Neurons
-#define K 51.0
+#define K 1.0
 #define DT 0.025 // ms
 #define TAU_SYNAP 3.0  // ms
 #define EXP_SUM 0.99170129 //exp(-1 * DT / TAU_SYNAP)

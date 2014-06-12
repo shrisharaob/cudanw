@@ -45,10 +45,15 @@ int main(int argc, char *argv[]) {
   cudaEvent_t start0, stop0;
   float elapsedTime;
   int *dev_sparseConVec, *sparseConVec;
+  int idxVec[N_NEURONS], nPostNeurons[N_NEURONS], *dev_idxVec, *dev_nPostNeurons;
+  int deviceId = 3;
+  devPtr_t devPtrs;
+  kernelParams_t kernelParams;
   /*PARSE INPUTS*/
-  //  if(argc >1) {
-    //    N_NEURONS = 
-
+   if(argc >1) {
+     deviceId = atoi(argv[2]);
+   }
+   cudaCheck(cudaSetDevice(deviceId));
   /* ================= INITIALIZE ===============================================*/
   nSteps = (tStop - tStart) / DT;
   lastNStepsToStore = (int)floor(STORE_LAST_T_MILLISEC  / DT);
@@ -66,20 +71,33 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaMallocHost((void **)&vm,  lastNStepsToStore * N_NEURONS * sizeof(*vm)));
   cudaCheck(cudaMallocHost((void **)&nSpks, sizeof(*nSpks)));
   cudaCheck(cudaMallocHost((void **)&spkNeuronIds, MAX_SPKS * sizeof(spkNeuronIds)));
-  /*cudaCheck(cudaMallocHost((void **)&vstart, N_STATEVARS * N_NEURONS * sizeof(float)));*/
   cudaCheck(cudaMallocHost((void **)&conVec, N_NEURONS * N_NEURONS * sizeof(int)));
   cudaCheck(cudaMallocHost((void **)&sparseConVec, N_NEURONS * (K + 2) * sizeof(int)));
   /* ================= ALLOCATE GLOBAL MEMORY ON DEVICE ===========================*/
   cudaCheck(cudaMalloc((void **)&dev_conVec, N_NEURONS * N_NEURONS * sizeof(int)));
   cudaCheck(cudaMalloc((void **)&dev_sparseConVec, N_NEURONS * (K + 2)* sizeof(int)));
+  cudaCheck(cudaMalloc((void **)&dev_idxVec, N_NEURONS * sizeof(int)));
+  cudaCheck(cudaMalloc((void **)&dev_nPostNeurons, N_NEURONS * sizeof(int)));
+
   cudaCheck(cudaMalloc((void **)&dev_vm, lastNStepsToStore * N_NEURONS * sizeof(float)));
   cudaCheck(cudaMalloc((void **)&dev_isynap, nSteps * N_NEURONS * sizeof(float)));
   cudaCheck(cudaMalloc((void **)&dev_spkTimes, MAX_SPKS * sizeof(*dev_spkTimes)));
   cudaCheck(cudaMalloc((void **)&dev_nSpks, sizeof(int)));
   cudaCheck(cudaMalloc((void **)&dev_spkNeuronIds, MAX_SPKS * sizeof(*dev_spkNeuronIds)));
- /*cudaCheck(cudaMalloc((void **)&dev_vstart, N_STATEVARS * N_NEURONS * sizeof(*dev_vstart)));*/
   cudaCheck(cudaMalloc((void **)&devStates,  N_NEURONS * sizeof(curandState)));
+  cudaCheck(cudaMemset(dev_spkTimes, 0, MAX_SPKS * sizeof(*dev_spkTimes)));
+  cudaCheck(cudaMemset(dev_spkNeuronIds, 0.0f, MAX_SPKS * sizeof(*dev_spkNeuronIds)));
   printf(" GPU memory allocation successful ! \n ");
+  devPtrs.dev_conVec = dev_conVec;
+  devPtrs.dev_spkNeuronIds = dev_spkNeuronIds;
+  devPtrs.dev_vm = dev_vm;
+  devPtrs.dev_nSpks = dev_nSpks;
+  devPtrs.dev_spkNeuronIds = dev_spkNeuronIds;
+  devPtrs.dev_spkTimes = dev_spkTimes;
+  devPtrs.dev_isynap = dev_isynap;
+  devPtrs.devStates = devStates;
+  devPtrs.dev_nPostNeurons = dev_nPostNeurons;
+  devPtrs.dev_sparseIdx = dev_idxVec;
   *nSpks = 0;
   cudaCheck(cudaMemcpy(dev_nSpks, nSpks, sizeof(int), cudaMemcpyHostToDevice));
   /*===================== GENERATE CONNECTION MATRIX ====================================*/
@@ -90,17 +108,23 @@ int main(int argc, char *argv[]) {
   fflush(stdout);
   kernelGenConMat<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, dev_conVec);
   printf(" Done! \n");
-
   cudaCheck(cudaMemcpy(conVec, dev_conVec, N_NEURONS * N_NEURONS * sizeof(int), cudaMemcpyDeviceToHost));
-  cudaCheck(cudaMemcpy(sparseConVec, dev_spkNeuronIds, N_NEURONS * (K + 2) * sizeof(int), cudaMemcpyDeviceToHost));
-  cudaCheck(cudaMemset(dev_spkTimes, 0, MAX_SPKS * sizeof(*dev_spkTimes)));
-  cudaCheck(cudaMemset(dev_spkNeuronIds, 0.0f, MAX_SPKS * sizeof(*dev_spkNeuronIds)));
+  cudaCheck(cudaFree(dev_conVec));
+  GenSparseMat(conVec, N_NEURONS, N_NEURONS, sparseConVec, idxVec, nPostNeurons);
+  cudaCheck(cudaMemcpy(sparseConVec, dev_sparseConVec, N_NEURONS * (K + 2) * sizeof(int), cudaMemcpyHostToDevice));
+  cudaCheck(cudaMemcpy(idxVec, dev_idxVec, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
+  cudaCheck(cudaMemcpy(nPostNeurons, dev_nPostNeurons, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
   /* ==================== INTEGRATE ODEs ON GPU ==========================================*/
     /* invoke device on this block/thread grid */
+  kernelParams.nSteps = nSteps;
+  kernelParams.tStop = tStop;
+  kernelParams.tStart = tStart;
+
   printf("\n launching Simulation kernel ...");
   fflush(stdout);
+  rkdumbPretty<<<BlocksPerGrid, ThreadsPerBlock>>> (kernelParams, devPtrs);
   //  setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, time(NULL) + 23);
-  rkdumb <<<BlocksPerGrid,ThreadsPerBlock>>> (tStart, tStop, nSteps, dev_nSpks, dev_spkTimes, dev_spkNeuronIds, dev_vm, dev_conVec, dev_isynap, devStates);
+  /*  rkdumb <<<BlocksPerGrid,ThreadsPerBlock>>> (tStart, tStop, nSteps, dev_nSpks, dev_spkTimes, dev_spkNeuronIds, dev_vm, dev_conVec, dev_isynap, devStates);*/
   cudaCheckLastError("rkdumb kernel failed");
   /*==================== COPY RESULTS TO HOST =================================================*/
   cudaCheck(cudaMemcpy(nSpks, dev_nSpks, sizeof(int), cudaMemcpyDeviceToHost));
@@ -161,10 +185,13 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaFree(dev_isynap));
   cudaCheck(cudaFree(dev_spkNeuronIds));
   cudaCheck(cudaFree(dev_spkTimes));
-  cudaCheck(cudaFree(dev_conVec));
+
   /*  cudaCheck(cudaFree(dev_vstart));*/
   cudaCheck(cudaFree(dev_nSpks));
   cudaCheck(cudaFree(devStates));
+  cudaCheck(cudaFree(dev_sparseConVec));
+  cudaCheck(cudaFree(dev_idxVec));
+  cudaCheck(cudaFree(dev_nPostNeurons));
   return EXIT_SUCCESS;
 }
 

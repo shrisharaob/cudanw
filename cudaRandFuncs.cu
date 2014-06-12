@@ -1,3 +1,5 @@
+#ifndef _CUDARANDFUNCS_
+#define _CUDARANDFUNCS_
 #include <cuda.h>
 //#include "curand_kernel.h"
 #include "mycurand.h"
@@ -23,7 +25,8 @@ __device__ float randkernel(curandState *state) {
 }
 
 
-__global__ void kernelGenConMat(curandState *state, int *dev_conVec, int *dev_sparseConVec){
+__global__ void kernelGenConMat(curandState *state, int *dev_conVec){
+  /* indexing of matrix row + clm x N_NEURONS*/
   int id = threadIdx.x + blockIdx.x * blockDim.x;
   int i;
   float k, n;
@@ -54,16 +57,15 @@ __global__ void kernelGenConMat(curandState *state, int *dev_conVec, int *dev_sp
         if(i < NE) {  /* I --> E */
           if(k/n >= randkernel(state)) { /* neuron[id] receives input from i ? */
             dev_conVec[id + i * N_NEURONS] = 4;
-            flag = 1;
           } 
         }
         if(i > NE) { /* I --> I */
           if(k/n >= randkernel(state)) { /* neuron[id] receives input from i ? */
             dev_conVec[id + i * N_NEURONS] = 1;
-            flag = 1;
           } 
         }
       }
     }
   }
 }
+#endif

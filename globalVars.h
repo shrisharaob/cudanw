@@ -1,6 +1,6 @@
 #ifndef _GLOBALVARS_
 #define _GLOBALVARS_
-
+#include "mycurand.h"
 #include "devHostConstants.h"
 // time in ms
 #define MAX_SPKS 5000
@@ -94,5 +94,17 @@ typedef struct
 {
   int neuronId, nPostNeurons, *postNeuronIds;
 } sparseMat;
+
+typedef struct {
+  int *dev_conVec, *dev_nSpks, *dev_spkNeuronIds, 
+    *dev_nPostNeurons, *dev_sparseConVec, *dev_sparseIdx;
+  float *dev_vm, *dev_isynap, *dev_spkTimes;
+  curandState *devStates;
+} devPtr_t;
+
+typedef struct {
+  float tStart, tStop;
+  int nSteps;
+} kernelParams_t;
 
 #endif

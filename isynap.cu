@@ -1,3 +1,5 @@
+#ifndef _ISYNAP_
+#define _ISYNAP_
 #include  <cuda.h>
 #include "globalVars.h"
 #include "devHostConstants.h"
@@ -47,42 +49,43 @@ __device__ float isynap(float vm, int *dev_conVec) {
   }
   return totIsynap;
 }
-// /*
 
-__device__ float SparseIsynap(double *vm, int *dev_nPostNeurons, int *dev_sparseConVec, int IF_SPK) {
+
+__device__ float SparseIsynap(double vm, int *dev_nPostNeurons, int *dev_sparseConVec, int *dev_sparseIdx, int IF_SPK) {
   int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   int kNeuron;
-  int i, spkNeuronId[MAX_SPKS_PER_T_STEP], localNSpks = 0;
   float totIsynap = 0, gE, gI, tempCurE = 0, tempCurI = 0;
   if(mNeuron < N_NEURONS) {
     gE = dev_gE[mNeuron];
     gI = dev_gI[mNeuron];
     gE *= EXP_SUM;
     gI *= EXP_SUM;
-    if(IF_SPK) {  
+     if(IF_SPK) {  
       for(kNeuron = 0; kNeuron <= dev_nPostNeurons[mNeuron]; ++kNeuron) { 
         if(mNeuron < NE) {       
-          atomicAdd(&gE[dev_sparseConVec[kNeuron]], 1);
-        }
+          atomicAdd(&dev_gE[dev_sparseConVec[dev_sparseIdx[kNeuron]]], 1.0f); /*WORKS ONLY ON CC >= 2.0 */
+       }
         else
-          atomicAdd(&gI[dev_sparseConVec[kNeuron]], 1);
+          atomicAdd(&dev_gI[dev_sparseConVec[dev_sparseIdx[kNeuron]]], 1.0f);
       }
-    }
-    dev_gE[mNeuron] = gE;
-    dev_gI[mNeuron] = gI;
+      gE += 1;
+    } 
+    
+    /*    dev_gE[mNeuron] = gE;
+          dev_gI[mNeuron] = gI;*/
     if(mNeuron < NE) {
-      tempCurE = -1 *  gE * (1/sqrt(K)) * INV_TAU_SYNAP * G_EE
-                          * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
-      tempCurI = -1 * gI * (1/sqrt(K)) * INV_TAU_SYNAP * G_EI
-                          * (RHO * (vm - V_I) + (1 - RHO) * (E_L - V_I));
+      tempCurE = -1 * gE * (1/sqrt(K)) * INV_TAU_SYNAP * G_EE * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
+
+      tempCurI = -1 * gI * (1/sqrt(K)) * INV_TAU_SYNAP * G_EI * (RHO * (vm - V_I) + (1 - RHO) * (E_L - V_I));
     }
-    if(mNeuron >= NE){
+    if(mNeuron > NE){
       tempCurE = -1 * gE * (1/sqrt(K)) * INV_TAU_SYNAP * G_IE * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
       tempCurI = -1 * gI * (1/sqrt(K)) * INV_TAU_SYNAP * G_II * (RHO * (vm - V_I) + (1 - RHO) * (E_L - V_I));
     }
     totIsynap = tempCurE + tempCurI; 
   }
-  return iSynap;
+  return totIsynap;
 }
 
 //*/
+#endif

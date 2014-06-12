@@ -1,3 +1,5 @@
+#ifndef _RK4_
+#define _RK4_
 #include "globalVars.h"
 #include "devFunctionProtos.h"
 
@@ -22,3 +24,4 @@ __device__ void rk4(float *y, float *dydx, int n, float rk4X, float h, float *yo
 	derivs(rk4X+h,yt,dyt, iSynap);                    /* 4th step */
 	for (i = 0; i < n; i++) yout[i]=y[i]+h6*(dydx[i]+dyt[i]+2.0*dym[i]);
 }
+#endif
