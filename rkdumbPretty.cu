@@ -19,6 +19,7 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
   x2 = params.tStop;
   nstep = params.nSteps;
   totNSpks = devPtrs.dev_nSpks;
+  y = devPtrs.dev_vm;
   dev_isynap = devPtrs.dev_isynap;
   dev_state = devPtrs.devStates;
   /*  dev_conVec = devPtrs.dev_conVec;*/
@@ -69,6 +70,7 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
           }
         }
         __syncthreads(); // CRUTIAL step to ensure that dev_IF_spk is updated by all threads 
+	int tstk = dev_sparseConVec[0];
         isynapNew = SparseIsynap(v[0], dev_nPostNeurons, dev_sparseConVec, dev_sparseIdx, IF_SPK);
 
         // if(k == (nstep - STORE_LAST_N_STEPS) || (nstep - STORE_LAST_N_STEPS) < 0) {

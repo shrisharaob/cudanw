@@ -33,7 +33,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  float tStart = 0.0, tStop = 10000.0;
+  float tStart = 0.0, tStop = 100.0;
   float *spkTimes, *vm = NULL;// *vstart; // 500 time steps
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   float *dev_vm = NULL, *dev_spkTimes;
@@ -44,8 +44,8 @@ int main(int argc, char *argv[]) {
   curandState *devStates;
   cudaEvent_t start0, stop0;
   float elapsedTime;
-  int *dev_sparseConVec, *sparseConVec;
-  int idxVec[N_NEURONS], nPostNeurons[N_NEURONS], *dev_idxVec, *dev_nPostNeurons;
+  int *dev_sparseConVec = NULL, *sparseConVec = NULL;
+  int idxVec[N_NEURONS], nPostNeurons[N_NEURONS], *dev_idxVec = NULL, *dev_nPostNeurons = NULL;
   int deviceId = 3;
   devPtr_t devPtrs;
   kernelParams_t kernelParams;
@@ -53,6 +53,7 @@ int main(int argc, char *argv[]) {
    if(argc >1) {
      deviceId = atoi(argv[2]);
    }
+   printf("\n Computing on GPU%d \n", deviceId);
    cudaCheck(cudaSetDevice(deviceId));
   /* ================= INITIALIZE ===============================================*/
   nSteps = (tStop - tStart) / DT;
@@ -75,7 +76,7 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaMallocHost((void **)&sparseConVec, N_NEURONS * (K + 2) * sizeof(int)));
   /* ================= ALLOCATE GLOBAL MEMORY ON DEVICE ===========================*/
   cudaCheck(cudaMalloc((void **)&dev_conVec, N_NEURONS * N_NEURONS * sizeof(int)));
-  cudaCheck(cudaMalloc((void **)&dev_sparseConVec, N_NEURONS * (K + 2)* sizeof(int)));
+  cudaCheck(cudaMalloc((void **)&dev_sparseConVec, N_NEURONS * ((int)K + 2)* sizeof(int)));
   cudaCheck(cudaMalloc((void **)&dev_idxVec, N_NEURONS * sizeof(int)));
   cudaCheck(cudaMalloc((void **)&dev_nPostNeurons, N_NEURONS * sizeof(int)));
 
@@ -96,6 +97,7 @@ int main(int argc, char *argv[]) {
   devPtrs.dev_spkTimes = dev_spkTimes;
   devPtrs.dev_isynap = dev_isynap;
   devPtrs.devStates = devStates;
+  devPtrs.dev_sparseConVec = dev_sparseConVec;
   devPtrs.dev_nPostNeurons = dev_nPostNeurons;
   devPtrs.dev_sparseIdx = dev_idxVec;
   *nSpks = 0;
@@ -109,18 +111,18 @@ int main(int argc, char *argv[]) {
   kernelGenConMat<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, dev_conVec);
   printf(" Done! \n");
   cudaCheck(cudaMemcpy(conVec, dev_conVec, N_NEURONS * N_NEURONS * sizeof(int), cudaMemcpyDeviceToHost));
-  cudaCheck(cudaFree(dev_conVec));
+  /*  cudaCheck(cudaFree(dev_conVec)); */
+  conVec[1] = 1;
   GenSparseMat(conVec, N_NEURONS, N_NEURONS, sparseConVec, idxVec, nPostNeurons);
-  cudaCheck(cudaMemcpy(sparseConVec, dev_sparseConVec, N_NEURONS * (K + 2) * sizeof(int), cudaMemcpyHostToDevice));
-  cudaCheck(cudaMemcpy(idxVec, dev_idxVec, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
-  cudaCheck(cudaMemcpy(nPostNeurons, dev_nPostNeurons, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
+  cudaCheck(cudaMemcpy(dev_sparseConVec, sparseConVec, N_NEURONS * (K + 2) * sizeof(int), cudaMemcpyHostToDevice));
+  cudaCheck(cudaMemcpy(dev_idxVec, idxVec, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
+  cudaCheck(cudaMemcpy(dev_nPostNeurons, nPostNeurons, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
   /* ==================== INTEGRATE ODEs ON GPU ==========================================*/
     /* invoke device on this block/thread grid */
   kernelParams.nSteps = nSteps;
   kernelParams.tStop = tStop;
   kernelParams.tStart = tStart;
-
-  printf("\n launching Simulation kernel ...");
+printf("\n launching Simulation kernel ...");
   fflush(stdout);
   rkdumbPretty<<<BlocksPerGrid, ThreadsPerBlock>>> (kernelParams, devPtrs);
   //  setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, time(NULL) + 23);
@@ -185,8 +187,9 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaFree(dev_isynap));
   cudaCheck(cudaFree(dev_spkNeuronIds));
   cudaCheck(cudaFree(dev_spkTimes));
-
   /*  cudaCheck(cudaFree(dev_vstart));*/
+  cudaCheck(cudaFree(dev_conVec));
+
   cudaCheck(cudaFree(dev_nSpks));
   cudaCheck(cudaFree(devStates));
   cudaCheck(cudaFree(dev_sparseConVec));

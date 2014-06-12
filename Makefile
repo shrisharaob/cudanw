@@ -4,7 +4,7 @@ a.out : mysolver.cu
 	nvcc -arch=sm_35 -O3 $<
 
 debug : mysolver.cu
-	nvcc -g -G -lineinfo -arch=sm_11 $<
+	nvcc  -arch=sm_35 -g -G -lineinfo $<
 
 clean:
 	-rm *.o *.out
