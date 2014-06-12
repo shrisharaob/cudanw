@@ -1,8 +1,8 @@
 #!/bin/sh
 set -eu # makes your program exit on error or unbound variable
-for n in {100..100..500}
+for n in {800..10000..200}
 do
-    eval sed "-i 's_#define K .*_#define K $n.0_' devHostConstants.h"
+    eval sed "-i 's_#define NI .*_#define NI ${n}_' devHostConstants.h"
     make clean
     make
     ./a.out

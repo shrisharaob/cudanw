@@ -90,7 +90,7 @@ __device__ void derivs(float t, float stateVar[], float dydx[], float isynap) {
      }
      else {cur = 0.0;}*/
     /*  cur = 0.25 * sqrt(K);*/
-        cur = 2.8;
+    cur = 2.8;
     if (kNeuron < NE) { 
       dydx[0] =  1/Cm * (cur 
                                  - G_Na * pow(m_inf(stateVar[0]), 3) * stateVar[3] * (stateVar[0] - E_Na) 
