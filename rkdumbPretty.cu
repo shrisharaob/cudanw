@@ -7,7 +7,7 @@
 #include "rk4.cu"
 
 __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) { 
-  float x1, x2,  *spkTimes, *y,  *dev_isynap;
+  float x1, *spkTimes, *y,  *dev_isynap;
   int nstep, *totNSpks, *spkNeuronId, *dev_nPostNeurons, *dev_sparseConVec, *dev_sparseIdx;
   curandState *dev_state;
   int i, k, IF_SPK;
@@ -16,7 +16,7 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
   int localTotNspks = 0, localLastNSteps;
   int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   x1 = params.tStart;
-  x2 = params.tStop;
+  /*  x2 = params.tStop;*/
   nstep = params.nSteps;
   totNSpks = devPtrs.dev_nSpks;
   y = devPtrs.dev_vm;
@@ -54,8 +54,8 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
           v[i]=vout[i];
         }
         if(k > localLastNSteps) {
-          y[mNeuron + N_NEURONS * k] = v[0];
-          dev_isynap[mNeuron + N_NEURONS * k] = isynapNew;
+          y[mNeuron + N_NEURONS * (k - localLastNSteps)] = v[0];
+          dev_isynap[mNeuron + N_NEURONS *  (k - localLastNSteps)] = isynapNew;
         }
         if(k > 2) {
           if(v[0] > SPK_THRESH) { 
@@ -70,7 +70,6 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
           }
         }
         __syncthreads(); // CRUTIAL step to ensure that dev_IF_spk is updated by all threads 
-	int tstk = dev_sparseConVec[0];
         isynapNew = SparseIsynap(v[0], dev_nPostNeurons, dev_sparseConVec, dev_sparseIdx, IF_SPK);
 
         // if(k == (nstep - STORE_LAST_N_STEPS) || (nstep - STORE_LAST_N_STEPS) < 0) {

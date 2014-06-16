@@ -13,14 +13,15 @@ void GenSparseMat(int *conVec,  int rows, int clms, int* sparseVec, int* idxVec,
     nPost = 0;
     for(j = 0; j < clms; ++j) {
       if(conVec[i * clms + j]) { /* i --> j  */
-        sparseVec[counter++] = j;
+        sparseVec[counter] = j;
+	counter += 1;
         nPost += 1;
       }
     }
     nPostNeurons[i] = nPost;
   }
   idxVec[0] = 0;
-  for(i = 1; i < counter; ++i) {
+  for(i = 1; i < rows; ++i) {
     idxVec[i] = idxVec[i-1] + nPostNeurons[i-1];
   }
 }

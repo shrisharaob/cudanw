@@ -7,7 +7,7 @@
 #include "rk4.cu"
 
 __global__ void rkdumb(float x1, float x2, int nstep, int *totNSpks, float *spkTimes, int *spkNeuronId, float *y, int *dev_conVec, float *dev_isynap, curandState *dev_state) { 
-  int i, k, IF_SPK;
+  int i, k;
   float x, h, xx, isynapNew = 0;// isynapOld = 0; //vm
   float v[N_STATEVARS], vout[N_STATEVARS], dv[N_STATEVARS], vmOld;
   int localTotNspks = 0, localLastNSteps;
@@ -27,7 +27,6 @@ __global__ void rkdumb(float x1, float x2, int nstep, int *totNSpks, float *spkT
     for (k = 0; k < nstep; k++) 
       {
         dev_IF_SPK[mNeuron] = 0;
-        IF_SPK = 0;
         vmOld = v[0];
         derivs(x, v, dv, isynapNew);
         rk4(v, dv, N_STATEVARS, x, h, vout, isynapNew);
@@ -45,8 +44,7 @@ __global__ void rkdumb(float x1, float x2, int nstep, int *totNSpks, float *spkT
         if(k > 2) {
           if(v[0] > SPK_THRESH) { 
             if(vmOld <= SPK_THRESH) {
-              IF_SPK = 1;
-              dev_IF_SPK[mNeuron] = 1;
+	      dev_IF_SPK[mNeuron] = 1;
               atomicAdd(totNSpks, 1); // atomic add on global introduces memory latency
               localTotNspks = *totNSpks;
               spkNeuronId[localTotNspks] = mNeuron;

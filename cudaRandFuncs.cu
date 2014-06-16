@@ -56,7 +56,7 @@ __global__ void kernelGenConMat(curandState *state, int *dev_conVec){
       for(i = 0; i < N_NEURONS; ++i) {
         if(i < NE) {  /* I --> E */
           if(k/n >= randkernel(state)) { /* neuron[id] receives input from i ? */
-            dev_conVec[id + i * N_NEURONS] = 4;
+            dev_conVec[id + i * N_NEURONS] = 1;
           } 
         }
         if(i > NE) { /* I --> I */

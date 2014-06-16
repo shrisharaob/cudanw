@@ -3,7 +3,7 @@
 #include "mycurand.h"
 #include "devHostConstants.h"
 // time in ms
-#define MAX_SPKS 5000
+#define MAX_SPKS 60000
 #define PI 3.14159265359
 
 //#define DT 0.025 // ms

@@ -46,15 +46,19 @@ int main(int argc, char *argv[]) {
   float elapsedTime;
   int *dev_sparseConVec = NULL, *sparseConVec = NULL;
   int idxVec[N_NEURONS], nPostNeurons[N_NEURONS], *dev_idxVec = NULL, *dev_nPostNeurons = NULL;
-  int deviceId = 3;
+  int deviceId = 0;
   devPtr_t devPtrs;
   kernelParams_t kernelParams;
+  int IF_SAVE = 1;
   /*PARSE INPUTS*/
-   if(argc >1) {
-     deviceId = atoi(argv[2]);
-   }
-   printf("\n Computing on GPU%d \n", deviceId);
-   cudaCheck(cudaSetDevice(deviceId));
+  if(argc >1) {
+    deviceId = atoi(argv[1]);
+    if(argc > 2) {
+      IF_SAVE = atoi(argv[2]);
+    }
+  }
+  printf("\n Computing on GPU%d \n", deviceId);
+  cudaCheck(cudaSetDevice(deviceId));
   /* ================= INITIALIZE ===============================================*/
   nSteps = (tStop - tStart) / DT;
   lastNStepsToStore = (int)floor(STORE_LAST_T_MILLISEC  / DT);
@@ -66,26 +70,44 @@ int main(int argc, char *argv[]) {
   /* choose 256 threads per block for high occupancy */
   int ThreadsPerBlock = 128;
   int BlocksPerGrid = (N_NEURONS + ThreadsPerBlock - 1) / ThreadsPerBlock;
+  /* gENERATE CONNECTION MATRIX */
+  cudaCheck(cudaMalloc((void **)&dev_conVec, N_NEURONS * N_NEURONS * sizeof(int)));
+  cudaCheck(cudaMallocHost((void **)&conVec, N_NEURONS * N_NEURONS * sizeof(int)));  
+  cudaCheck(cudaMemset(dev_conVec, 0, N_NEURONS * N_NEURONS * sizeof(int)));
+  cudaCheck(cudaMalloc((void **)&devStates,  N_NEURONS * sizeof(curandState)));
+  printf("\n launching rand generator setup kernel\n");
+  setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, time(NULL));
+  printf("\n launching connection matrix geneting kernel with seed %ld ...", time(NULL));
+  fflush(stdout);
+  kernelGenConMat<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, dev_conVec);
+  printf(" Done! \n");
+  cudaCheck(cudaMemcpy(conVec, dev_conVec, N_NEURONS * N_NEURONS * sizeof(int), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaFree(dev_conVec));
+  /* SPARSIFY */
+
+  /* conVec[0] = 0;conVec[1] = 1;conVec[2] = 1;conVec[3] = 0;*/
+  cudaCheck(cudaMallocHost((void **)&sparseConVec, N_NEURONS * (2 * K + 1) * sizeof(int)));  
+  cudaCheck(cudaMalloc((void **)&dev_sparseConVec, N_NEURONS * ((int)2 * K + 1)* sizeof(int)));
+  cudaCheck(cudaMalloc((void **)&dev_idxVec, N_NEURONS * sizeof(int)));
+  cudaCheck(cudaMalloc((void **)&dev_nPostNeurons, N_NEURONS * sizeof(int)));
+  printf("here----> \n");
+  GenSparseMat(conVec, N_NEURONS, N_NEURONS, sparseConVec, idxVec, nPostNeurons);
+  cudaCheck(cudaMemcpy(dev_sparseConVec, sparseConVec, N_NEURONS * (2 * K + 1) * sizeof(int), cudaMemcpyHostToDevice));
+  cudaCheck(cudaMemcpy(dev_idxVec, idxVec, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
+  cudaCheck(cudaMemcpy(dev_nPostNeurons, nPostNeurons, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
   /* ================= ALLOCATE PAGELOCKED MEMORY ON HOST =========================*/
   cudaCheck(cudaMallocHost((void **)&spkTimes, MAX_SPKS  * sizeof(*spkTimes)));
   cudaCheck(cudaMallocHost((void **)&host_isynap, nSteps * N_NEURONS * sizeof(*host_isynap)));
   cudaCheck(cudaMallocHost((void **)&vm,  lastNStepsToStore * N_NEURONS * sizeof(*vm)));
   cudaCheck(cudaMallocHost((void **)&nSpks, sizeof(*nSpks)));
   cudaCheck(cudaMallocHost((void **)&spkNeuronIds, MAX_SPKS * sizeof(spkNeuronIds)));
-  cudaCheck(cudaMallocHost((void **)&conVec, N_NEURONS * N_NEURONS * sizeof(int)));
-  cudaCheck(cudaMallocHost((void **)&sparseConVec, N_NEURONS * (K + 2) * sizeof(int)));
   /* ================= ALLOCATE GLOBAL MEMORY ON DEVICE ===========================*/
-  cudaCheck(cudaMalloc((void **)&dev_conVec, N_NEURONS * N_NEURONS * sizeof(int)));
-  cudaCheck(cudaMalloc((void **)&dev_sparseConVec, N_NEURONS * ((int)K + 2)* sizeof(int)));
-  cudaCheck(cudaMalloc((void **)&dev_idxVec, N_NEURONS * sizeof(int)));
-  cudaCheck(cudaMalloc((void **)&dev_nPostNeurons, N_NEURONS * sizeof(int)));
-
+  /*cudaCheck(cudaMalloc((void **)&dev_conVec, N_NEURONS * N_NEURONS * sizeof(int)));*/
   cudaCheck(cudaMalloc((void **)&dev_vm, lastNStepsToStore * N_NEURONS * sizeof(float)));
-  cudaCheck(cudaMalloc((void **)&dev_isynap, nSteps * N_NEURONS * sizeof(float)));
+  cudaCheck(cudaMalloc((void **)&dev_isynap, lastNStepsToStore * N_NEURONS * sizeof(float)));
   cudaCheck(cudaMalloc((void **)&dev_spkTimes, MAX_SPKS * sizeof(*dev_spkTimes)));
   cudaCheck(cudaMalloc((void **)&dev_nSpks, sizeof(int)));
   cudaCheck(cudaMalloc((void **)&dev_spkNeuronIds, MAX_SPKS * sizeof(*dev_spkNeuronIds)));
-  cudaCheck(cudaMalloc((void **)&devStates,  N_NEURONS * sizeof(curandState)));
   cudaCheck(cudaMemset(dev_spkTimes, 0, MAX_SPKS * sizeof(*dev_spkTimes)));
   cudaCheck(cudaMemset(dev_spkNeuronIds, 0.0f, MAX_SPKS * sizeof(*dev_spkNeuronIds)));
   printf(" GPU memory allocation successful ! \n ");
@@ -103,7 +125,7 @@ int main(int argc, char *argv[]) {
   *nSpks = 0;
   cudaCheck(cudaMemcpy(dev_nSpks, nSpks, sizeof(int), cudaMemcpyHostToDevice));
   /*===================== GENERATE CONNECTION MATRIX ====================================*/
-  cudaCheck(cudaMemset(dev_conVec, 0, N_NEURONS * N_NEURONS * sizeof(int)));
+  /*cudaCheck(cudaMemset(dev_conVec, 0, N_NEURONS * N_NEURONS * sizeof(int)));
   printf("\n launching rand generator setup kernel\n");
   setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, time(NULL));
   printf("\n launching connection matrix geneting kernel with seed %ld ...", time(NULL));
@@ -111,12 +133,11 @@ int main(int argc, char *argv[]) {
   kernelGenConMat<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, dev_conVec);
   printf(" Done! \n");
   cudaCheck(cudaMemcpy(conVec, dev_conVec, N_NEURONS * N_NEURONS * sizeof(int), cudaMemcpyDeviceToHost));
-  /*  cudaCheck(cudaFree(dev_conVec)); */
-  conVec[1] = 1;
+  cudaCheck(cudaFree(dev_conVec));
   GenSparseMat(conVec, N_NEURONS, N_NEURONS, sparseConVec, idxVec, nPostNeurons);
-  cudaCheck(cudaMemcpy(dev_sparseConVec, sparseConVec, N_NEURONS * (K + 2) * sizeof(int), cudaMemcpyHostToDevice));
+  cudaCheck(cudaMemcpy(dev_sparseConVec, sparseConVec, N_NEURONS * (2 * K + 1) * sizeof(int), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_idxVec, idxVec, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
-  cudaCheck(cudaMemcpy(dev_nPostNeurons, nPostNeurons, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
+  cudaCheck(cudaMemcpy(dev_nPostNeurons, nPostNeurons, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));*/
   /* ==================== INTEGRATE ODEs ON GPU ==========================================*/
     /* invoke device on this block/thread grid */
   kernelParams.nSteps = nSteps;
@@ -133,63 +154,61 @@ printf("\n launching Simulation kernel ...");
   cudaCheck(cudaMemcpy(spkTimes, dev_spkTimes, MAX_SPKS * sizeof(float), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(spkNeuronIds, dev_spkNeuronIds, MAX_SPKS * sizeof(int), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(vm, dev_vm, lastNStepsToStore * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
-  cudaCheck(cudaMemcpy(host_isynap, dev_isynap, nSteps * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(host_isynap, dev_isynap, lastNStepsToStore * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
   /* ================= RECORD COMPUTE TIME ====================================================*/
   cudaEventRecord(stop0, 0);
   cudaEventSynchronize(stop0);
   printf(" Done ! \n");
   cudaEventElapsedTime(&elapsedTime, start0, stop0);
   printf("\n elapsed time = %fms \n", elapsedTime);
-  fpElapsedTime = fopen("elapsedTime.csv", "a+");
-  fprintf(fpElapsedTime, "%d %f %d\n", N_NEURONS, elapsedTime, *nSpks);
   cudaCheck(cudaEventDestroy(start0));
   cudaCheck(cudaEventDestroy(stop0));
   printf("\n nSpks = %d\n", *nSpks);
   printf(" MAX SPKS stored on GPU = %d \n", MAX_SPKS); 
   printf("\n Simulation completed ! \n");
+  fpElapsedTime = fopen("elapsedTime.csv", "a+");
+  fprintf(fpElapsedTime, "%d %f %d\n", N_NEURONS, elapsedTime, *nSpks);
+  fclose(fpElapsedTime);
   /* ================= SAVE TO DISK =============================================================*/
-  printf(" saving results to disk ..."); 
-  fflush(stdout);
-  fp = fopen("vm.csv", "w");
-  for(i = 0; i < lastNStepsToStore; ++i) {
-    for(k = 0; k < N_NEURONS; ++k) {
-      fprintf(fp, "%f %f ", vm[k + i *  N_NEURONS], host_isynap[k + i * N_NEURONS]);
+  if(IF_SAVE) {  
+    printf(" saving results to disk ..."); 
+    fflush(stdout);
+    fp = fopen("vm.csv", "w");
+    for(i = 0; i < lastNStepsToStore; ++i) {
+      for(k = 0; k < N_NEURONS; ++k) {
+	fprintf(fp, "%f %f ", vm[k + i *  N_NEURONS], host_isynap[k + i * N_NEURONS]);
+      }
+      fprintf(fp, "\n");
     }
-    fprintf(fp, "\n");
-  }
-  fpConMat = fopen("conMat.csv", "w");
-  for(i = 0; i < N_NEURONS; ++i) {
-    for(k = 0; k < N_NEURONS; ++k) {
-      fprintf(fpConMat, "%d ", conVec[i + N_NEURONS *k]);
+    fpConMat = fopen("conMat.csv", "w");
+    for(i = 0; i < N_NEURONS; ++i) {
+      for(k = 0; k < N_NEURONS; ++k) {
+	fprintf(fpConMat, "%d ", conVec[i * N_NEURONS + k]);
+      }
+      fprintf(fpConMat, "\n");
+      }
+    fpSpkTimes = fopen("spkTimes.csv", "w");
+    for(i = 1; i < *nSpks; ++i) {
+      fprintf(fpSpkTimes, "%f %f\n", spkTimes[i], (float)spkNeuronIds[i] + 1);
     }
-    fprintf(fpConMat, "\n");
-  }
-  fpSpkTimes = fopen("spkTimes.csv", "w");
-  for(i = 1; i < *nSpks; ++i) {
-    fprintf(fpSpkTimes, "%f %f\n", spkTimes[i], (float)spkNeuronIds[i] + 1);
-  }
-  printf("Done!\n");  
-  if(*nSpks > MAX_SPKS) {
-    printf("\n ***** WARNING MAX_SPKS EXCEEDED limit of %d *****\n", MAX_SPKS);
+    printf("Done!\n");  
+    if(*nSpks > MAX_SPKS) {
+      printf("\n ***** WARNING MAX_SPKS EXCEEDED limit of %d *****\n", MAX_SPKS);
+    }
+   fclose(fpSpkTimes);
+   fclose(fpConMat);
+   fclose(fp);
   }
   /*================== CLEANUP ===================================================================*/
-  fclose(fpElapsedTime);
-  fclose(fpSpkTimes);
-  fclose(fpConMat);
-  fclose(fp);
   cudaCheck(cudaFreeHost(vm));
   cudaCheck(cudaFreeHost(host_isynap));
   cudaCheck(cudaFreeHost(spkTimes));
   cudaCheck(cudaFreeHost(spkNeuronIds));
   cudaCheck(cudaFreeHost(nSpks));
-  /*  cudaCheck(cudaFreeHost(vstart));*/
   cudaCheck(cudaFree(dev_vm));
   cudaCheck(cudaFree(dev_isynap));
   cudaCheck(cudaFree(dev_spkNeuronIds));
   cudaCheck(cudaFree(dev_spkTimes));
-  /*  cudaCheck(cudaFree(dev_vstart));*/
-  cudaCheck(cudaFree(dev_conVec));
-
   cudaCheck(cudaFree(dev_nSpks));
   cudaCheck(cudaFree(devStates));
   cudaCheck(cudaFree(dev_sparseConVec));

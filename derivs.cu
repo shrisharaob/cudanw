@@ -79,41 +79,38 @@ __device__ float z_inf(float(vm)) {
 // stateVar = [vm, n, z, h]
 // z - gating variable of the adaptation current
 __device__ void derivs(float t, float stateVar[], float dydx[], float isynap) {
-  //  int tIdx, 
-  //  int colNo;
   float cur = 0;
   int kNeuron = threadIdx.x + blockDim.x * blockIdx.x;
-  //  tIdx = (int)(t / dt) + 1;
   if(kNeuron < N_NEURONS) {
     /*    if(kNeuron == 0 && t >= 30 && t <= 35) {  
-       cur = 10;//input_cur[tIdx];
-     }
-     else {cur = 0.0;}*/
-    /*  cur = 0.25 * sqrt(K);*/
-        cur = 2.8;
-    if (kNeuron < NE) { 
-      dydx[0] =  1/Cm * (cur 
+      cur = 10;//input_cur[tIdx];
+      }
+      else {cur = 0.0;}
+    cur = 0.25 * sqrt(K);*/
+  cur = 2.8;
+  if (kNeuron < NE) { 
+    dydx[0] =  1/Cm * (cur 
                                  - G_Na * pow(m_inf(stateVar[0]), 3) * stateVar[3] * (stateVar[0] - E_Na) 
                                  - G_K * pow(stateVar[1], 4) * (stateVar[0] - E_K) 
                                  - G_L_E * (stateVar[0] - E_L)
                                  - G_adapt * stateVar[2] * (stateVar[0] - E_K) + isynap);//  iBg[kNeuron]);//+ iFF[kNeuron]); // N = [NE; NI]
       }
-      else {
-        dydx[0] =  1/Cm * (cur  
+  else {
+    dydx[0] =  1/Cm * (cur  
                                    - G_Na * pow(m_inf(stateVar[0]), 3) * stateVar[3] * (stateVar[0] - E_Na) 
                                    - G_K * pow(stateVar[1], 4) * (stateVar[0] - E_K) 
                                    - G_L_I * (stateVar[0] - E_L)
                                    - G_adapt * stateVar[2] * (stateVar[0] - E_K) + isynap); // + iBg[kNeuron]);//+ iFF[kNeuron]); // N = [NE; NI]
       }
      
-    dydx[1] = alpha_n(stateVar[0]) * (1 - stateVar[1]) 
+  dydx[1] = alpha_n(stateVar[0]) * (1 - stateVar[1]) 
                       - beta_n(stateVar[0]) * stateVar[1];
   
-    dydx[2] = 1 / Tau_adapt * (z_inf(stateVar[0]) - stateVar[2]);
+  dydx[2] = 1 / Tau_adapt * (z_inf(stateVar[0]) - stateVar[2]);
     
-    dydx[3] = alpha_h(stateVar[0]) * (1 - stateVar[3]) - beta_h(stateVar[0]) * stateVar[3];
-    //  }
-  }
+  dydx[3] = alpha_h(stateVar[0]) * (1 - stateVar[3]) - beta_h(stateVar[0]) * stateVar[3];
+  //  }
+}
 }
 
 #endif
