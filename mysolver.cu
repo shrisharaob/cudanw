@@ -33,7 +33,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  float tStart = 0.0, tStop = 100.0;
+  float tStart = 0.0, tStop = 1000.0;
   float *spkTimes, *vm = NULL;// *vstart; // 500 time steps
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   float *dev_vm = NULL, *dev_spkTimes;
@@ -84,20 +84,18 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaMemcpy(conVec, dev_conVec, N_NEURONS * N_NEURONS * sizeof(int), cudaMemcpyDeviceToHost));
   cudaCheck(cudaFree(dev_conVec));
   /* SPARSIFY */
-
   /* conVec[0] = 0;conVec[1] = 1;conVec[2] = 1;conVec[3] = 0;*/
   cudaCheck(cudaMallocHost((void **)&sparseConVec, N_NEURONS * (2 * K + 1) * sizeof(int)));  
   cudaCheck(cudaMalloc((void **)&dev_sparseConVec, N_NEURONS * ((int)2 * K + 1)* sizeof(int)));
   cudaCheck(cudaMalloc((void **)&dev_idxVec, N_NEURONS * sizeof(int)));
   cudaCheck(cudaMalloc((void **)&dev_nPostNeurons, N_NEURONS * sizeof(int)));
-  printf("here----> \n");
   GenSparseMat(conVec, N_NEURONS, N_NEURONS, sparseConVec, idxVec, nPostNeurons);
   cudaCheck(cudaMemcpy(dev_sparseConVec, sparseConVec, N_NEURONS * (2 * K + 1) * sizeof(int), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_idxVec, idxVec, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_nPostNeurons, nPostNeurons, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
   /* ================= ALLOCATE PAGELOCKED MEMORY ON HOST =========================*/
   cudaCheck(cudaMallocHost((void **)&spkTimes, MAX_SPKS  * sizeof(*spkTimes)));
-  cudaCheck(cudaMallocHost((void **)&host_isynap, nSteps * N_NEURONS * sizeof(*host_isynap)));
+  cudaCheck(cudaMallocHost((void **)&host_isynap, lastNStepsToStore * N_NEURONS * sizeof(*host_isynap)));
   cudaCheck(cudaMallocHost((void **)&vm,  lastNStepsToStore * N_NEURONS * sizeof(*vm)));
   cudaCheck(cudaMallocHost((void **)&nSpks, sizeof(*nSpks)));
   cudaCheck(cudaMallocHost((void **)&spkNeuronIds, MAX_SPKS * sizeof(spkNeuronIds)));
@@ -155,6 +153,13 @@ printf("\n launching Simulation kernel ...");
   cudaCheck(cudaMemcpy(spkNeuronIds, dev_spkNeuronIds, MAX_SPKS * sizeof(int), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(vm, dev_vm, lastNStepsToStore * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(host_isynap, dev_isynap, lastNStepsToStore * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
+  float curE[4000], curI[4000], *dev_curE, *dev_curI;
+
+  cudaCheck(cudaGetSymbolAddress((void **)&dev_curE, glbCurE));
+  cudaCheck(cudaGetSymbolAddress((void **)&dev_curI, glbCurI));
+  printf("---> %p %p \n",dev_curI, dev_curE);
+  cudaCheck(cudaMemcpy(curE, dev_curE, 4000 * sizeof(float), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(curI, dev_curI, 4000 * sizeof(float), cudaMemcpyDeviceToHost));
   /* ================= RECORD COMPUTE TIME ====================================================*/
   cudaEventRecord(stop0, 0);
   cudaEventSynchronize(stop0);
@@ -180,6 +185,17 @@ printf("\n launching Simulation kernel ...");
       }
       fprintf(fp, "\n");
     }
+    fclose(fp);
+    FILE* fpCur = fopen("currents.csv", "w");
+    for(i = 0; i < 4000; ++i) {
+      fprintf(fpCur, "%f ", curE[i]);
+    }
+    fprintf(fpCur, "\n");
+    for(i = 0; i < 4000; ++i) {
+      fprintf(fpCur, "%f ", curI[i]);
+    }
+    fprintf(fpCur, "\n");
+    fclose(fpCur);
     fpConMat = fopen("conMat.csv", "w");
     for(i = 0; i < N_NEURONS; ++i) {
       for(k = 0; k < N_NEURONS; ++k) {
@@ -188,7 +204,11 @@ printf("\n launching Simulation kernel ...");
       fprintf(fpConMat, "\n");
       }
     fpSpkTimes = fopen("spkTimes.csv", "w");
-    for(i = 1; i < *nSpks; ++i) {
+    int totalNSpks = *nSpks;
+    if(*nSpks > MAX_SPKS) {
+      totalNSpks = MAX_SPKS;
+    }
+    for(i = 1; i < totalNSpks; ++i) {
       fprintf(fpSpkTimes, "%f %f\n", spkTimes[i], (float)spkNeuronIds[i] + 1);
     }
     printf("Done!\n");  
@@ -197,7 +217,7 @@ printf("\n launching Simulation kernel ...");
     }
    fclose(fpSpkTimes);
    fclose(fpConMat);
-   fclose(fp);
+
   }
   /*================== CLEANUP ===================================================================*/
   cudaCheck(cudaFreeHost(vm));

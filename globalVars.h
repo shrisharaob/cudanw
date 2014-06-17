@@ -68,7 +68,8 @@
 __device__ float dt, *thetaVec;
 __device__ float dev_gE[N_NEURONS], dev_gI[N_NEURONS];
 //__device__ float *dev_gE, *dev_gI;
-__device__ int dev_IF_SPK[N_NEURONS];
+__device__ int dev_IF_SPK[N_NEURONS], curConter = 0;
+__device__ float glbCurE[4000], glbCurI[4000];
 /* // recurrent input  */
 /* __device__ float *tempCurE, *tempCurI; */
 /* //__device__ float *iBg, *gaussNoiseE, *gaussNoiseI; */

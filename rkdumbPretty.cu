@@ -64,8 +64,10 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
               dev_IF_SPK[mNeuron] = 1;
               atomicAdd(totNSpks, 1); // atomic add on global introduces memory latency
               localTotNspks = *totNSpks;
-              spkNeuronId[localTotNspks] = mNeuron;
-              spkTimes[localTotNspks] = xx;
+	      if(localTotNspks < MAX_SPKS) {
+		spkNeuronId[localTotNspks] = mNeuron;
+		spkTimes[localTotNspks] = xx;
+	      }
             }
           }
         }

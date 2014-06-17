@@ -82,6 +82,13 @@ __device__ float SparseIsynap(double vm, int *dev_nPostNeurons, int *dev_sparseC
       tempCurI = -1 * gI * (1/sqrt(K)) * INV_TAU_SYNAP * G_II * (RHO * (vm - V_I) + (1 - RHO) * (E_L - V_I));
     }
     totIsynap = tempCurE + tempCurI; 
+    if(mNeuron == 3) {
+      if(curConter < 4000) {
+	glbCurE[curConter] = tempCurE;
+	glbCurI[curConter] = tempCurI;
+	curConter += 1;
+      }
+    }
   }
   return totIsynap;
 }
