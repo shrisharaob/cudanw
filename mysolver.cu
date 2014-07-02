@@ -153,13 +153,13 @@ printf("\n launching Simulation kernel ...");
   cudaCheck(cudaMemcpy(spkNeuronIds, dev_spkNeuronIds, MAX_SPKS * sizeof(int), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(vm, dev_vm, lastNStepsToStore * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(host_isynap, dev_isynap, lastNStepsToStore * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
-  float curE[4000], curI[4000], *dev_curE, *dev_curI;
+  float curE[5 * 4000], curI[5 * 4000], *dev_curE, *dev_curI;
 
   cudaCheck(cudaGetSymbolAddress((void **)&dev_curE, glbCurE));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_curI, glbCurI));
   printf("---> %p %p \n",dev_curI, dev_curE);
-  cudaCheck(cudaMemcpy(curE, dev_curE, 4000 * sizeof(float), cudaMemcpyDeviceToHost));
-  cudaCheck(cudaMemcpy(curI, dev_curI, 4000 * sizeof(float), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(curE, dev_curE, 5 * 4000 * sizeof(float), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(curI, dev_curI, 5 * 4000 * sizeof(float), cudaMemcpyDeviceToHost));
   /* ================= RECORD COMPUTE TIME ====================================================*/
   cudaEventRecord(stop0, 0);
   cudaEventSynchronize(stop0);
@@ -187,14 +187,9 @@ printf("\n launching Simulation kernel ...");
     }
     fclose(fp);
     FILE* fpCur = fopen("currents.csv", "w");
-    for(i = 0; i < 4000; ++i) {
-      fprintf(fpCur, "%f ", curE[i]);
+    for(i = 0; i < 5 *  4000; ++i) {
+      fprintf(fpCur, "%f;%f\n", curE[i], curI[i]);
     }
-    fprintf(fpCur, "\n");
-    for(i = 0; i < 4000; ++i) {
-      fprintf(fpCur, "%f ", curI[i]);
-    }
-    fprintf(fpCur, "\n");
     fclose(fpCur);
     fpConMat = fopen("conMat.csv", "w");
     for(i = 0; i < N_NEURONS; ++i) {
@@ -209,7 +204,7 @@ printf("\n launching Simulation kernel ...");
       totalNSpks = MAX_SPKS;
     }
     for(i = 1; i < totalNSpks; ++i) {
-      fprintf(fpSpkTimes, "%f %f\n", spkTimes[i], (float)spkNeuronIds[i] + 1);
+      fprintf(fpSpkTimes, "%f;%f\n", spkTimes[i], (float)spkNeuronIds[i] + 1);
     }
     printf("Done!\n");  
     if(*nSpks > MAX_SPKS) {

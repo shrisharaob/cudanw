@@ -8,7 +8,7 @@
 __device__ float isynap(float vm, int *dev_conVec) {
   //
   int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
- int i, spkNeuronId[MAX_SPKS_PER_T_STEP], localNSpks = 0;
+  int i, spkNeuronId[MAX_SPKS_PER_T_STEP], localNSpks = 0;
   float totIsynap = 0, gE, gI, tempCurE = 0, tempCurI = 0;
   /* compute squares of entries in data array */
   // !!!!! neurons ids start from ZERO  !!!!!! 
@@ -53,7 +53,7 @@ __device__ float isynap(float vm, int *dev_conVec) {
 
 __device__ float SparseIsynap(double vm, int *dev_nPostNeurons, int *dev_sparseConVec, int *dev_sparseIdx, int IF_SPK) {
   int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
-  int kNeuron;
+  int kNeuron, localCurConter;
   float totIsynap = 0, gE, gI, tempCurE = 0, tempCurI = 0;
   if(mNeuron < N_NEURONS) {
     dev_gE[mNeuron] *= EXP_SUM;
@@ -83,9 +83,10 @@ __device__ float SparseIsynap(double vm, int *dev_nPostNeurons, int *dev_sparseC
     }
     totIsynap = tempCurE + tempCurI; 
     if(mNeuron == 3) {
-      if(curConter < 4000) {
-	glbCurE[curConter] = tempCurE;
-	glbCurI[curConter] = tempCurI;
+      localCurConter = curConter;
+      if(curConter < 5 * 4000) {
+	glbCurE[localCurConter] = tempCurE;
+	glbCurI[localCurConter] = tempCurI;
 	curConter += 1;
       }
     }
