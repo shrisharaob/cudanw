@@ -37,7 +37,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  float tStart = 0.0, tStop = 100.0;
+  float tStart = 0.0, tStop = 3000.0;
   float *spkTimes, *vm = NULL, host_theta = 0.0;// *vstart; // 500 time steps
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   float *dev_vm = NULL, *dev_spkTimes;
@@ -89,7 +89,6 @@ int main(int argc, char *argv[]) {
   setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devNormRandState, time(NULL));
   /*  AuxRffTotal<<BlocksPerGrid, ThreadsPerBlock>>(devNormRandState, devStates);*/
   cudaCheck(cudaFree(devNormRandState));
-  
   /* gENERATE CONNECTION MATRIX */
   cudaCheck(cudaMalloc((void **)&dev_conVec, N_NEURONS * N_NEURONS * sizeof(int)));
   cudaCheck(cudaMallocHost((void **)&conVec, N_NEURONS * N_NEURONS * sizeof(int)));  
@@ -112,8 +111,6 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaMemcpy(dev_sparseConVec, sparseConVec, N_NEURONS * (2 * K + 1) * sizeof(int), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_idxVec, idxVec, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_nPostNeurons, nPostNeurons, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
-
-
   /* ================= ALLOCATE PAGELOCKED MEMORY ON HOST =========================*/
   cudaCheck(cudaMallocHost((void **)&spkTimes, MAX_SPKS  * sizeof(*spkTimes)));
   cudaCheck(cudaMallocHost((void **)&host_isynap, lastNStepsToStore * N_NEURONS * sizeof(*host_isynap)));
@@ -178,14 +175,11 @@ printf("\n launching Simulation kernel ...");
   cudaCheck(cudaMemcpy(spkNeuronIds, dev_spkNeuronIds, MAX_SPKS * sizeof(int), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(vm, dev_vm, lastNStepsToStore * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(host_isynap, dev_isynap, lastNStepsToStore * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
-
   cudaCheck(cudaMemcpy(vm, dev_vm, lastNStepsToStore * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
   float curE[5 * 4000], curI[5 * 4000], ibgCur[5 * 4000], *dev_curE, *dev_curI, *dev_ibg;
-
   cudaCheck(cudaGetSymbolAddress((void **)&dev_curE, glbCurE));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_curI, glbCurI));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_ibg, dev_bgCur));
-  /*  printf("---> %p %p \n",dev_curI, dev_curE);*/
   cudaCheck(cudaMemcpy(curE, dev_curE, 5 * 4000 * sizeof(float), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(curI, dev_curI, 5 * 4000 * sizeof(float), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(ibgCur, dev_ibg, 5 * 4000 * sizeof(float), cudaMemcpyDeviceToHost));

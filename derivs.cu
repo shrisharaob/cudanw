@@ -81,9 +81,9 @@ __device__ float z_inf(float(vm)) {
 __device__ void derivs(float t, float stateVar[], float dydx[], float isynap, float ibg, float iff) {
   float cur = 0;
   int kNeuron = threadIdx.x + blockDim.x * blockIdx.x;
-  float bgPrefactor = 0.01, iffPrefactor = 0.01;
+  float bgPrefactor = 0.0, iffPrefactor = 0.0;
   if(kNeuron < N_NEURONS) {
-    cur = 0.0 * sqrt(K);
+    cur = 0.1 * sqrt(K);
     if (kNeuron < NE) { 
       dydx[0] =  1/Cm * (cur 
                                  - G_Na * pow(m_inf(stateVar[0]), 3) * stateVar[3] * (stateVar[0] - E_Na) 
@@ -105,8 +105,8 @@ __device__ void derivs(float t, float stateVar[], float dydx[], float isynap, fl
   dydx[2] = 1 / Tau_adapt * (z_inf(stateVar[0]) - stateVar[2]);
     
   dydx[3] = alpha_h(stateVar[0]) * (1 - stateVar[3]) - beta_h(stateVar[0]) * stateVar[3];
-  //  }
-}
+ 
+  }
 }
 
 #endif
