@@ -78,29 +78,25 @@ __device__ float z_inf(float(vm)) {
 //extern float dt, *iSynap;
 // stateVar = [vm, n, z, h]
 // z - gating variable of the adaptation current
-__device__ void derivs(float t, float stateVar[], float dydx[], float isynap) {
+__device__ void derivs(float t, float stateVar[], float dydx[], float isynap, float ibg, float iff) {
   float cur = 0;
   int kNeuron = threadIdx.x + blockDim.x * blockIdx.x;
+  float bgPrefactor = 0.01, iffPrefactor = 0.01;
   if(kNeuron < N_NEURONS) {
-    /*    if(kNeuron == 0 && t >= 30 && t <= 35) {  
-      cur = 10;//input_cur[tIdx];
-      }
-      else {cur = 0.0;}
-    cur = 0.25 * sqrt(K);*/
-  cur = 2.8;
-  if (kNeuron < NE) { 
-    dydx[0] =  1/Cm * (cur 
+    cur = 0.0 * sqrt(K);
+    if (kNeuron < NE) { 
+      dydx[0] =  1/Cm * (cur 
                                  - G_Na * pow(m_inf(stateVar[0]), 3) * stateVar[3] * (stateVar[0] - E_Na) 
                                  - G_K * pow(stateVar[1], 4) * (stateVar[0] - E_K) 
                                  - G_L_E * (stateVar[0] - E_L)
-                                 - G_adapt * stateVar[2] * (stateVar[0] - E_K) + isynap);//  iBg[kNeuron]);//+ iFF[kNeuron]); // N = [NE; NI]
+			 - G_adapt * stateVar[2] * (stateVar[0] - E_K) + isynap + bgPrefactor * ibg + iffPrefactor * iff);
       }
-  else {
-    dydx[0] =  1/Cm * (cur  
+    else {
+      dydx[0] =  1/Cm * (cur  
                                    - G_Na * pow(m_inf(stateVar[0]), 3) * stateVar[3] * (stateVar[0] - E_Na) 
                                    - G_K * pow(stateVar[1], 4) * (stateVar[0] - E_K) 
                                    - G_L_I * (stateVar[0] - E_L)
-                                   - G_adapt * stateVar[2] * (stateVar[0] - E_K) + isynap); // + iBg[kNeuron]);//+ iFF[kNeuron]); // N = [NE; NI]
+		       - G_adapt * stateVar[2] * (stateVar[0] - E_K) + isynap + bgPrefactor * ibg + iffPrefactor * iff);
       }
      
   dydx[1] = alpha_n(stateVar[0]) * (1 - stateVar[1]) 

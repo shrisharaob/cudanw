@@ -3,7 +3,7 @@
 #include "globalVars.h"
 #include "devFunctionProtos.h"
 
-__device__ void rk4(float *y, float *dydx, int n, float rk4X, float h, float *yout, float iSynap)
+__device__ void rk4(float *y, float *dydx, int n, float rk4X, float h, float *yout, float iSynap, float ibg, float iff)
 {
 	int i;
 	float xh, hh, h6, dym[N_STATEVARS], dyt[N_STATEVARS], yt[N_STATEVARS];
@@ -13,15 +13,15 @@ __device__ void rk4(float *y, float *dydx, int n, float rk4X, float h, float *yo
 	for (i = 0; i < n; i++) { /* 1st step */
       yt[i] = y[i] + hh * dydx[i]; 
     }
-	derivs(xh,yt,dyt, iSynap);                     /* 2nd step */
+	derivs(xh,yt,dyt, iSynap, ibg, iff);                     /* 2nd step */
 	for (i = 0; i < n; i++) yt[i] = y[i] + hh * dyt[i];
-	derivs(xh,yt,dym, iSynap);                     /* 3rd step */
+	derivs(xh,yt,dym, iSynap, ibg, iff);                     /* 3rd step */
 	for (i = 0; i < n; i++)
 	{
 		yt[i]=y[i]+h*dym[i];
 		dym[i] += dyt[i];
 	}
-	derivs(rk4X+h,yt,dyt, iSynap);                    /* 4th step */
+	derivs(rk4X+h,yt,dyt, iSynap, ibg, iff);                    /* 4th step */
 	for (i = 0; i < n; i++) yout[i]=y[i]+h6*(dydx[i]+dyt[i]+2.0*dym[i]);
 }
 #endif

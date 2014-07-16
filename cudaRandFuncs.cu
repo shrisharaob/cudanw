@@ -1,7 +1,8 @@
 #ifndef _CUDARANDFUNCS_
 #define _CUDARANDFUNCS_
 #include <cuda.h>
-//#include "curand_kernel.h"
+#include "globalVars.h"
+/*#include "curand_kernel.h"*/
 #include "mycurand.h"
 #include "devFunctionProtos.h"
 #include "devHostConstants.h"
@@ -16,14 +17,38 @@ __global__ void setup_kernel(curandState *state, unsigned long long seed ) {
 }
 
 __device__ float randkernel(curandState *state) {
+  /*RETURNS ONE SAMPLE FROM UNIFORM DISTRIBUTION*/
   int id = threadIdx.x + blockIdx.x * blockDim.x;
   float randNumber;
-  curandState localState = state[id]; // state in global memory 
+  curandState localState = state[id]; /* state in global memory */
   randNumber = curand_uniform(&localState);
   state[id] = localState;
   return randNumber;
 }
 
+__device__ float normRndKernel(curandState *state) {
+  /*RETURNS ONE SAMPLE FROM UNIFORM DISTRIBUTION*/
+  int id = threadIdx.x + blockIdx.x * blockDim.x;
+  float randNumber;
+  curandState localState = state[id]; /* state in global memory */
+  randNumber = curand_normal(&localState);
+  state[id] = localState;
+  return randNumber;
+}
+/* same as setup_kernel, but avoids passing device pointers from host */
+__global__ void setupBGCurGenerator(unsigned long long seed) {
+  int id = threadIdx.x + blockIdx.x * blockDim.x;
+  if(id < N_Neurons) {
+    curand_init(seed * (id + 23), id, 0, &bgCurNoiseGenState[id]);
+  }
+}
+
+__global__ void setupIFFRndGenerator(unsigned long long seed) {
+  int id = threadIdx.x + blockIdx.x * blockDim.x;
+  if(id < N_Neurons) {
+    curand_init(seed * (id + 23), id, 0, &iffNormRandState[id]);
+  }
+}
 
 __global__ void kernelGenConMat(curandState *state, int *dev_conVec){
   /* indexing of matrix row + clm x N_NEURONS*/
@@ -40,7 +65,7 @@ __global__ void kernelGenConMat(curandState *state, int *dev_conVec){
         if(i < NE) {  /* E --> E */
           if(k/n >= randkernel(state)) { /* neuron[id] receives input from i ? */
             dev_conVec[id + i * N_NEURONS] = 1;
-          } 
+          }
         }
         if(i >= NE) { /* E --> I */
           if(k/n >= randkernel(state)) { /* neuron[id] receives input from i ? */

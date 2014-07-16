@@ -11,41 +11,42 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
   int nstep, *totNSpks, *spkNeuronId, *dev_nPostNeurons, *dev_sparseConVec, *dev_sparseIdx;
   curandState *dev_state;
   int i, k, IF_SPK;
-  float x, h, xx, isynapNew = 0;// isynapOld = 0; //vm
+  float x, h, xx, isynapNew = 0, ibg = 0, iff = 0;
   float v[N_STATEVARS], vout[N_STATEVARS], dv[N_STATEVARS], vmOld;
   int localTotNspks = 0, localLastNSteps;
   int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   x1 = params.tStart;
-  /*  x2 = params.tStop;*/
+  /*  x2 = params.tStop; */
   nstep = params.nSteps;
   totNSpks = devPtrs.dev_nSpks;
   y = devPtrs.dev_vm;
   dev_isynap = devPtrs.dev_isynap;
   dev_state = devPtrs.devStates;
-  /*  dev_conVec = devPtrs.dev_conVec;*/
+  /*  dev_conVec = devPtrs.dev_conVec; */
   spkTimes = devPtrs.dev_spkTimes;
   spkNeuronId = devPtrs.dev_spkNeuronIds;
   dev_nPostNeurons = devPtrs.dev_nPostNeurons;
   dev_sparseConVec = devPtrs.dev_sparseConVec;
   dev_sparseIdx = devPtrs.dev_sparseIdx;
+
   if(mNeuron < N_NEURONS) {
     v[0] = (-1 * 70) +  (40 * randkernel(dev_state)); // Vm(0) ~ U(-70, -30)
     v[1] = 0.3176;
     v[2] = 0.1;
     v[3] = 0.5961;
     localLastNSteps = nstep - STORE_LAST_N_STEPS;
-    //*** TIMELOOP ***//
+    /* TIMELOOP */
     xx = x1;  
     x = x1;
-    h = DT; //(x2 - x1) / nstep;
+    h = DT; /*(x2 - x1) / nstep;*/
     isynapNew = 0;
     for (k = 0; k < nstep; k++) 
       {
         dev_IF_SPK[mNeuron] = 0;
         IF_SPK = 0;
         vmOld = v[0];
-        derivs(x, v, dv, isynapNew);
-        rk4(v, dv, N_STATEVARS, x, h, vout, isynapNew);
+        derivs(x, v, dv, isynapNew, ibg, iff);
+        rk4(v, dv, N_STATEVARS, x, h, vout, isynapNew, ibg, iff);
         //  ERROR HANDLE     if ((float)(x+h) == x) //nrerror("Step size too small in routine rkdumb");
         x += h; 
         xx = x; //xx[k+1] = x;
@@ -73,7 +74,8 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
         }
         __syncthreads(); // CRUTIAL step to ensure that dev_IF_spk is updated by all threads 
         isynapNew = SparseIsynap(v[0], dev_nPostNeurons, dev_sparseConVec, dev_sparseIdx, IF_SPK);
-
+	ibg = bgCur(vmOld);	
+	/*
         // if(k == (nstep - STORE_LAST_N_STEPS) || (nstep - STORE_LAST_N_STEPS) < 0) {
         //   y[mNeuron + N_NEURONS * k] = v[0];
         //   dev_isynap[mNeuron + N_NEURONS * k] = isynapNew;
@@ -85,11 +87,11 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
         //      CudaISynap(spkNeuronId); // allocate memore on device for spkNeuronId vector
         //      ISynapCudaAux(vm); // returns current 
         //      IBackGrnd(vm);
-        // FF input current
-        //      RffTotal(theta, x);
-        //      Gff(theta, x);
-        //      IFF(vm);
-        //      __syncthreads();
+        /* FF input current*/
+	RffTotal(x);
+	Gff(x);
+	iff = IFF(vmOld);
+	__syncthreads();
       }
   }
 }

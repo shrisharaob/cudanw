@@ -1,3 +1,8 @@
+/* cuda network simulation 
+   History :                    
+    created: Shrisha
+   Makefile included for build on CC=3.5
+*/
 #include "cuda.h"
 #include "cuda_runtime_api.h"
 #include <stdio.h>
@@ -21,7 +26,6 @@ void __cudaCheck(cudaError err, const char *file, const int line)
     exit(-1);
   }
 }
-
 void __cudaCheckLastError(const char *errorMessage, const char *file, const int line)
 {
   cudaError_t err = cudaGetLastError();
@@ -33,15 +37,15 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  float tStart = 0.0, tStop = 1000.0;
-  float *spkTimes, *vm = NULL;// *vstart; // 500 time steps
+  float tStart = 0.0, tStop = 100.0;
+  float *spkTimes, *vm = NULL, host_theta = 0.0;// *vstart; // 500 time steps
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   float *dev_vm = NULL, *dev_spkTimes;
   int *dev_conVec, *dev_nSpks, *dev_spkNeuronIds;
   FILE *fp, *fpConMat, *fpSpkTimes, *fpElapsedTime;
   float *host_isynap, *dev_isynap;
   int *conVec;
-  curandState *devStates;
+  curandState *devStates, *devNormRandState;
   cudaEvent_t start0, stop0;
   float elapsedTime;
   int *dev_sparseConVec = NULL, *sparseConVec = NULL;
@@ -56,25 +60,40 @@ int main(int argc, char *argv[]) {
     if(argc > 2) {
       IF_SAVE = atoi(argv[2]);
     }
+    if(argc > 3) {
+      host_theta = atof(argv[3]);
+    }
   }
   printf("\n Computing on GPU%d \n", deviceId);
   cudaCheck(cudaSetDevice(deviceId));
+  cudaMemcpyToSymbol(theta, &host_theta, sizeof(host_theta));
   /* ================= INITIALIZE ===============================================*/
   nSteps = (tStop - tStart) / DT;
   lastNStepsToStore = (int)floor(STORE_LAST_T_MILLISEC  / DT);
   //  nSteps = 800;
-  printf("\n N  = %d \n NE = %d \n NI = %d \n K  = %d \n nSteps = %d\n\n", N_NEURONS, NE, NI, (int)K, nSteps);
+  printf("\n N  = %d \n NE = %d \n NI = %d \n K  = %d \n tStop = %3.2f seconds nSteps = %d\n\n", N_NEURONS, NE, NI, (int)K, tStop / 1000.0, nSteps);
+  printf(" theta = %2.1f\n", host_theta);
   /* ================== SETUP TIMER EVENTS ON DEVICE ==============================*/
   cudaEventCreate(&stop0); cudaEventCreate(&start0);
   cudaEventRecord(start0, 0);
   /* choose 256 threads per block for high occupancy */
   int ThreadsPerBlock = 128;
   int BlocksPerGrid = (N_NEURONS + ThreadsPerBlock - 1) / ThreadsPerBlock;
+  /*INITIALIZE RND GENERATORS FOR ibf & iff */
+  setupBGCurGenerator<<<BlocksPerGrid, ThreadsPerBlock>>>(time(NULL));
+  setupIFFRndGenerator<<<BlocksPerGrid, ThreadsPerBlock>>>(time(NULL));
+  /*Generate frozen FF input approximat*/
+  cudaCheck(cudaMalloc((void **)&devStates,  N_NEURONS * sizeof(curandState)));
+  cudaCheck(cudaMalloc((void **)&devNormRandState, N_NEURONS * sizeof(curandState)));
+  setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, time(NULL));
+  setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devNormRandState, time(NULL));
+  /*  AuxRffTotal<<BlocksPerGrid, ThreadsPerBlock>>(devNormRandState, devStates);*/
+  cudaCheck(cudaFree(devNormRandState));
+  
   /* gENERATE CONNECTION MATRIX */
   cudaCheck(cudaMalloc((void **)&dev_conVec, N_NEURONS * N_NEURONS * sizeof(int)));
   cudaCheck(cudaMallocHost((void **)&conVec, N_NEURONS * N_NEURONS * sizeof(int)));  
   cudaCheck(cudaMemset(dev_conVec, 0, N_NEURONS * N_NEURONS * sizeof(int)));
-  cudaCheck(cudaMalloc((void **)&devStates,  N_NEURONS * sizeof(curandState)));
   printf("\n launching rand generator setup kernel\n");
   setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, time(NULL));
   printf("\n launching connection matrix geneting kernel with seed %ld ...", time(NULL));
@@ -93,6 +112,8 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaMemcpy(dev_sparseConVec, sparseConVec, N_NEURONS * (2 * K + 1) * sizeof(int), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_idxVec, idxVec, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_nPostNeurons, nPostNeurons, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
+
+
   /* ================= ALLOCATE PAGELOCKED MEMORY ON HOST =========================*/
   cudaCheck(cudaMallocHost((void **)&spkTimes, MAX_SPKS  * sizeof(*spkTimes)));
   cudaCheck(cudaMallocHost((void **)&host_isynap, lastNStepsToStore * N_NEURONS * sizeof(*host_isynap)));
@@ -122,6 +143,10 @@ int main(int argc, char *argv[]) {
   devPtrs.dev_sparseIdx = dev_idxVec;
   *nSpks = 0;
   cudaCheck(cudaMemcpy(dev_nSpks, nSpks, sizeof(int), cudaMemcpyHostToDevice));
+
+  
+
+
   /*===================== GENERATE CONNECTION MATRIX ====================================*/
   /*cudaCheck(cudaMemset(dev_conVec, 0, N_NEURONS * N_NEURONS * sizeof(int)));
   printf("\n launching rand generator setup kernel\n");
@@ -153,13 +178,17 @@ printf("\n launching Simulation kernel ...");
   cudaCheck(cudaMemcpy(spkNeuronIds, dev_spkNeuronIds, MAX_SPKS * sizeof(int), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(vm, dev_vm, lastNStepsToStore * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(host_isynap, dev_isynap, lastNStepsToStore * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
-  float curE[5 * 4000], curI[5 * 4000], *dev_curE, *dev_curI;
+
+  cudaCheck(cudaMemcpy(vm, dev_vm, lastNStepsToStore * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
+  float curE[5 * 4000], curI[5 * 4000], ibgCur[5 * 4000], *dev_curE, *dev_curI, *dev_ibg;
 
   cudaCheck(cudaGetSymbolAddress((void **)&dev_curE, glbCurE));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_curI, glbCurI));
-  printf("---> %p %p \n",dev_curI, dev_curE);
+  cudaCheck(cudaGetSymbolAddress((void **)&dev_ibg, dev_bgCur));
+  /*  printf("---> %p %p \n",dev_curI, dev_curE);*/
   cudaCheck(cudaMemcpy(curE, dev_curE, 5 * 4000 * sizeof(float), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(curI, dev_curI, 5 * 4000 * sizeof(float), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(ibgCur, dev_ibg, 5 * 4000 * sizeof(float), cudaMemcpyDeviceToHost));
   /* ================= RECORD COMPUTE TIME ====================================================*/
   cudaEventRecord(stop0, 0);
   cudaEventSynchronize(stop0);
@@ -188,16 +217,16 @@ printf("\n launching Simulation kernel ...");
     fclose(fp);
     FILE* fpCur = fopen("currents.csv", "w");
     for(i = 0; i < 5 *  4000; ++i) {
-      fprintf(fpCur, "%f;%f\n", curE[i], curI[i]);
+      fprintf(fpCur, "%f;%f;%f\n", curE[i], curI[i], ibgCur[i]);
     }
     fclose(fpCur);
     fpConMat = fopen("conMat.csv", "w");
-    for(i = 0; i < N_NEURONS; ++i) {
+    /*    for(i = 0; i < N_NEURONS; ++i) {
       for(k = 0; k < N_NEURONS; ++k) {
 	fprintf(fpConMat, "%d ", conVec[i * N_NEURONS + k]);
       }
       fprintf(fpConMat, "\n");
-      }
+      }*/
     fpSpkTimes = fopen("spkTimes.csv", "w");
     int totalNSpks = *nSpks;
     if(*nSpks > MAX_SPKS) {
@@ -206,7 +235,7 @@ printf("\n launching Simulation kernel ...");
     for(i = 1; i < totalNSpks; ++i) {
       fprintf(fpSpkTimes, "%f;%f\n", spkTimes[i], (float)spkNeuronIds[i] + 1);
     }
-    printf("Done!\n");  
+    printf("Done!\n");
     if(*nSpks > MAX_SPKS) {
       printf("\n ***** WARNING MAX_SPKS EXCEEDED limit of %d *****\n", MAX_SPKS);
     }

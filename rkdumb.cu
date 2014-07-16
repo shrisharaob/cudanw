@@ -45,7 +45,7 @@ __global__ void rkdumb(float x1, float x2, int nstep, int *totNSpks, float *spkT
           if(v[0] > SPK_THRESH) { 
             if(vmOld <= SPK_THRESH) {
 	      dev_IF_SPK[mNeuron] = 1;
-              atomicAdd(totNSpks, 1); // atomic add on global introduces memory latency
+              atomicAdd(totNSpks, 1); /* atomic add on global introduces memory latency */
               localTotNspks = *totNSpks;
 	      if(localTotNspks < MAX_SPKS) {
 		spkNeuronId[localTotNspks] = mNeuron;
@@ -54,12 +54,12 @@ __global__ void rkdumb(float x1, float x2, int nstep, int *totNSpks, float *spkT
 	    }
           }
         }
-        __syncthreads(); // CRUTIAL step to ensure that dev_IF_spk is updated by all threads 
+        __syncthreads(); /* CRUTIAL step to ensure that dev_IF_spk is updated by all threads */
         isynapNew = isynap(v[0], dev_conVec);
 
-
+	/*
         // if(k == (nstep - STORE_LAST_N_STEPS) || (nstep - STORE_LAST_N_STEPS) < 0) {
-        //   y[mNeuron + N_NEURONS * k] = v[0];
+       //   y[mNeuron + N_NEURONS * k] = v[0];
         //   dev_isynap[mNeuron + N_NEURONS * k] = isynapNew;
         // } 
 
@@ -74,6 +74,8 @@ __global__ void rkdumb(float x1, float x2, int nstep, int *totNSpks, float *spkT
         //      Gff(theta, x);
         //      IFF(vm);
         //      __syncthreads();
+	
+	*/
 
       }
   }
