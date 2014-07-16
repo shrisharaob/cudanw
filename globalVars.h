@@ -3,7 +3,7 @@
 #include "mycurand.h"
 #include "devHostConstants.h"
 
-#define MAX_SPKS 100000000
+#define MAX_SPKS 105000000
 #define PI 3.14159265359
 #define SQRT_DT sqrt(DT)
 
@@ -31,7 +31,7 @@
 #define V_I -80.0
 #define G_EE 0.0 /*0.15*/
 #define G_EI 2.0
-#define G_IE 0.45
+#define G_IE 0.0 /*0.45*/
 #define G_II 3.0
 
 /* backgrund input*/
@@ -67,7 +67,7 @@ __device__ float glbCurE[5 * 4000], glbCurI[5 * 4000]; /* !!!!!! GENERALIZE */
 __device__ float rTotal[N_Neurons], gFF[N_Neurons]; /* rTotalPrev[N_Neurons];*/
 __device__ float gaussNoiseE[NE], gaussNoiseI[NI];
 __device__ curandState bgCurNoiseGenState[N_NEURONS], iffNormRandState[N_NEURONS];
-__device__ float dev_bgCur[5 * 4000];
+__device__ float dev_bgCur[5 * 4000], dev_iff[5000];
 
 /* // recurrent input  */
 /* __device__ float *tempCurE, *tempCurI; */

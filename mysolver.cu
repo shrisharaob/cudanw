@@ -37,7 +37,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  float tStart = 0.0, tStop = 3000.0;
+  float tStart = 0.0, tStop = 30000.0;
   float *spkTimes, *vm = NULL, host_theta = 0.0;// *vstart; // 500 time steps
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   float *dev_vm = NULL, *dev_spkTimes;
@@ -176,13 +176,15 @@ printf("\n launching Simulation kernel ...");
   cudaCheck(cudaMemcpy(vm, dev_vm, lastNStepsToStore * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(host_isynap, dev_isynap, lastNStepsToStore * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(vm, dev_vm, lastNStepsToStore * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
-  float curE[5 * 4000], curI[5 * 4000], ibgCur[5 * 4000], *dev_curE, *dev_curI, *dev_ibg;
+  float curE[5 * 4000], curI[5 * 4000], ibgCur[5 * 4000], *dev_curE, *dev_curI, *dev_ibg, curIff[5000], *dev_curiff;
   cudaCheck(cudaGetSymbolAddress((void **)&dev_curE, glbCurE));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_curI, glbCurI));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_ibg, dev_bgCur));
+  cudaCheck(cudaGetSymbolAddress((void **)&dev_curiff, dev_iff));
   cudaCheck(cudaMemcpy(curE, dev_curE, 5 * 4000 * sizeof(float), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(curI, dev_curI, 5 * 4000 * sizeof(float), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(ibgCur, dev_ibg, 5 * 4000 * sizeof(float), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(curIff, dev_curiff, 5000 * sizeof(float), cudaMemcpyDeviceToHost));
   /* ================= RECORD COMPUTE TIME ====================================================*/
   cudaEventRecord(stop0, 0);
   cudaEventSynchronize(stop0);
@@ -204,14 +206,15 @@ printf("\n launching Simulation kernel ...");
     fp = fopen("vm.csv", "w");
     for(i = 0; i < lastNStepsToStore; ++i) {
       for(k = 0; k < N_NEURONS; ++k) {
-	fprintf(fp, "%f %f ", vm[k + i *  N_NEURONS], host_isynap[k + i * N_NEURONS]);
+	/*	fprintf(fp, "%f %f ", vm[k + i *  N_NEURONS], host_isynap[k + i * N_NEURONS]);*/
+	fprintf(fp, "%f ", vm[k + i *  N_NEURONS]);
       }
       fprintf(fp, "\n");
     }
     fclose(fp);
     FILE* fpCur = fopen("currents.csv", "w");
-    for(i = 0; i < 5 *  4000; ++i) {
-      fprintf(fpCur, "%f;%f;%f\n", curE[i], curI[i], ibgCur[i]);
+    for(i = 0; i < 5000; ++i) {
+      fprintf(fpCur, "%f;%f;%f;%f\n", curE[i], curI[i], ibgCur[i], curIff[i]);
     }
     fclose(fpCur);
     fpConMat = fopen("conMat.csv", "w");
