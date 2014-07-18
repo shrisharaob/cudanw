@@ -37,7 +37,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  float tStart = 0.0, tStop = 30000.0;
+  float tStart = 0.0, tStop = 3000.0;
   float *spkTimes, *vm = NULL, host_theta = 0.0;// *vstart; // 500 time steps
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   float *dev_vm = NULL, *dev_spkTimes;
@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaMemcpy(conVec, dev_conVec, N_NEURONS * N_NEURONS * sizeof(int), cudaMemcpyDeviceToHost));
   cudaCheck(cudaFree(dev_conVec));
   /* SPARSIFY */
-  /* conVec[0] = 0;conVec[1] = 1;conVec[2] = 1;conVec[3] = 0;*/
+  /*  conVec[0] = 0;conVec[1] = 1;conVec[2] = 0;conVec[3] = 0;*/
   cudaCheck(cudaMallocHost((void **)&sparseConVec, N_NEURONS * (2 * K + 1) * sizeof(int)));  
   cudaCheck(cudaMalloc((void **)&dev_sparseConVec, N_NEURONS * ((int)2 * K + 1)* sizeof(int)));
   cudaCheck(cudaMalloc((void **)&dev_idxVec, N_NEURONS * sizeof(int)));
@@ -218,7 +218,7 @@ printf("\n launching Simulation kernel ...");
     }
     fclose(fpCur);
     fpConMat = fopen("conMat.csv", "w");
-    /*    for(i = 0; i < N_NEURONS; ++i) {
+    /*for(i = 0; i < N_NEURONS; ++i) {
       for(k = 0; k < N_NEURONS; ++k) {
 	fprintf(fpConMat, "%d ", conVec[i * N_NEURONS + k]);
       }

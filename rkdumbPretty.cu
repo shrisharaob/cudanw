@@ -74,24 +74,18 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
         }
         __syncthreads(); // CRUTIAL step to ensure that dev_IF_spk is updated by all threads 
         isynapNew = SparseIsynap(v[0], dev_nPostNeurons, dev_sparseConVec, dev_sparseIdx, IF_SPK);
-	ibg = bgCur(vmOld);	
-	/*
-        // if(k == (nstep - STORE_LAST_N_STEPS) || (nstep - STORE_LAST_N_STEPS) < 0) {
-        //   y[mNeuron + N_NEURONS * k] = v[0];
-        //   dev_isynap[mNeuron + N_NEURONS * k] = isynapNew;
-        // } 
+	__syncthreads();
+	/*	ibg = bgCur(vmOld);	*/
+	
+	/*      CudaISynap(spkNeuronId); // allocate memore on device for spkNeuronId vector
+		ISynapCudaAux(vm); // returns current 
+		IBackGrnd(vm);*/
 
-
-
-        //      }
-        //      CudaISynap(spkNeuronId); // allocate memore on device for spkNeuronId vector
-        //      ISynapCudaAux(vm); // returns current 
-        //      IBackGrnd(vm);
         /* FF input current*/
-	RffTotal(x);
+	/*	RffTotal(x);
 	Gff(x);
 	iff = IFF(vmOld);
-	__syncthreads();
+	__syncthreads();*/
       }
   }
 }
