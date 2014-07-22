@@ -17,7 +17,7 @@ __device__ float bgCur(float vm) {
       iBg = -1 * gI * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
       gaussNoiseI[mNeuron - NE] = gNoise;
     }
-    if(mNeuron == 3) {
+    if(mNeuron == 16003) {
       dev_bgCur[curConter - 1] = iBg;
     }
   }

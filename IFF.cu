@@ -83,7 +83,7 @@ __device__ float IFF(double vm) {
   if(mNeuron < N_Neurons) {
     iff = -1 * gFF[mNeuron] * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
   }
-  if(mNeuron == 3) {
+  if(mNeuron == 16003) {
       dev_iff[curConter - 1] = iff;
   }
   return iff;

@@ -79,6 +79,7 @@ int main(int argc, char *argv[]) {
   /* choose 256 threads per block for high occupancy */
   int ThreadsPerBlock = 128;
   int BlocksPerGrid = (N_NEURONS + ThreadsPerBlock - 1) / ThreadsPerBlock;
+  printf("Threads per block : %d, Blocks per grid : %d \n", ThreadsPerBlock, BlocksPerGrid);
   /*INITIALIZE RND GENERATORS FOR ibf & iff */
   setupBGCurGenerator<<<BlocksPerGrid, ThreadsPerBlock>>>(time(NULL));
   setupIFFRndGenerator<<<BlocksPerGrid, ThreadsPerBlock>>>(time(NULL));
@@ -87,7 +88,7 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaMalloc((void **)&devNormRandState, N_NEURONS * sizeof(curandState)));
   setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, time(NULL));
   setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devNormRandState, time(NULL));
-  /*  AuxRffTotal<<BlocksPerGrid, ThreadsPerBlock>>(devNormRandState, devStates);*/
+  AuxRffTotal<<<BlocksPerGrid, ThreadsPerBlock>>>(devNormRandState, devStates);
   cudaCheck(cudaFree(devNormRandState));
   /* gENERATE CONNECTION MATRIX */
   cudaCheck(cudaMalloc((void **)&dev_conVec, N_NEURONS * N_NEURONS * sizeof(int)));
@@ -203,6 +204,20 @@ printf("\n launching Simulation kernel ...");
   if(IF_SAVE) {  
     printf(" saving results to disk ..."); 
     fflush(stdout);
+    fpSpkTimes = fopen("spkTimes.csv", "w");
+    int totalNSpks = *nSpks;
+    printf(" saving spikes ...");
+    fflush(stdout);
+    if(*nSpks > MAX_SPKS) {
+      totalNSpks = MAX_SPKS;
+      printf("\n ***** WARNING MAX_SPKS EXCEEDED limit of %d *****\n", MAX_SPKS);
+    }
+    for(i = 1; i <= totalNSpks; ++i) {
+      fprintf(fpSpkTimes, "%f;%f\n", spkTimes[i], (float)spkNeuronIds[i]);
+    }
+    printf("Done!\n");
+    fclose(fpSpkTimes);
+
     fp = fopen("vm.csv", "w");
     for(i = 0; i < lastNStepsToStore; ++i) {
       for(k = 0; k < N_NEURONS; ++k) {
@@ -218,27 +233,13 @@ printf("\n launching Simulation kernel ...");
     }
     fclose(fpCur);
     fpConMat = fopen("conMat.csv", "w");
-    /*for(i = 0; i < N_NEURONS; ++i) {
+    for(i = 0; i < N_NEURONS; ++i) {
       for(k = 0; k < N_NEURONS; ++k) {
 	fprintf(fpConMat, "%d ", conVec[i * N_NEURONS + k]);
       }
       fprintf(fpConMat, "\n");
-      }*/
-    fpSpkTimes = fopen("spkTimes.csv", "w");
-    int totalNSpks = *nSpks;
-    if(*nSpks > MAX_SPKS) {
-      totalNSpks = MAX_SPKS;
-    }
-    for(i = 1; i < totalNSpks; ++i) {
-      fprintf(fpSpkTimes, "%f;%f\n", spkTimes[i], (float)spkNeuronIds[i] + 1);
-    }
-    printf("Done!\n");
-    if(*nSpks > MAX_SPKS) {
-      printf("\n ***** WARNING MAX_SPKS EXCEEDED limit of %d *****\n", MAX_SPKS);
-    }
-   fclose(fpSpkTimes);
-   fclose(fpConMat);
-
+      }
+    fclose(fpConMat);
   }
   /*================== CLEANUP ===================================================================*/
   cudaCheck(cudaFreeHost(vm));

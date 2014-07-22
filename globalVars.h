@@ -7,41 +7,41 @@
 #define PI 3.14159265359
 #define SQRT_DT sqrt(DT)
 
-#define Cm 1 //microF / cm^2
-#define E_Na 55.0 //mV
+#define Cm 1 /* microF / cm^2  */
+#define E_Na 55.0 /* mV */
 #define E_K -90.0
 #define E_L -65.0
-#define G_Na 100.0 // mS/cm^2
+#define G_Na 100.0 /* mS/cm^2 */
 #define G_K 40.0
-#define G_L_E 0.05 // excitatory
-#define G_L_I 0.1 // inhibitory
+#define G_L_E 0.05 /* excitatory*/
+#define G_L_I 0.1 /*inhibitory*/
 #define G_adapt 0.5
-#define Tau_adapt 60.0 // in ms
+#define Tau_adapt 60.0 /* in ms*/
 
-/*params network*/
-#define N_STATEVARS 4 // equals the number of 1st order ode's
+/* params network*/
+#define N_STATEVARS 4 /* equals the number of 1st order ode's */
 
-/*params patch*/
+/* params patch */
 #define L 1.0
 #define CON_SIGMA (L / 5.0)
 
-/* params synapse*/
+/* params synapseb */
 #define INV_TAU_SYNAP (1 / TAU_SYNAP)
-#define V_E -80.0
+#define V_E  00.0
 #define V_I -80.0
-#define G_EE 3.00 /*0.15*/
-#define G_EI 2.00 /*2.00*/
+#define G_EE 0.15
+#define G_EI 2.00 
 #define G_IE 0.45
 #define G_II 3.00
 
-/* backgrund input*/
+/* backgrund input */
 #define RB_E 3.0
 #define RB_I 3.0
 
 #define G_EB (0.3 /sqrt(K))
 #define G_IB (0.4 /sqrt(K))
 
-/* ff input*/
+/* ff input */
 #define CFF 0.1
 #define KFF 1.0
 #define GE_FF 0.95
