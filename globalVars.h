@@ -98,7 +98,7 @@ typedef struct
 typedef struct {
   int *dev_conVec, *dev_nSpks, *dev_spkNeuronIds, 
     *dev_nPostNeurons, *dev_sparseConVec, *dev_sparseIdx;
-  float *dev_vm, *dev_isynap, *dev_spkTimes;
+  float *dev_vm, *dev_isynap, *dev_spkTimes, *dev_time;
   curandState *devStates;
 } devPtr_t;
 

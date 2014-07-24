@@ -37,10 +37,10 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  float tStart = 0.0, tStop = 3000.0;
+  float tStart = 0.0, tStop = 1000.0;
   float *spkTimes, *vm = NULL, host_theta = 0.0;// *vstart; // 500 time steps
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
-  float *dev_vm = NULL, *dev_spkTimes;
+  float *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
   int *dev_conVec, *dev_nSpks, *dev_spkNeuronIds;
   FILE *fp, *fpConMat, *fpSpkTimes, *fpElapsedTime;
   float *host_isynap, *dev_isynap;
@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaMemcpy(conVec, dev_conVec, N_NEURONS * N_NEURONS * sizeof(int), cudaMemcpyDeviceToHost));
   cudaCheck(cudaFree(dev_conVec));
   /* SPARSIFY */
-  /*  conVec[0] = 0;conVec[1] = 1;conVec[2] = 0;conVec[3] = 0;*/
+  conVec[0] = 0;conVec[1] = 1;conVec[2] = 1;conVec[3] = 0;
   cudaCheck(cudaMallocHost((void **)&sparseConVec, N_NEURONS * (2 * K + 1) * sizeof(int)));  
   cudaCheck(cudaMalloc((void **)&dev_sparseConVec, N_NEURONS * ((int)2 * K + 1)* sizeof(int)));
   cudaCheck(cudaMalloc((void **)&dev_idxVec, N_NEURONS * sizeof(int)));
@@ -116,11 +116,13 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaMallocHost((void **)&spkTimes, MAX_SPKS  * sizeof(*spkTimes)));
   cudaCheck(cudaMallocHost((void **)&host_isynap, lastNStepsToStore * N_NEURONS * sizeof(*host_isynap)));
   cudaCheck(cudaMallocHost((void **)&vm,  lastNStepsToStore * N_NEURONS * sizeof(*vm)));
+  cudaCheck(cudaMallocHost((void **)&host_time,  lastNStepsToStore * N_NEURONS * sizeof(*vm)));
   cudaCheck(cudaMallocHost((void **)&nSpks, sizeof(*nSpks)));
-  cudaCheck(cudaMallocHost((void **)&spkNeuronIds, MAX_SPKS * sizeof(spkNeuronIds)));
+  cudaCheck(cudaMallocHost((void **)&spkNeuronIds, MAX_SPKS * sizeof(*spkNeuronIds)));
   /* ================= ALLOCATE GLOBAL MEMORY ON DEVICE ===========================*/
   /*cudaCheck(cudaMalloc((void **)&dev_conVec, N_NEURONS * N_NEURONS * sizeof(int)));*/
   cudaCheck(cudaMalloc((void **)&dev_vm, lastNStepsToStore * N_NEURONS * sizeof(float)));
+  cudaCheck(cudaMalloc((void **)&dev_time, lastNStepsToStore * N_NEURONS * sizeof(float)));
   cudaCheck(cudaMalloc((void **)&dev_isynap, lastNStepsToStore * N_NEURONS * sizeof(float)));
   cudaCheck(cudaMalloc((void **)&dev_spkTimes, MAX_SPKS * sizeof(*dev_spkTimes)));
   cudaCheck(cudaMalloc((void **)&dev_nSpks, sizeof(int)));
@@ -139,11 +141,12 @@ int main(int argc, char *argv[]) {
   devPtrs.dev_sparseConVec = dev_sparseConVec;
   devPtrs.dev_nPostNeurons = dev_nPostNeurons;
   devPtrs.dev_sparseIdx = dev_idxVec;
+  devPtrs.dev_time = dev_time;
   *nSpks = 0;
   cudaCheck(cudaMemcpy(dev_nSpks, nSpks, sizeof(int), cudaMemcpyHostToDevice));
 
   
-
+  printf("devspk ptrs: %p %p \n", dev_spkTimes, dev_spkNeuronIds);
 
   /*===================== GENERATE CONNECTION MATRIX ====================================*/
   /*cudaCheck(cudaMemset(dev_conVec, 0, N_NEURONS * N_NEURONS * sizeof(int)));
@@ -172,9 +175,11 @@ printf("\n launching Simulation kernel ...");
   cudaCheckLastError("rkdumb kernel failed");
   /*==================== COPY RESULTS TO HOST =================================================*/
   cudaCheck(cudaMemcpy(nSpks, dev_nSpks, sizeof(int), cudaMemcpyDeviceToHost));
+  printf("devspk ptrs: %p %p \n", dev_spkTimes, dev_spkNeuronIds);
   cudaCheck(cudaMemcpy(spkTimes, dev_spkTimes, MAX_SPKS * sizeof(float), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(spkNeuronIds, dev_spkNeuronIds, MAX_SPKS * sizeof(int), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(vm, dev_vm, lastNStepsToStore * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(host_time, dev_time, lastNStepsToStore * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(host_isynap, dev_isynap, lastNStepsToStore * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(vm, dev_vm, lastNStepsToStore * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
   float curE[5 * 4000], curI[5 * 4000], ibgCur[5 * 4000], *dev_curE, *dev_curI, *dev_ibg, curIff[5000], *dev_curiff;
@@ -220,6 +225,7 @@ printf("\n launching Simulation kernel ...");
 
     fp = fopen("vm.csv", "w");
     for(i = 0; i < lastNStepsToStore; ++i) {
+      fprintf(fp, "%f ", host_time[i]);
       for(k = 0; k < N_NEURONS; ++k) {
 	/*	fprintf(fp, "%f %f ", vm[k + i *  N_NEURONS], host_isynap[k + i * N_NEURONS]);*/
 	fprintf(fp, "%f ", vm[k + i *  N_NEURONS]);
@@ -233,21 +239,23 @@ printf("\n launching Simulation kernel ...");
     }
     fclose(fpCur);
     fpConMat = fopen("conMat.csv", "w");
-    for(i = 0; i < N_NEURONS; ++i) {
+    /*    for(i = 0; i < N_NEURONS; ++i) {
       for(k = 0; k < N_NEURONS; ++k) {
 	fprintf(fpConMat, "%d ", conVec[i * N_NEURONS + k]);
       }
       fprintf(fpConMat, "\n");
-      }
+      }*/
     fclose(fpConMat);
   }
   /*================== CLEANUP ===================================================================*/
   cudaCheck(cudaFreeHost(vm));
+  cudaCheck(cudaFreeHost(host_time));
   cudaCheck(cudaFreeHost(host_isynap));
   cudaCheck(cudaFreeHost(spkTimes));
   cudaCheck(cudaFreeHost(spkNeuronIds));
   cudaCheck(cudaFreeHost(nSpks));
   cudaCheck(cudaFree(dev_vm));
+  cudaCheck(cudaFree(dev_time));
   cudaCheck(cudaFree(dev_isynap));
   cudaCheck(cudaFree(dev_spkNeuronIds));
   cudaCheck(cudaFree(dev_spkTimes));
