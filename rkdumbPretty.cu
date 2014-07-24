@@ -7,12 +7,12 @@
 #include "rk4.cu"
 
 __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) { 
-  float x1, *dev_spkTimes, *y,  *dev_isynap, *dev_time;
+  double x1, *dev_spkTimes, *y,  *dev_isynap, *dev_time;
   int nstep, *totNSpks, *dev_spkNeuronIds, *dev_nPostNeurons, *dev_sparseConVec, *dev_sparseIdx;
   curandState *dev_state;
   int i, k, IF_SPK;
-  float x, h, isynapNew = 0, ibg = 0, iff = 0;
-  float v[N_STATEVARS], vout[N_STATEVARS], dv[N_STATEVARS], vmOld;
+  double x, h, isynapNew = 0, ibg = 0, iff = 0;
+  double v[N_STATEVARS], vout[N_STATEVARS], dv[N_STATEVARS], vmOld;
   int localTotNspks = 0, localLastNSteps;
   int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   x1 = params.tStart;

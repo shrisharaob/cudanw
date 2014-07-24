@@ -37,17 +37,17 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  float tStart = 0.0, tStop = 1000.0;
-  float *spkTimes, *vm = NULL, host_theta = 0.0;// *vstart; // 500 time steps
+  double tStart = 0.0, tStop = 1000.0;
+  double *spkTimes, *vm = NULL, host_theta = 0.0;// *vstart; // 500 time steps
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
-  float *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
+  double *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
   int *dev_conVec, *dev_nSpks, *dev_spkNeuronIds;
   FILE *fp, *fpConMat, *fpSpkTimes, *fpElapsedTime;
-  float *host_isynap, *dev_isynap;
+  double *host_isynap, *dev_isynap;
   int *conVec;
   curandState *devStates, *devNormRandState;
   cudaEvent_t start0, stop0;
-  float elapsedTime;
+  double elapsedTime;
   int *dev_sparseConVec = NULL, *sparseConVec = NULL;
   int idxVec[N_NEURONS], nPostNeurons[N_NEURONS], *dev_idxVec = NULL, *dev_nPostNeurons = NULL;
   int deviceId = 0;
@@ -121,9 +121,9 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaMallocHost((void **)&spkNeuronIds, MAX_SPKS * sizeof(*spkNeuronIds)));
   /* ================= ALLOCATE GLOBAL MEMORY ON DEVICE ===========================*/
   /*cudaCheck(cudaMalloc((void **)&dev_conVec, N_NEURONS * N_NEURONS * sizeof(int)));*/
-  cudaCheck(cudaMalloc((void **)&dev_vm, lastNStepsToStore * N_NEURONS * sizeof(float)));
-  cudaCheck(cudaMalloc((void **)&dev_time, lastNStepsToStore * N_NEURONS * sizeof(float)));
-  cudaCheck(cudaMalloc((void **)&dev_isynap, lastNStepsToStore * N_NEURONS * sizeof(float)));
+  cudaCheck(cudaMalloc((void **)&dev_vm, lastNStepsToStore * N_NEURONS * sizeof(double)));
+  cudaCheck(cudaMalloc((void **)&dev_time, lastNStepsToStore * N_NEURONS * sizeof(double)));
+  cudaCheck(cudaMalloc((void **)&dev_isynap, lastNStepsToStore * N_NEURONS * sizeof(double)));
   cudaCheck(cudaMalloc((void **)&dev_spkTimes, MAX_SPKS * sizeof(*dev_spkTimes)));
   cudaCheck(cudaMalloc((void **)&dev_nSpks, sizeof(int)));
   cudaCheck(cudaMalloc((void **)&dev_spkNeuronIds, MAX_SPKS * sizeof(*dev_spkNeuronIds)));
@@ -176,21 +176,21 @@ printf("\n launching Simulation kernel ...");
   /*==================== COPY RESULTS TO HOST =================================================*/
   cudaCheck(cudaMemcpy(nSpks, dev_nSpks, sizeof(int), cudaMemcpyDeviceToHost));
   printf("devspk ptrs: %p %p \n", dev_spkTimes, dev_spkNeuronIds);
-  cudaCheck(cudaMemcpy(spkTimes, dev_spkTimes, MAX_SPKS * sizeof(float), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(spkTimes, dev_spkTimes, MAX_SPKS * sizeof(double), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(spkNeuronIds, dev_spkNeuronIds, MAX_SPKS * sizeof(int), cudaMemcpyDeviceToHost));
-  cudaCheck(cudaMemcpy(vm, dev_vm, lastNStepsToStore * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
-  cudaCheck(cudaMemcpy(host_time, dev_time, lastNStepsToStore * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
-  cudaCheck(cudaMemcpy(host_isynap, dev_isynap, lastNStepsToStore * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
-  cudaCheck(cudaMemcpy(vm, dev_vm, lastNStepsToStore * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
-  float curE[5 * 4000], curI[5 * 4000], ibgCur[5 * 4000], *dev_curE, *dev_curI, *dev_ibg, curIff[5000], *dev_curiff;
+  cudaCheck(cudaMemcpy(vm, dev_vm, lastNStepsToStore * N_NEURONS * sizeof(double), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(host_time, dev_time, lastNStepsToStore * N_NEURONS * sizeof(double), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(host_isynap, dev_isynap, lastNStepsToStore * N_NEURONS * sizeof(double), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(vm, dev_vm, lastNStepsToStore * N_NEURONS * sizeof(double), cudaMemcpyDeviceToHost));
+  double curE[5 * 4000], curI[5 * 4000], ibgCur[5 * 4000], *dev_curE, *dev_curI, *dev_ibg, curIff[5000], *dev_curiff;
   cudaCheck(cudaGetSymbolAddress((void **)&dev_curE, glbCurE));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_curI, glbCurI));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_ibg, dev_bgCur));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_curiff, dev_iff));
-  cudaCheck(cudaMemcpy(curE, dev_curE, 5 * 4000 * sizeof(float), cudaMemcpyDeviceToHost));
-  cudaCheck(cudaMemcpy(curI, dev_curI, 5 * 4000 * sizeof(float), cudaMemcpyDeviceToHost));
-  cudaCheck(cudaMemcpy(ibgCur, dev_ibg, 5 * 4000 * sizeof(float), cudaMemcpyDeviceToHost));
-  cudaCheck(cudaMemcpy(curIff, dev_curiff, 5000 * sizeof(float), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(curE, dev_curE, 5 * 4000 * sizeof(double), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(curI, dev_curI, 5 * 4000 * sizeof(double), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(ibgCur, dev_ibg, 5 * 4000 * sizeof(double), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(curIff, dev_curiff, 5000 * sizeof(double), cudaMemcpyDeviceToHost));
   /* ================= RECORD COMPUTE TIME ====================================================*/
   cudaEventRecord(stop0, 0);
   cudaEventSynchronize(stop0);
@@ -218,7 +218,7 @@ printf("\n launching Simulation kernel ...");
       printf("\n ***** WARNING MAX_SPKS EXCEEDED limit of %d *****\n", MAX_SPKS);
     }
     for(i = 1; i <= totalNSpks; ++i) {
-      fprintf(fpSpkTimes, "%f;%f\n", spkTimes[i], (float)spkNeuronIds[i]);
+      fprintf(fpSpkTimes, "%f;%f\n", spkTimes[i], (double)spkNeuronIds[i]);
     }
     printf("Done!\n");
     fclose(fpSpkTimes);

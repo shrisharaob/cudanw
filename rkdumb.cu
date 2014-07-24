@@ -6,10 +6,10 @@
 #include "derivs.cu"
 #include "rk4.cu"
 
-__global__ void rkdumb(float x1, float x2, int nstep, int *totNSpks, float *spkTimes, int *spkNeuronId, float *y, int *dev_conVec, float *dev_isynap, curandState *dev_state) { 
+__global__ void rkdumb(double x1, double x2, int nstep, int *totNSpks, double *spkTimes, int *spkNeuronId, double *y, int *dev_conVec, double *dev_isynap, curandState *dev_state) { 
   int i, k;
-  float x, h, xx, isynapNew = 0;// isynapOld = 0; //vm
-  float v[N_STATEVARS], vout[N_STATEVARS], dv[N_STATEVARS], vmOld;
+  double x, h, xx, isynapNew = 0;// isynapOld = 0; //vm
+  double v[N_STATEVARS], vout[N_STATEVARS], dv[N_STATEVARS], vmOld;
   int localTotNspks = 0, localLastNSteps;
   int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
 
@@ -30,7 +30,7 @@ __global__ void rkdumb(float x1, float x2, int nstep, int *totNSpks, float *spkT
         vmOld = v[0];
         derivs(x, v, dv, isynapNew);
         rk4(v, dv, N_STATEVARS, x, h, vout, isynapNew);
-        //  ERROR HANDLE     if ((float)(x+h) == x) //nrerror("Step size too small in routine rkdumb");
+        //  ERROR HANDLE     if ((double)(x+h) == x) //nrerror("Step size too small in routine rkdumb");
         x += h; 
         xx = x; //xx[k+1] = x;
         /* RENAME */

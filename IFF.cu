@@ -77,7 +77,7 @@ __device__ void Gff(double t) {
   }
 }
 
-__device__ float IFF(double vm) {
+__device__ double IFF(double vm) {
   int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   double iff = 0;
   if(mNeuron < N_Neurons) {

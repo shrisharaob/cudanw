@@ -6,10 +6,10 @@
 #include "devFunctionProtos.h"
 #define MAX_SPKS_PER_T_STEP 1000
 
-__device__ float isynap(float vm, int *dev_conVec) {
+__device__ double isynap(double vm, int *dev_conVec) {
   int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   int i, spkNeuronId[MAX_SPKS_PER_T_STEP], localNSpks = 0;
-  float totIsynap = 0, gE, gI, tempCurE = 0, tempCurI = 0;
+  double totIsynap = 0, gE, gI, tempCurE = 0, tempCurI = 0;
   /* compute squares of entries in data array */
   /*!!!!! neurons ids start from ZERO  !!!!!! */
   if(mNeuron < N_NEURONS) {
@@ -50,17 +50,17 @@ __device__ float isynap(float vm, int *dev_conVec) {
   return totIsynap;
 }
 
-__device__ float SparseIsynap(double vm, int *dev_nPostNeurons, int *dev_sparseConVec, int *dev_sparseIdx, int IF_SPK) {
+__device__ double SparseIsynap(double vm, int *dev_nPostNeurons, int *dev_sparseConVec, int *dev_sparseIdx, int IF_SPK) {
   int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   int kNeuron, localCurConter;
-  float totIsynap = 0, gE, gI, tempCurE = 0, tempCurI = 0;
+  double totIsynap = 0, gE, gI, tempCurE = 0, tempCurI = 0;
   if(mNeuron < N_NEURONS) {
     dev_gE[mNeuron] *= EXP_SUM;
     dev_gI[mNeuron] *= EXP_SUM;
      if(IF_SPK) {  
       for(kNeuron = 0; kNeuron < dev_nPostNeurons[mNeuron]; ++kNeuron) { 
         if(mNeuron < NE) {       
-          atomicAdd(&dev_gE[dev_sparseConVec[dev_sparseIdx[mNeuron] + kNeuron]], 1.0f); /*atomic float add WORKS ONLY ON CC >= 2.0 */
+          atomicAdd(&dev_gE[dev_sparseConVec[dev_sparseIdx[mNeuron] + kNeuron]], 1.0f); /*atomic double add WORKS ONLY ON CC >= 2.0 */
        }
         else
           atomicAdd(&dev_gI[dev_sparseConVec[dev_sparseIdx[mNeuron] + kNeuron]], 1.0f);

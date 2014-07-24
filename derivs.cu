@@ -5,15 +5,15 @@
 #include "devFunctionProtos.h"
 #include <cuda.h>
 
-__device__ float alpha_n(float vm);
-__device__ float alpha_m(float vm);
-__device__ float alpha_h(float vm);
-__device__ float beta_n(float vm);
-__device__ float beta_m(float vm);
-__device__ float beta_h(float vm);
+__device__ double alpha_n(double vm);
+__device__ double alpha_m(double vm);
+__device__ double alpha_h(double vm);
+__device__ double beta_n(double vm);
+__device__ double beta_m(double vm);
+__device__ double beta_h(double vm);
 
-__device__ float alpha_n(float vm) {
-  float out;
+__device__ double alpha_n(double vm) {
+  double out;
   if(vm != -34) { 
     out = 0.1 * (vm + 34) / (1 - exp(-0.1 * (vm + 34)));
   }
@@ -23,14 +23,14 @@ __device__ float alpha_n(float vm) {
   return out;
 }
 
-__device__ float beta_n(float vm) {
-  float out;
+__device__ double beta_n(double vm) {
+  double out;
   out = 1.25 * exp(- (vm + 44) / 80);
   return out;
 }
 
-__device__ float alpha_m(float vm) {
-  float out;
+__device__ double alpha_m(double vm) {
+  double out;
   if(vm != -30) { 
     out = 0.1 * (vm + 30) / (1 - exp(-0.1 * (vm + 30)));
   }
@@ -40,51 +40,50 @@ __device__ float alpha_m(float vm) {
   return out;
 }
 
-__device__ float beta_m(float vm) {
-  float out;
+__device__ double beta_m(double vm) {
+  double out;
   out = 4 * exp(-(vm + 55) / 18);
   return out;
 }
 
-__device__ float alpha_h(float vm) {
-  float out;
+__device__ double alpha_h(double vm) {
+  double out;
   out = 0.7 * exp(- (vm + 44) / 20);
   return out;
 }
 
-__device__ float beta_h(float vm) {
-  float out;
+__device__ double beta_h(double vm) {
+  double out;
   out = 10 / (exp(-0.1 * (vm + 14)) + 1);
   return out;
   }
 
-__device__ float m_inf(float vm) {
-  float out, temp;
+__device__ double m_inf(double vm) {
+  double out, temp;
   temp = alpha_m(vm);
   out = temp / (temp + beta_m(vm));
   return out;
 }
 
 //z is the gating varible of the adaptation current
-__device__ float z_inf(float(vm)) {
-  float out;
+__device__ double z_inf(double(vm)) {
+  double out;
   out = 1 / (1 + exp(-0.7 *(vm + 30)));
   return out;
 }
 
 
-//=========================================================================================\\
-
-//extern float dt, *iSynap;
-// stateVar = [vm, n, z, h]
-// z - gating variable of the adaptation current
-__device__ void derivs(float t, float stateVar[], float dydx[], float isynap, float ibg, float iff) {
-  float cur = 0;
+/*
+  extern double dt, *iSynap;
+  stateVar = [vm, n, z, h]
+  z - gating variable of the adaptation current
+*/
+__device__ void derivs(double t, double stateVar[], double dydx[], double isynap, double ibg, double iff) {
+  double cur = 0;
   int kNeuron = threadIdx.x + blockDim.x * blockIdx.x;
-  float bgPrefactor = 0.0, iffPrefactor = 0.0;
+  double bgPrefactor = 0.0, iffPrefactor = 0.0;
   if(kNeuron < N_NEURONS) {
     cur = 0.1 * sqrt(K);
-    cur = 2.8;
     /*if((kNeuron == 13520 & t >= 30 & t <= 35) | (kNeuron == 2 & t >= 50 & t <= 55)) {cur = 10;}*/
     /*    if(kNeuron >= 13520) {
       cur = 3.0;
