@@ -12,6 +12,20 @@ __device__ double beta_n(double vm);
 __device__ double beta_m(double vm);
 __device__ double beta_h(double vm);
 
+__device__ double atomicAdd(double* address, double val)
+{
+    unsigned long long int* address_as_ull =
+      (unsigned long long int*)address;
+    unsigned long long int old = *address_as_ull, assumed;
+    do {
+      assumed = old;
+      old = atomicCAS(address_as_ull, assumed, 
+		      __double_as_longlong(val + 
+					   __longlong_as_double(assumed)));
+    } while (assumed != old);
+    return __longlong_as_double(old);
+}
+
 __device__ double alpha_n(double vm) {
   double out;
   if(vm != -34) { 
@@ -88,7 +102,7 @@ __device__ void derivs(double t, double stateVar[], double dydx[], double isynap
     /*    if(kNeuron >= 13520) {
       cur = 3.0;
       }*/
-
+    cur = 2.8;
     if (kNeuron < NE) {
       dydx[0] =  1/Cm * (cur 
                                  - G_Na * pow(m_inf(stateVar[0]), 3) * stateVar[3] * (stateVar[0] - E_Na) 

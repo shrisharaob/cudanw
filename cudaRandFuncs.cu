@@ -16,24 +16,24 @@ __global__ void setup_kernel(curandState *state, unsigned long long seed ) {
     }
 }
 
-__device__ float randkernel(curandState *state) {
+__device__ double randkernel(curandState *state) {
   /*RETURNS ONE SAMPLE FROM UNIFORM DISTRIBUTION*/
   int id = threadIdx.x + blockIdx.x * blockDim.x;
   float randNumber;
   curandState localState = state[id]; /* state in global memory */
   randNumber = curand_uniform(&localState);
   state[id] = localState;
-  return randNumber;
+  return (double)randNumber;
 }
 
-__device__ float normRndKernel(curandState *state) {
+__device__ double normRndKernel(curandState *state) {
   /*RETURNS ONE SAMPLE FROM UNIFORM DISTRIBUTION*/
   int id = threadIdx.x + blockIdx.x * blockDim.x;
   float randNumber;
   curandState localState = state[id]; /* state in global memory */
   randNumber = curand_normal(&localState);
   state[id] = localState;
-  return randNumber;
+  return (double)randNumber;
 }
 /* same as setup_kernel, but avoids passing device pointers from host */
 __global__ void setupBGCurGenerator(unsigned long long seed) {

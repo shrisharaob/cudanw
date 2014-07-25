@@ -37,8 +37,8 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  double tStart = 0.0, tStop = 1000.0;
-  double *spkTimes, *vm = NULL, host_theta = 0.0;// *vstart; // 500 time steps
+  double tStart = 0.0, tStop = 100.0;
+  double *spkTimes, *vm = NULL, host_theta = 0.0; /* *vstart; 500 time steps */
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   double *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
   int *dev_conVec, *dev_nSpks, *dev_spkNeuronIds;
@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
   int *conVec;
   curandState *devStates, *devNormRandState;
   cudaEvent_t start0, stop0;
-  double elapsedTime;
+  float elapsedTime;
   int *dev_sparseConVec = NULL, *sparseConVec = NULL;
   int idxVec[N_NEURONS], nPostNeurons[N_NEURONS], *dev_idxVec = NULL, *dev_nPostNeurons = NULL;
   int deviceId = 0;

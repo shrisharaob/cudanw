@@ -60,23 +60,23 @@ __device__ float randnXiA[N_Neurons],
                  randuDelta[N_Neurons], 
                  randwZiA[N_Neurons * 4], 
                  randuPhi[N_Neurons * 3]; 
-__device__ float dt, *thetaVec;
-__device__ float dev_gE[N_NEURONS], dev_gI[N_NEURONS];
+__device__ double dt, *thetaVec;
+__device__ double dev_gE[N_NEURONS], dev_gI[N_NEURONS];
 __device__ int dev_IF_SPK[N_NEURONS], curConter = 0;
-__device__ float glbCurE[5 * 4000], glbCurI[5 * 4000]; /* !!!!!! GENERALIZE */
-__device__ float rTotal[N_Neurons], gFF[N_Neurons]; /* rTotalPrev[N_Neurons];*/
+__device__ double glbCurE[5 * 4000], glbCurI[5 * 4000]; /* !!!!!! GENERALIZE */
+__device__ double rTotal[N_Neurons], gFF[N_Neurons]; /* rTotalPrev[N_Neurons];*/
 __device__ float gaussNoiseE[NE], gaussNoiseI[NI];
 __device__ curandState bgCurNoiseGenState[N_NEURONS], iffNormRandState[N_NEURONS];
-__device__ float dev_bgCur[5 * 4000], dev_iff[5000];
+__device__ double dev_bgCur[5 * 4000], dev_iff[5000];
 
 /* // recurrent input  */
-/* __device__ float *tempCurE, *tempCurI; */
-/* //__device__ float *iBg, *gaussNoiseE, *gaussNoiseI; */
-/* __device__ float *input_cur, *IF_SPK, conMat[N_NEURONS], nSpks; */
-/* __device__ float *iSynap, *expSum;// *gEI_E, *gEI_I; */
+/* __device__ double *tempCurE, *tempCurI; */
+/* //__device__ double *iBg, *gaussNoiseE, *gaussNoiseI; */
+/* __device__ double *input_cur, *IF_SPK, conMat[N_NEURONS], nSpks; */
+/* __device__ double *iSynap, *expSum;// *gEI_E, *gEI_I; */
 /* //__device__ FILE *outVars, *spkTimesFp, *isynapFP, *gbgrndFP, *gEEEIFP, *vmFP; */
-/* __device__ float contrast, theta; */
-/* __device__ float *gFF, *iFF, *rTotal, muE, muI, */
+/* __device__ double contrast, theta; */
+/* __device__ double *gFF, *iFF, *rTotal, muE, muI, */
 /*   *randnXiA, // norm rand number */
 /*   **randwZiA, // weibul rand number */
 /*   *randuDelta, // uniform rand (0, PI) */
@@ -98,12 +98,12 @@ typedef struct
 typedef struct {
   int *dev_conVec, *dev_nSpks, *dev_spkNeuronIds, 
     *dev_nPostNeurons, *dev_sparseConVec, *dev_sparseIdx;
-  float *dev_vm, *dev_isynap, *dev_spkTimes, *dev_time;
+  double *dev_vm, *dev_isynap, *dev_spkTimes, *dev_time;
   curandState *devStates;
 } devPtr_t;
 
 typedef struct {
-  float tStart, tStop;
+  double tStart, tStop;
   int nSteps;
 } kernelParams_t;
 
