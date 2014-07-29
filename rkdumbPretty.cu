@@ -53,7 +53,7 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
         for (i = 0; i < N_STATEVARS; ++i) {
           v[i]=vout[i];
         }
-        if(k > localLastNSteps) {
+        if(k >= localLastNSteps) {
           y[mNeuron + N_NEURONS * (k - localLastNSteps)] = v[0];
           dev_isynap[mNeuron + N_NEURONS *  (k - localLastNSteps)] = isynapNew;
 	  if(mNeuron == 0) {
