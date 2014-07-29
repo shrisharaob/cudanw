@@ -14,7 +14,7 @@
 #define G_Na 100.0 /* mS/cm^2 */
 #define G_K 40.0
 #define G_L_E 0.05 /* excitatory*/
-#define G_L_I 0.1 /*inhibitory*/
+#define G_L_I 0.05 /* 0.1 *//*inhibitory*/
 #define G_adapt 0.5
 #define Tau_adapt 60.0 /* in ms*/
 
@@ -28,7 +28,7 @@
 /* params synapseb */
 #define INV_TAU_SYNAP (1 / TAU_SYNAP)
 #define V_E  00.0
-#define V_I -80.0
+#define V_I 0.0 /*-80.0*/
 #define G_EE 0.15
 #define G_EI 2.00 
 #define G_IE 0.45
