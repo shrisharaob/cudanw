@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaMemcpy(conVec, dev_conVec, N_NEURONS * N_NEURONS * sizeof(int), cudaMemcpyDeviceToHost));
   cudaCheck(cudaFree(dev_conVec));
   /* SPARSIFY */
-  conVec[0] = 0;conVec[1] = 1;conVec[2] = 1;conVec[3] = 0;
+  conVec[0] = 0;conVec[1] = 0;conVec[2] = 0;conVec[3] = 0;
   cudaCheck(cudaMallocHost((void **)&sparseConVec, N_NEURONS * (2 * K + 1) * sizeof(int)));  
   cudaCheck(cudaMalloc((void **)&dev_sparseConVec, N_NEURONS * ((int)2 * K + 1)* sizeof(int)));
   cudaCheck(cudaMalloc((void **)&dev_idxVec, N_NEURONS * sizeof(int)));
