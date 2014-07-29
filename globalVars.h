@@ -27,7 +27,7 @@
 
 /* params synapseb */
 #define INV_TAU_SYNAP (1 / TAU_SYNAP)
-#define V_E  00.0
+#define V_E  -80.0
 #define V_I 0.0 /*-80.0*/
 #define G_EE 0.15
 #define G_EI 2.00 
