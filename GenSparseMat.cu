@@ -3,7 +3,7 @@
 void GenSparseMat(int *conVec,  int rows, int clms, int* sparseVec, int* idxVec, int* nPostNeurons ) {
   /* generate sparse representation
      conVec       : input vector / flattened matrix 
-     sparseVec    : sparse vector
+     sparseVec    : sparse vector, elements are the neuron ids of post synaptic neurons 
      idxVec       : every element is the starting index in sparseVec for ith row in matrix conVec
      nPostNeurons : number of non-zero elements in ith row 
   */
@@ -12,7 +12,7 @@ void GenSparseMat(int *conVec,  int rows, int clms, int* sparseVec, int* idxVec,
   for(i = 0; i < rows; ++i) {
     nPost = 0;
     for(j = 0; j < clms; ++j) {
-      if(conVec[i * clms + j]) { /* i --> j  */
+      if(conVec[i + clms * j]) { /* i --> j  */
         sparseVec[counter] = j;
 	counter += 1;
         nPost += 1;

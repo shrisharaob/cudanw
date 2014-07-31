@@ -1,13 +1,14 @@
 from numpy import *
 import pylab as plt
+
 x = loadtxt("vm.csv")
 cm = loadtxt("conMat.csv")
 st = loadtxt("spkTimes.csv", delimiter = ';')
 #spkNeuronIds = unique(st[:,1])
 nsteps, nNeurons =  shape(x)
-nNeurons = nNeurons
+nNeurons = nNeurons - 1 # first column is time
 print "#N", nNeurons
-v = x
+v = x[:, 1:nNeurons + 1]
 print cm
 plt.ion()
 for i in arange(nNeurons):

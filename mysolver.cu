@@ -38,13 +38,13 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 
 int main(int argc, char *argv[]) {
   float tStart = 0.0, tStop = 1000.0;
-  float *spkTimes, *vm = NULL, host_theta = 0.0;// *vstart; // 500 time steps
+  float *spkTimes, *vm = NULL, host_theta = 0.0;/* *vstart;  500 time steps*/ 
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   float *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
   int *dev_conVec, *dev_nSpks, *dev_spkNeuronIds;
   FILE *fp, *fpConMat, *fpSpkTimes, *fpElapsedTime;
   float *host_isynap, *dev_isynap;
-  int *conVec;
+  int *conVec; /*  {0,0,0, 0,0,1, 0,0,0};;*/
   curandState *devStates, *devNormRandState;
   cudaEvent_t start0, stop0;
   float elapsedTime;
@@ -92,18 +92,22 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaFree(devNormRandState));
   /* gENERATE CONNECTION MATRIX */
   cudaCheck(cudaMalloc((void **)&dev_conVec, N_NEURONS * N_NEURONS * sizeof(int)));
-  cudaCheck(cudaMallocHost((void **)&conVec, N_NEURONS * N_NEURONS * sizeof(int)));  
+  cudaCheck(cudaMallocHost((void **)&conVec, N_NEURONS * N_NEURONS * sizeof(int)));
   cudaCheck(cudaMemset(dev_conVec, 0, N_NEURONS * N_NEURONS * sizeof(int)));
+  /*
   printf("\n launching rand generator setup kernel\n");
   setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, time(NULL));
   printf("\n launching connection matrix geneting kernel with seed %ld ...", time(NULL));
   fflush(stdout);
   kernelGenConMat<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, dev_conVec);
   printf(" Done! \n");
+  */
   cudaCheck(cudaMemcpy(conVec, dev_conVec, N_NEURONS * N_NEURONS * sizeof(int), cudaMemcpyDeviceToHost));
   cudaCheck(cudaFree(dev_conVec));
   /* SPARSIFY */
-  conVec[0] = 0;conVec[1] = 0;conVec[2] = 0;conVec[3] = 0;
+  /* indexing of matrix row + clm x N_NEURONS*/  
+  conVec[0] = 0; conVec[1] = 1; conVec[2] = 1; conVec[3] = 0;
+  /*  conVec[1] */
   cudaCheck(cudaMallocHost((void **)&sparseConVec, N_NEURONS * (2 * K + 1) * sizeof(int)));  
   cudaCheck(cudaMalloc((void **)&dev_sparseConVec, N_NEURONS * ((int)2 * K + 1)* sizeof(int)));
   cudaCheck(cudaMalloc((void **)&dev_idxVec, N_NEURONS * sizeof(int)));
@@ -239,12 +243,12 @@ printf("\n launching Simulation kernel ...");
     }
     fclose(fpCur);
     fpConMat = fopen("conMat.csv", "w");
-    /*    for(i = 0; i < N_NEURONS; ++i) {
+    for(i = 0; i < N_NEURONS; ++i) {
       for(k = 0; k < N_NEURONS; ++k) {
 	fprintf(fpConMat, "%d ", conVec[i * N_NEURONS + k]);
       }
       fprintf(fpConMat, "\n");
-      }*/
+      }
     fclose(fpConMat);
   }
   /*================== CLEANUP ===================================================================*/
@@ -266,4 +270,3 @@ printf("\n launching Simulation kernel ...");
   cudaCheck(cudaFree(dev_nPostNeurons));
   return EXIT_SUCCESS;
 }
-

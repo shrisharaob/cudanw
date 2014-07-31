@@ -65,26 +65,27 @@ __device__ float SparseIsynap(double vm, int *dev_nPostNeurons, int *dev_sparseC
         else
           atomicAdd(&dev_gI[dev_sparseConVec[dev_sparseIdx[mNeuron] + kNeuron]], 1.0f);
       }
-    } 
-    gE = dev_gE[mNeuron];
-    gI = dev_gI[mNeuron];
-    if(mNeuron < NE) {
-      tempCurE = -1 * gE * (1/sqrt(K)) * INV_TAU_SYNAP * G_EE * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
-      tempCurI = -1 * gI * (1/sqrt(K)) * INV_TAU_SYNAP * G_EI * (RHO * (vm - V_I) + (1 - RHO) * (E_L - V_I));
-    }
-    if(mNeuron >= NE){
-      tempCurE = -1 * gE * (1/sqrt(K)) * INV_TAU_SYNAP * G_IE * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
-      tempCurI = -1 * gI * (1/sqrt(K)) * INV_TAU_SYNAP * G_II * (RHO * (vm - V_I) + (1 - RHO) * (E_L - V_I));
-    }
-    totIsynap = tempCurE + tempCurI; 
-    if(mNeuron == 16003) {
-      localCurConter = curConter;
-      if(curConter < 5 * 4000) {
-	glbCurE[localCurConter] = tempCurE;
-	glbCurI[localCurConter] = tempCurI;
-	curConter += 1;
-      }
-    }
+     }
+      __syncthreads();
+     gE = dev_gE[mNeuron];
+     gI = dev_gI[mNeuron];
+     if(mNeuron < NE) {
+       tempCurE = -1 * gE * (1/sqrt(K)) * INV_TAU_SYNAP * G_EE * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
+       tempCurI = -1 * gI * (1/sqrt(K)) * INV_TAU_SYNAP * G_EI * (RHO * (vm - V_I) + (1 - RHO) * (E_L - V_I));
+     }
+     if(mNeuron >= NE){
+       tempCurE = -1 * gE * (1/sqrt(K)) * INV_TAU_SYNAP * G_IE * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
+       tempCurI = -1 * gI * (1/sqrt(K)) * INV_TAU_SYNAP * G_II * (RHO * (vm - V_I) + (1 - RHO) * (E_L - V_I));
+     }
+     totIsynap = tempCurE + tempCurI; 
+     if(mNeuron == 16003) {
+       localCurConter = curConter;
+       if(curConter < 5 * 4000) {
+	 glbCurE[localCurConter] = tempCurE;
+	 glbCurI[localCurConter] = tempCurI;
+	 curConter += 1;
+       }
+     }
   }
   return totIsynap;
 }
