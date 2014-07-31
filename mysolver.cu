@@ -94,19 +94,17 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaMalloc((void **)&dev_conVec, N_NEURONS * N_NEURONS * sizeof(int)));
   cudaCheck(cudaMallocHost((void **)&conVec, N_NEURONS * N_NEURONS * sizeof(int)));
   cudaCheck(cudaMemset(dev_conVec, 0, N_NEURONS * N_NEURONS * sizeof(int)));
-  /*
   printf("\n launching rand generator setup kernel\n");
   setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, time(NULL));
   printf("\n launching connection matrix geneting kernel with seed %ld ...", time(NULL));
   fflush(stdout);
   kernelGenConMat<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, dev_conVec);
   printf(" Done! \n");
-  */
   cudaCheck(cudaMemcpy(conVec, dev_conVec, N_NEURONS * N_NEURONS * sizeof(int), cudaMemcpyDeviceToHost));
   cudaCheck(cudaFree(dev_conVec));
   /* SPARSIFY */
   /* indexing of matrix row + clm x N_NEURONS*/  
-  conVec[0] = 0; conVec[1] = 1; conVec[2] = 1; conVec[3] = 0;
+  /*  conVec[0] = 0; conVec[1] = 1; conVec[2] = 1; conVec[3] = 0;*/
   /*  conVec[1] */
   cudaCheck(cudaMallocHost((void **)&sparseConVec, N_NEURONS * (2 * K + 1) * sizeof(int)));  
   cudaCheck(cudaMalloc((void **)&dev_sparseConVec, N_NEURONS * ((int)2 * K + 1)* sizeof(int)));
