@@ -31,8 +31,7 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
   dev_gI[mNeuron] = 0;
   if(mNeuron < N_NEURONS) {
     v[0] = (-1 * 70) +  (40 * randkernel(dev_state)); /* Vm(0) ~ U(-70, -30)*/
-    if(mNeuron == 0) { v[0] = -30.0;}
-    if(mNeuron == 1) { v[0] = -30.0;}
+    v[0] = -60;
     v[1] = 0.3176;
     v[2] = 0.1;
     v[3] = 0.5961;
@@ -65,11 +64,11 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
             if(vmOld <= SPK_THRESH) {
               IF_SPK = 1;
               dev_IF_SPK[mNeuron] = 1;
-              atomicAdd(totNSpks, 1); /* atomic add on global introduces memory latency*/
-	      localTotNspks = *totNSpks;
+              localTotNspks = atomicAdd(totNSpks, 1); /* atomic add on global introduces memory latency*/
+	      
 	      if(localTotNspks < MAX_SPKS) {
-		dev_spkNeuronIds[localTotNspks] = mNeuron;
-		dev_spkTimes[localTotNspks] = x;
+		dev_spkNeuronIds[localTotNspks + 1] = mNeuron;
+		dev_spkTimes[localTotNspks + 1] = x;
 	      }
             }
           }

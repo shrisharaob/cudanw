@@ -57,6 +57,7 @@ __device__ double SparseIsynap(double vm, int *dev_nPostNeurons, int *dev_sparse
   if(mNeuron < N_NEURONS) {
     dev_gE[mNeuron] *= EXP_SUM;
     dev_gI[mNeuron] *= EXP_SUM;
+    __syncthreads(); /* really needed ???? (decay and add or add and decay) */
      if(IF_SPK) {  
       for(kNeuron = 0; kNeuron < dev_nPostNeurons[mNeuron]; ++kNeuron) { 
         if(mNeuron < NE) {       
@@ -65,7 +66,8 @@ __device__ double SparseIsynap(double vm, int *dev_nPostNeurons, int *dev_sparse
         else
           atomicAdd(&dev_gI[dev_sparseConVec[dev_sparseIdx[mNeuron] + kNeuron]], 1.0f);
       }
-    } 
+     } 
+    __syncthreads();
     gE = dev_gE[mNeuron];
     gI = dev_gI[mNeuron];
     if(mNeuron < NE) {
