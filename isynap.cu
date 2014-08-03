@@ -66,7 +66,7 @@ __device__ float SparseIsynap(double vm, int *dev_nPostNeurons, int *dev_sparseC
           atomicAdd(&dev_gI[dev_sparseConVec[dev_sparseIdx[mNeuron] + kNeuron]], 1.0f);
       }
      }
-      __syncthreads();
+     __syncthreads();
      gE = dev_gE[mNeuron];
      gI = dev_gI[mNeuron];
      if(mNeuron < NE) {
