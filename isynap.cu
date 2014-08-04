@@ -50,15 +50,20 @@ __device__ double isynap(double vm, int *dev_conVec) {
   return totIsynap;
 }
 
-__device__ double SparseIsynap(double vm, int *dev_nPostNeurons, int *dev_sparseConVec, int *dev_sparseIdx, int IF_SPK) {
+__global__ void expDecay() {
+  int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
+  if(mNeuron < N_NEURONS) {
+    dev_gE[mNeuron] *= EXP_SUM;
+    dev_gI[mNeuron] *= EXP_SUM;
+  }
+}
+
+__global__ void computeConductance(int *dev_nPostNeurons, int *dev_sparseConVec, int *dev_sparseIdx) {
   int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   int kNeuron, localCurConter;
   double totIsynap = 0, gE, gI, tempCurE = 0, tempCurI = 0;
   if(mNeuron < N_NEURONS) {
-    dev_gE[mNeuron] *= EXP_SUM;
-    dev_gI[mNeuron] *= EXP_SUM;
-    __syncthreads(); /* really needed ???? (decay and add or add and decay) */
-     if(IF_SPK) {  
+     if(dev_IF_SPK[mNeuron]) {  
       for(kNeuron = 0; kNeuron < dev_nPostNeurons[mNeuron]; ++kNeuron) { 
         if(mNeuron < NE) {       
           atomicAdd(&dev_gE[dev_sparseConVec[dev_sparseIdx[mNeuron] + kNeuron]], (double)1.0); /*atomic double add WORKS ONLY ON CC >= 2.0 */
@@ -67,18 +72,21 @@ __device__ double SparseIsynap(double vm, int *dev_nPostNeurons, int *dev_sparse
           atomicAdd(&dev_gI[dev_sparseConVec[dev_sparseIdx[mNeuron] + kNeuron]], (double)1.0);
       }
      } 
-    __syncthreads();
-    gE = dev_gE[mNeuron];
-    gI = dev_gI[mNeuron];
+  }
+}
+
+__global__ void computeISynap(double vm) {
+  int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
+  double tempCurE = 0, tempCurI = 0;
     if(mNeuron < NE) {
-      tempCurE = -1 * gE * (1/sqrt(K)) * INV_TAU_SYNAP * G_EE * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
-      tempCurI = -1 * gI * (1/sqrt(K)) * INV_TAU_SYNAP * G_EI * (RHO * (vm - V_I) + (1 - RHO) * (E_L - V_I));
+      tempCurE = -1 * dev_gE[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP * G_EE * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
+      tempCurI = -1 * dev_gI[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP * G_EI * (RHO * (vm - V_I) + (1 - RHO) * (E_L - V_I));
     }
     if(mNeuron >= NE){
-      tempCurE = -1 * gE * (1/sqrt(K)) * INV_TAU_SYNAP * G_IE * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
-      tempCurI = -1 * gI * (1/sqrt(K)) * INV_TAU_SYNAP * G_II * (RHO * (vm - V_I) + (1 - RHO) * (E_L - V_I));
+      tempCurE = -1 * dev_gE[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP * G_IE * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
+      tempCurI = -1 * dev_gI[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP * G_II * (RHO * (vm - V_I) + (1 - RHO) * (E_L - V_I));
     }
-    totIsynap = tempCurE + tempCurI; 
+    dev_isynap[mNeuron] = tempCurE + tempCurI; 
     if(mNeuron == 2) {
       localCurConter = curConter;
       if(curConter < 5 * 4000) {
@@ -88,6 +96,6 @@ __device__ double SparseIsynap(double vm, int *dev_nPostNeurons, int *dev_sparse
       }
     }
   }
-  return totIsynap;
+/*  return totIsynap;*/
 }
 #endif

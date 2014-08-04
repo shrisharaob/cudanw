@@ -171,9 +171,16 @@ int main(int argc, char *argv[]) {
   kernelParams.nSteps = nSteps;
   kernelParams.tStop = tStop;
   kernelParams.tStart = tStart;
-printf("\n launching Simulation kernel ...");
+  printf("\n launching Simulation kernel ...");
   fflush(stdout);
-  rkdumbPretty<<<BlocksPerGrid, ThreadsPerBlock>>> (kernelParams, devPtrs);
+  /* TIME LOOP */
+  for(k = 0; k < nstep; ++k) { 
+    devPtrs.k = 0;
+    rkdumbPretty<<<BlocksPerGrid, ThreadsPerBlock>>> (kernelParams, devPtrs);
+    expDecay<<<BlocksPerGrid, ThreadsPerBlock>>>();
+    computeConductance<<<BlocksPerGrid, ThreadsPerBlock>>>();
+    computeIsynap();
+  }
   //  setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, time(NULL) + 23);
   /*  rkdumb <<<BlocksPerGrid,ThreadsPerBlock>>> (tStart, tStop, nSteps, dev_nSpks, dev_spkTimes, dev_spkNeuronIds, dev_vm, dev_conVec, dev_isynap, devStates);*/
   cudaCheckLastError("rkdumb kernel failed");
