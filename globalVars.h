@@ -7,7 +7,7 @@
 #define PI 3.14159265359
 #define SQRT_DT sqrt(DT)
 
-#define Cm 1 /* microF / cm^2  */
+#define Cm 1.0 /* microF / cm^2  */
 #define E_Na 55.0 /* mV */
 #define E_K -90.0
 #define E_L -65.0

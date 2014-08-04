@@ -61,10 +61,10 @@ __device__ double SparseIsynap(double vm, int *dev_nPostNeurons, int *dev_sparse
      if(IF_SPK) {  
       for(kNeuron = 0; kNeuron < dev_nPostNeurons[mNeuron]; ++kNeuron) { 
         if(mNeuron < NE) {       
-          atomicAdd(&dev_gE[dev_sparseConVec[dev_sparseIdx[mNeuron] + kNeuron]], 1.0f); /*atomic double add WORKS ONLY ON CC >= 2.0 */
+          atomicAdd(&dev_gE[dev_sparseConVec[dev_sparseIdx[mNeuron] + kNeuron]], (double)1.0); /*atomic double add WORKS ONLY ON CC >= 2.0 */
        }
         else
-          atomicAdd(&dev_gI[dev_sparseConVec[dev_sparseIdx[mNeuron] + kNeuron]], 1.0f);
+          atomicAdd(&dev_gI[dev_sparseConVec[dev_sparseIdx[mNeuron] + kNeuron]], (double)1.0);
       }
      } 
     __syncthreads();
@@ -79,7 +79,7 @@ __device__ double SparseIsynap(double vm, int *dev_nPostNeurons, int *dev_sparse
       tempCurI = -1 * gI * (1/sqrt(K)) * INV_TAU_SYNAP * G_II * (RHO * (vm - V_I) + (1 - RHO) * (E_L - V_I));
     }
     totIsynap = tempCurE + tempCurI; 
-    if(mNeuron == 16003) {
+    if(mNeuron == 2) {
       localCurConter = curConter;
       if(curConter < 5 * 4000) {
 	glbCurE[localCurConter] = tempCurE;
