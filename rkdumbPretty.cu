@@ -8,10 +8,10 @@
 
 __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) { 
   double x1, *dev_spkTimes, *y,  *dev_isynap, *dev_time;
-  int nstep, *totNSpks, *dev_spkNeuronIds, *dev_nPostNeurons, *dev_sparseConVec, *dev_sparseIdx;
+  int nstep, *totNSpks, *dev_spkNeuronIds;
   curandState *dev_state;
-  int i, k, IF_SPK;
-  double x, h, isynapNew = 0, ibg = 0, iff = 0;
+  int k;
+  double x, isynapNew = 0, ibg = 0, iff = 0;
   double v[N_STATEVARS], vout[N_STATEVARS], dv[N_STATEVARS], vmOld;
   int localTotNspks = 0, localLastNSteps;
   int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
@@ -24,9 +24,9 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
   dev_state = devPtrs.devStates;
   dev_spkTimes = devPtrs.dev_spkTimes;
   dev_spkNeuronIds = devPtrs.dev_spkNeuronIds;
-  dev_nPostNeurons = devPtrs.dev_nPostNeurons;
+  /*  dev_nPostNeurons = devPtrs.dev_nPostNeurons;
   dev_sparseConVec = devPtrs.dev_sparseConVec;
-  dev_sparseIdx = devPtrs.dev_sparseIdx;
+  dev_sparseIdx = devPtrs.dev_sparseIdx;*/
   dev_gE[mNeuron] = 0;
   dev_gI[mNeuron] = 0;
   k = devPtrs.k;
@@ -37,14 +37,12 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
       dev_n[mNeuron] = 0.3176;
       dev_z[mNeuron] = 0.1;
       dev_h[mNeuron] = 0.5961;
+      dev_isynap[mNeuron] = 0;
     }
     localLastNSteps = nstep - STORE_LAST_N_STEPS;
     /* TIMELOOP */
-    x = x1;
-    h = DT; /*(x2 - x1) / nstep;*/
-    /*    for (k = 0; k < nstep; k++) {*/
+    x = x1 + k * DT;
     dev_IF_SPK[mNeuron] = 0;
-    IF_SPK = 0;
     vmOld = dev_v[mNeuron];
     v[0] = vmOld;
     v[1] = dev_n[mNeuron];
@@ -53,8 +51,8 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
     isynapNew = dev_isynap[mNeuron];
     /* runge kutta 4 */
     derivs(x, v, dv, isynapNew, ibg, iff);
-    rk4(v, dv, N_STATEVARS, x, h, vout, isynapNew, ibg, iff);
-    x += h; 
+    rk4(v, dv, N_STATEVARS, x, DT, vout, isynapNew, ibg, iff);
+    x += DT; 
     /* UPDATE */
     dev_v[mNeuron] = vout[0];
     dev_n[mNeuron] = vout[1];
@@ -62,7 +60,7 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
     dev_h[mNeuron] = vout[3];
     if(k >= localLastNSteps) {
       y[mNeuron + N_NEURONS * (k - localLastNSteps)] = vout[0];
-          dev_isynap[mNeuron + N_NEURONS *  (k - localLastNSteps)] = isynapNew;
+           dev_isynap[mNeuron + N_NEURONS *  (k - localLastNSteps)] = isynapNew;
 	  if(mNeuron == 0) {
 	    dev_time[k - localLastNSteps] = x;
 	  }
@@ -70,7 +68,6 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
     if(k > 2) {
       if(vout[0] > SPK_THRESH) { 
 	if(vmOld <= SPK_THRESH) {
-	  IF_SPK = 1;
 	  dev_IF_SPK[mNeuron] = 1;
 	  localTotNspks = atomicAdd(totNSpks, 1); /* atomic add on global introduces memory latency*/
 	  if(localTotNspks + 1 < MAX_SPKS) {

@@ -116,7 +116,7 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaMemcpy(dev_sparseConVec, sparseConVec, N_NEURONS * (2 * K + 1) * sizeof(int), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_idxVec, idxVec, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_nPostNeurons, nPostNeurons, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
-  /* ================= ALLOCATE PAGELOCKED MEMORY ON HOST =========================*/
+ /* ================= ALLOCATE PAGELOCKED MEMORY ON HOST =========================*/
   cudaCheck(cudaMallocHost((void **)&spkTimes, MAX_SPKS  * sizeof(*spkTimes)));
   cudaCheck(cudaMallocHost((void **)&host_isynap, lastNStepsToStore * N_NEURONS * sizeof(*host_isynap)));
   cudaCheck(cudaMallocHost((void **)&vm,  lastNStepsToStore * N_NEURONS * sizeof(*vm)));
@@ -142,16 +142,13 @@ int main(int argc, char *argv[]) {
   devPtrs.dev_spkTimes = dev_spkTimes;
   devPtrs.dev_isynap = dev_isynap;
   devPtrs.devStates = devStates;
-  devPtrs.dev_sparseConVec = dev_sparseConVec;
+  /*  devPtrs.dev_sparseConVec = dev_sparseConVec;
   devPtrs.dev_nPostNeurons = dev_nPostNeurons;
-  devPtrs.dev_sparseIdx = dev_idxVec;
+  devPtrs.dev_sparseIdx = dev_idxVec;*/
   devPtrs.dev_time = dev_time;
   *nSpks = 0;
   cudaCheck(cudaMemcpy(dev_nSpks, nSpks, sizeof(int), cudaMemcpyHostToDevice));
-
-  
   printf("devspk ptrs: %p %p \n", dev_spkTimes, dev_spkNeuronIds);
-
   /*===================== GENERATE CONNECTION MATRIX ====================================*/
   /*cudaCheck(cudaMemset(dev_conVec, 0, N_NEURONS * N_NEURONS * sizeof(int)));
   printf("\n launching rand generator setup kernel\n");
@@ -174,15 +171,13 @@ int main(int argc, char *argv[]) {
   printf("\n launching Simulation kernel ...");
   fflush(stdout);
   /* TIME LOOP */
-  for(k = 0; k < nstep; ++k) { 
-    devPtrs.k = 0;
+  for(k = 0; k < nSteps; ++k) { 
+    devPtrs.k = k;
     rkdumbPretty<<<BlocksPerGrid, ThreadsPerBlock>>> (kernelParams, devPtrs);
     expDecay<<<BlocksPerGrid, ThreadsPerBlock>>>();
     computeConductance<<<BlocksPerGrid, ThreadsPerBlock>>>();
-    computeIsynap();
+    computeIsynap<<<BlocksPerGrid, ThreadsPerBlock>>>();
   }
-  //  setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, time(NULL) + 23);
-  /*  rkdumb <<<BlocksPerGrid,ThreadsPerBlock>>> (tStart, tStop, nSteps, dev_nSpks, dev_spkTimes, dev_spkNeuronIds, dev_vm, dev_conVec, dev_isynap, devStates);*/
   cudaCheckLastError("rkdumb kernel failed");
   /*==================== COPY RESULTS TO HOST =================================================*/
   cudaCheck(cudaMemcpy(nSpks, dev_nSpks, sizeof(int), cudaMemcpyDeviceToHost));
@@ -218,7 +213,7 @@ int main(int argc, char *argv[]) {
   fclose(fpElapsedTime);
   /* ================= SAVE TO DISK =============================================================*/
   if(IF_SAVE) {  
-    printf(" saving results to disk ..."); 
+    printf(" saving results to disk ... "); 
     fflush(stdout);
     fpSpkTimes = fopen("spkTimes.csv", "w");
     int totalNSpks = *nSpks;

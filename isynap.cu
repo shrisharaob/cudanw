@@ -58,10 +58,9 @@ __global__ void expDecay() {
   }
 }
 
-__global__ void computeConductance(int *dev_nPostNeurons, int *dev_sparseConVec, int *dev_sparseIdx) {
+__global__ void computeConductance() {
   int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
-  int kNeuron, localCurConter;
-  double totIsynap = 0, gE, gI, tempCurE = 0, tempCurI = 0;
+  int kNeuron;
   if(mNeuron < N_NEURONS) {
      if(dev_IF_SPK[mNeuron]) {  
       for(kNeuron = 0; kNeuron < dev_nPostNeurons[mNeuron]; ++kNeuron) { 
@@ -75,9 +74,12 @@ __global__ void computeConductance(int *dev_nPostNeurons, int *dev_sparseConVec,
   }
 }
 
-__global__ void computeISynap(double vm) {
+__global__ void computeIsynap() {
   int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
-  double tempCurE = 0, tempCurI = 0;
+  double vm, tempCurE = 0, tempCurI = 0;
+  int localCurConter;
+  if(mNeuron < N_NEURONS) {
+    vm = dev_v[mNeuron];
     if(mNeuron < NE) {
       tempCurE = -1 * dev_gE[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP * G_EE * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
       tempCurI = -1 * dev_gI[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP * G_EI * (RHO * (vm - V_I) + (1 - RHO) * (E_L - V_I));
@@ -96,6 +98,5 @@ __global__ void computeISynap(double vm) {
       }
     }
   }
-/*  return totIsynap;*/
 }
 #endif

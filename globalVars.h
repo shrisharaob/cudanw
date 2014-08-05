@@ -60,7 +60,7 @@ __device__ float randnXiA[N_Neurons],
                  randuDelta[N_Neurons], 
                  randwZiA[N_Neurons * 4], 
                  randuPhi[N_Neurons * 3]; 
-__device__ double dev_v[N_NEURONS], dev_n[N_NEURONS], dev_z[N_NEURONS], dev_h[mNeuron]; 
+__device__ double dev_v[N_NEURONS], dev_n[N_NEURONS], dev_z[N_NEURONS], dev_h[N_NEURONS]; 
 __device__ double dt, *thetaVec;
 __device__ double dev_gE[N_NEURONS], dev_gI[N_NEURONS], dev_isynap[N_NEURONS];
 __device__ int dev_IF_SPK[N_NEURONS], curConter = 0;
@@ -69,6 +69,8 @@ __device__ double rTotal[N_Neurons], gFF[N_Neurons]; /* rTotalPrev[N_Neurons];*/
 __device__ float gaussNoiseE[NE], gaussNoiseI[NI];
 __device__ curandState bgCurNoiseGenState[N_NEURONS], iffNormRandState[N_NEURONS];
 __device__ double dev_bgCur[5 * 4000], dev_iff[5000];
+__device__ int dev_nPostNeurons[N_NEURONS], dev_sparseIdx[N_NEURONS]; 
+__device__ int dev_sparseConVec[N_NEURONS * 2 * (int)K + N_NEURONS];
 
 /* // recurrent input  */
 /* __device__ double *tempCurE, *tempCurI; */
@@ -97,8 +99,7 @@ typedef struct
 } sparseMat;
 
 typedef struct {
-  int *dev_conVec, *dev_nSpks, *dev_spkNeuronIds, 
-    *dev_nPostNeurons, *dev_sparseConVec, *dev_sparseIdx, k;
+  int *dev_conVec, *dev_nSpks, *dev_spkNeuronIds, k;
   double *dev_vm, *dev_isynap, *dev_spkTimes, *dev_time;
   curandState *devStates;
 } devPtr_t;
