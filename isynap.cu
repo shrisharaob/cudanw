@@ -52,12 +52,24 @@ __device__ double isynap(double vm, int *dev_conVec) {
 
 __device__ double SparseIsynap(double vm, int *dev_nPostNeurons, int *dev_sparseConVec, int *dev_sparseIdx, int IF_SPK) {
   int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
-  int kNeuron, localCurConter;
+  int kNeuron, localCurConter, dummy = 0;
   double totIsynap = 0, gE, gI, tempCurE = 0, tempCurI = 0;
   if(mNeuron < N_NEURONS) {
+    if(mNeuron == 0) {
+      SYNC_FLAG_1 = 0;
+      SYNC_FLAG_2 = 0;
+    }
     dev_gE[mNeuron] *= EXP_SUM;
     dev_gI[mNeuron] *= EXP_SUM;
+
+    atomicAdd(&SYNC_FLAG_1, 1);                                                                                                                              
+     
     __syncthreads(); /* really needed ???? (decay and add or add and decay) */
+
+     while(dummy != N_NEURONS) {  
+       dummy = SYNC_FLAG_1;
+     } 
+     dummy = 0;
      if(IF_SPK) {  
       for(kNeuron = 0; kNeuron < dev_nPostNeurons[mNeuron]; ++kNeuron) { 
         if(mNeuron < NE) {       
@@ -67,7 +79,14 @@ __device__ double SparseIsynap(double vm, int *dev_nPostNeurons, int *dev_sparse
           atomicAdd(&dev_gI[dev_sparseConVec[dev_sparseIdx[mNeuron] + kNeuron]], (double)1.0);
       }
      } 
-    __syncthreads();
+    atomicAdd(&SYNC_FLAG_2, 1);                                                                                                                              
+
+     __syncthreads(); /* really needed ???? (decay and add or add and decay) */
+
+     while(dummy != N_NEURONS) {  
+       dummy = SYNC_FLAG_2;
+     } 
+
     gE = dev_gE[mNeuron];
     gI = dev_gI[mNeuron];
     if(mNeuron < NE) {

@@ -68,6 +68,7 @@ __device__ double rTotal[N_Neurons], gFF[N_Neurons]; /* rTotalPrev[N_Neurons];*/
 __device__ float gaussNoiseE[NE], gaussNoiseI[NI];
 __device__ curandState bgCurNoiseGenState[N_NEURONS], iffNormRandState[N_NEURONS];
 __device__ double dev_bgCur[5 * 4000], dev_iff[5000];
+__device__ int SYNC_FLAG_0, SYNC_FLAG_1, SYNC_FLAG_2; 
 
 /* // recurrent input  */
 /* __device__ double *tempCurE, *tempCurI; */

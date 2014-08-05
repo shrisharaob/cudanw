@@ -10,7 +10,7 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
   double x1, *dev_spkTimes, *y,  *dev_isynap, *dev_time;
   int nstep, *totNSpks, *dev_spkNeuronIds, *dev_nPostNeurons, *dev_sparseConVec, *dev_sparseIdx;
   curandState *dev_state;
-  int i, k, IF_SPK;
+  int i, k, IF_SPK, dummy = 0;
   double x, h, isynapNew = 0, ibg = 0, iff = 0;
   double v[N_STATEVARS], vout[N_STATEVARS], dv[N_STATEVARS], vmOld;
   int localTotNspks = 0, localLastNSteps;
@@ -40,6 +40,10 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
     x = x1;
     h = DT; /*(x2 - x1) / nstep;*/
     isynapNew = 0;
+    if(mNeuron == 0) {
+      SYNC_FLAG_0 = 0;
+    }
+    
     for (k = 0; k < nstep; k++) {
       dev_IF_SPK[mNeuron] = 0;
       IF_SPK = 0;
@@ -72,7 +76,15 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
             }
           }
         }
-        __syncthreads(); /* CRUTIAL step to ensure that dev_IF_spk is updated by all threads */
+	
+	atomicAdd(&SYNC_FLAG_0,1);                                                                                                                           
+
+        __syncthreads();                       
+
+	while(dummy != N_NEURONS) {  
+	  dummy = SYNC_FLAG_0;
+	} 
+
         isynapNew = SparseIsynap(v[0], dev_nPostNeurons, dev_sparseConVec, dev_sparseIdx, IF_SPK);
 	/* bg current */
 	/*	ibg = bgCur(vmOld); /* make sure AuxRffTotal<<<  >>> is run begore calling bgCur */
