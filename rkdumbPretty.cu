@@ -7,7 +7,7 @@
 #include "rk4.cu"
 
 __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) { 
-  double x1, *dev_spkTimes, *y,  *dev_isynap, *dev_time;
+  double x1, *dev_spkTimes, *y,  *synapticCurrent, *dev_time;
   int nstep, *totNSpks, *dev_spkNeuronIds;
   curandState *dev_state;
   int k;
@@ -20,15 +20,13 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
   totNSpks = devPtrs.dev_nSpks;
   y = devPtrs.dev_vm;
   dev_time = devPtrs.dev_time;
-  dev_isynap = devPtrs.dev_isynap;
+  synapticCurrent = devPtrs.synapticCurrent;
   dev_state = devPtrs.devStates;
   dev_spkTimes = devPtrs.dev_spkTimes;
   dev_spkNeuronIds = devPtrs.dev_spkNeuronIds;
   /*  dev_nPostNeurons = devPtrs.dev_nPostNeurons;
   dev_sparseConVec = devPtrs.dev_sparseConVec;
   dev_sparseIdx = devPtrs.dev_sparseIdx;*/
-  dev_gE[mNeuron] = 0;
-  dev_gI[mNeuron] = 0;
   k = devPtrs.k;
   if(mNeuron < N_NEURONS) {
     if(k == 0) {
@@ -38,6 +36,8 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
       dev_z[mNeuron] = 0.1;
       dev_h[mNeuron] = 0.5961;
       dev_isynap[mNeuron] = 0;
+      dev_gE[mNeuron] = 0;
+      dev_gI[mNeuron] = 0;
     }
     localLastNSteps = nstep - STORE_LAST_N_STEPS;
     /* TIMELOOP */
@@ -60,7 +60,7 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
     dev_h[mNeuron] = vout[3];
     if(k >= localLastNSteps) {
       y[mNeuron + N_NEURONS * (k - localLastNSteps)] = vout[0];
-           dev_isynap[mNeuron + N_NEURONS *  (k - localLastNSteps)] = isynapNew;
+           synapticCurrent[mNeuron + N_NEURONS *  (k - localLastNSteps)] = isynapNew;
 	  if(mNeuron == 0) {
 	    dev_time[k - localLastNSteps] = x;
 	  }

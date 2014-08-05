@@ -100,7 +100,7 @@ typedef struct
 
 typedef struct {
   int *dev_conVec, *dev_nSpks, *dev_spkNeuronIds, k;
-  double *dev_vm, *dev_isynap, *dev_spkTimes, *dev_time;
+  double *dev_vm, *synapticCurrent, *dev_spkTimes, *dev_time;
   curandState *devStates;
 } devPtr_t;
 

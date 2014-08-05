@@ -43,13 +43,13 @@ int main(int argc, char *argv[]) {
   double *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
   int *dev_conVec, *dev_nSpks, *dev_spkNeuronIds;
   FILE *fp, *fpConMat, *fpSpkTimes, *fpElapsedTime;
-  double *host_isynap, *dev_isynap;
+  double *host_isynap, *synapticCurrent;
   int *conVec;
   curandState *devStates, *devNormRandState;
   cudaEvent_t start0, stop0;
   float elapsedTime;
-  int *dev_sparseConVec = NULL, *sparseConVec = NULL;
-  int idxVec[N_NEURONS], nPostNeurons[N_NEURONS], *dev_idxVec = NULL, *dev_nPostNeurons = NULL;
+  int *dev_sparseVec = NULL, *sparseConVec = NULL;
+  int idxVec[N_NEURONS], nPostNeurons[N_NEURONS], *dev_idxVec = NULL, *dev_nPostneuronsPtr = NULL;
   int deviceId = 0;
   devPtr_t devPtrs;
   kernelParams_t kernelParams;
@@ -108,14 +108,17 @@ int main(int argc, char *argv[]) {
   conVec[8] = 1; /*conVec[9] = 0;*/
   /*conVec[10] = 0;conVec[11] = 1;
     conVec[12]= 0;conVec[13] = 0;conVec[14] = 0;conVec[15] = 0;*/
+  cudaCheck(cudaGetSymbolAddress((void **)&dev_sparseVec, dev_sparseConVec));
+  cudaCheck(cudaGetSymbolAddress((void **)&dev_idxVec, dev_sparseIdx));
+  cudaCheck(cudaGetSymbolAddress((void **)&dev_nPostneuronsPtr, dev_nPostNeurons));
   cudaCheck(cudaMallocHost((void **)&sparseConVec, N_NEURONS * (2 * K + 1) * sizeof(int)));  
-  cudaCheck(cudaMalloc((void **)&dev_sparseConVec, N_NEURONS * ((int)2 * K + 1)* sizeof(int)));
+  /*  cudaCheck(cudaMalloc((void **)&dev_sparseVec, N_NEURONS * ((int)2 * K + 1)* sizeof(int)));
   cudaCheck(cudaMalloc((void **)&dev_idxVec, N_NEURONS * sizeof(int)));
-  cudaCheck(cudaMalloc((void **)&dev_nPostNeurons, N_NEURONS * sizeof(int)));
+  cudaCheck(cudaMalloc((void **)&dev_nPostneuronsPtr, N_NEURONS * sizeof(int)));*/
   GenSparseMat(conVec, N_NEURONS, N_NEURONS, sparseConVec, idxVec, nPostNeurons);
-  cudaCheck(cudaMemcpy(dev_sparseConVec, sparseConVec, N_NEURONS * (2 * K + 1) * sizeof(int), cudaMemcpyHostToDevice));
+  cudaCheck(cudaMemcpy(dev_sparseVec, sparseConVec, N_NEURONS * (2 * K + 1) * sizeof(int), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_idxVec, idxVec, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
-  cudaCheck(cudaMemcpy(dev_nPostNeurons, nPostNeurons, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
+  cudaCheck(cudaMemcpy(dev_nPostneuronsPtr, nPostNeurons, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
  /* ================= ALLOCATE PAGELOCKED MEMORY ON HOST =========================*/
   cudaCheck(cudaMallocHost((void **)&spkTimes, MAX_SPKS  * sizeof(*spkTimes)));
   cudaCheck(cudaMallocHost((void **)&host_isynap, lastNStepsToStore * N_NEURONS * sizeof(*host_isynap)));
@@ -127,7 +130,7 @@ int main(int argc, char *argv[]) {
   /*cudaCheck(cudaMalloc((void **)&dev_conVec, N_NEURONS * N_NEURONS * sizeof(int)));*/
   cudaCheck(cudaMalloc((void **)&dev_vm, lastNStepsToStore * N_NEURONS * sizeof(double)));
   cudaCheck(cudaMalloc((void **)&dev_time, lastNStepsToStore * N_NEURONS * sizeof(double)));
-  cudaCheck(cudaMalloc((void **)&dev_isynap, lastNStepsToStore * N_NEURONS * sizeof(double)));
+  cudaCheck(cudaMalloc((void **)&synapticCurrent, lastNStepsToStore * N_NEURONS * sizeof(double)));
   cudaCheck(cudaMalloc((void **)&dev_spkTimes, MAX_SPKS * sizeof(*dev_spkTimes)));
   cudaCheck(cudaMalloc((void **)&dev_nSpks, sizeof(int)));
   cudaCheck(cudaMalloc((void **)&dev_spkNeuronIds, MAX_SPKS * sizeof(*dev_spkNeuronIds)));
@@ -140,10 +143,10 @@ int main(int argc, char *argv[]) {
   devPtrs.dev_nSpks = dev_nSpks;
   devPtrs.dev_spkNeuronIds = dev_spkNeuronIds;
   devPtrs.dev_spkTimes = dev_spkTimes;
-  devPtrs.dev_isynap = dev_isynap;
+  devPtrs.synapticCurrent = synapticCurrent;
   devPtrs.devStates = devStates;
-  /*  devPtrs.dev_sparseConVec = dev_sparseConVec;
-  devPtrs.dev_nPostNeurons = dev_nPostNeurons;
+  /*  devPtrs.dev_sparseConVec = dev_sparseVec;
+  devPtrs.dev_nPostNeurons = dev_nPostneuronsPtr;
   devPtrs.dev_sparseIdx = dev_idxVec;*/
   devPtrs.dev_time = dev_time;
   *nSpks = 0;
@@ -160,9 +163,9 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaMemcpy(conVec, dev_conVec, N_NEURONS * N_NEURONS * sizeof(int), cudaMemcpyDeviceToHost));
   cudaCheck(cudaFree(dev_conVec));
   GenSparseMat(conVec, N_NEURONS, N_NEURONS, sparseConVec, idxVec, nPostNeurons);
-  cudaCheck(cudaMemcpy(dev_sparseConVec, sparseConVec, N_NEURONS * (2 * K + 1) * sizeof(int), cudaMemcpyHostToDevice));
+  cudaCheck(cudaMemcpy(dev_sparseVec, sparseConVec, N_NEURONS * (2 * K + 1) * sizeof(int), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_idxVec, idxVec, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
-  cudaCheck(cudaMemcpy(dev_nPostNeurons, nPostNeurons, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));*/
+  cudaCheck(cudaMemcpy(dev_nPostneuronsPtr, nPostNeurons, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));*/
   /* ==================== INTEGRATE ODEs ON GPU ==========================================*/
     /* invoke device on this block/thread grid */
   kernelParams.nSteps = nSteps;
@@ -186,7 +189,7 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaMemcpy(spkNeuronIds, dev_spkNeuronIds, MAX_SPKS * sizeof(int), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(vm, dev_vm, lastNStepsToStore * N_NEURONS * sizeof(double), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(host_time, dev_time, lastNStepsToStore * N_NEURONS * sizeof(double), cudaMemcpyDeviceToHost));
-  cudaCheck(cudaMemcpy(host_isynap, dev_isynap, lastNStepsToStore * N_NEURONS * sizeof(double), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(host_isynap, synapticCurrent, lastNStepsToStore * N_NEURONS * sizeof(double), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(vm, dev_vm, lastNStepsToStore * N_NEURONS * sizeof(double), cudaMemcpyDeviceToHost));
   double curE[5 * 4000], curI[5 * 4000], ibgCur[5 * 4000], *dev_curE, *dev_curI, *dev_ibg, curIff[5000], *dev_curiff;
   cudaCheck(cudaGetSymbolAddress((void **)&dev_curE, glbCurE));
@@ -263,14 +266,14 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaFreeHost(nSpks));
   cudaCheck(cudaFree(dev_vm));
   cudaCheck(cudaFree(dev_time));
-  cudaCheck(cudaFree(dev_isynap));
+  cudaCheck(cudaFree(synapticCurrent));
   cudaCheck(cudaFree(dev_spkNeuronIds));
   cudaCheck(cudaFree(dev_spkTimes));
   cudaCheck(cudaFree(dev_nSpks));
   cudaCheck(cudaFree(devStates));
-  cudaCheck(cudaFree(dev_sparseConVec));
+  /*  cudaCheck(cudaFree(dev_sparseVec));
   cudaCheck(cudaFree(dev_idxVec));
-  cudaCheck(cudaFree(dev_nPostNeurons));
+  cudaCheck(cudaFree(dev_nPostneuronsPtr));*/
   return EXIT_SUCCESS;
 }
 
