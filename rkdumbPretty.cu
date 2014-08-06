@@ -1,4 +1,4 @@
-#ifndef _RKDUMBPRETTY_
+ #ifndef _RKDUMBPRETTY_
 #define _RKDUMBPRETTY_
 #include <cuda.h>
 #include "globalVars.h"
@@ -31,7 +31,7 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
   if(mNeuron < N_NEURONS) {
     if(k == 0) {
       dev_v[mNeuron] = (-1 * 70) +  (40 * randkernel(dev_state)); /* Vm(0) ~ U(-70, -30)*/
-      dev_v[mNeuron] = -60;
+      dev_v[mNeuron] = -60.0;
       dev_n[mNeuron] = 0.3176;
       dev_z[mNeuron] = 0.1;
       dev_h[mNeuron] = 0.5961;
@@ -41,7 +41,7 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
     }
     localLastNSteps = nstep - STORE_LAST_N_STEPS;
     /* TIMELOOP */
-    x = x1 + k * DT;
+    x = x1 + (double)k * DT;
     dev_IF_SPK[mNeuron] = 0;
     vmOld = dev_v[mNeuron];
     v[0] = vmOld;
@@ -49,6 +49,7 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
     v[2] = dev_z[mNeuron];
     v[3] = dev_h[mNeuron];
     isynapNew = dev_isynap[mNeuron];
+
     /* runge kutta 4 */
     derivs(x, v, dv, isynapNew, ibg, iff);
     rk4(v, dv, N_STATEVARS, x, DT, vout, isynapNew, ibg, iff);
@@ -60,11 +61,11 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
     dev_h[mNeuron] = vout[3];
     if(k >= localLastNSteps) {
       y[mNeuron + N_NEURONS * (k - localLastNSteps)] = vout[0];
-           synapticCurrent[mNeuron + N_NEURONS *  (k - localLastNSteps)] = isynapNew;
-	  if(mNeuron == 0) {
-	    dev_time[k - localLastNSteps] = x;
-	  }
-        }
+      synapticCurrent[mNeuron + N_NEURONS *  (k - localLastNSteps)] = isynapNew;
+      if(mNeuron == 0) {
+	dev_time[k - localLastNSteps] = x;
+      }
+    }
     if(k > 2) {
       if(vout[0] > SPK_THRESH) { 
 	if(vmOld <= SPK_THRESH) {

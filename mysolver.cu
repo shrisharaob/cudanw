@@ -37,7 +37,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  double tStart = 0.0, tStop = 100.0;
+  double tStart = 0.0, tStop = 500.0;
   double *spkTimes, *vm = NULL, host_theta = 0.0; /* *vstart; 500 time steps */
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   double *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
   cudaEventCreate(&stop0); cudaEventCreate(&start0);
   cudaEventRecord(start0, 0);
   /* choose 256 threads per block for high occupancy */
-  int ThreadsPerBlock = 2; /*128;*/
+  int ThreadsPerBlock = 128;
   int BlocksPerGrid = (N_NEURONS + ThreadsPerBlock - 1) / ThreadsPerBlock;
   printf("Threads per block : %d, Blocks per grid : %d \n", ThreadsPerBlock, BlocksPerGrid);
   /*INITIALIZE RND GENERATORS FOR ibf & iff */
@@ -103,9 +103,9 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaMemcpy(conVec, dev_conVec, N_NEURONS * N_NEURONS * sizeof(int), cudaMemcpyDeviceToHost));
   cudaCheck(cudaFree(dev_conVec));
   /* SPARSIFY */
-  conVec[0] = 1;conVec[1] = 0;conVec[2] = 1;conVec[3] = 1;
-  conVec[4] = 0;conVec[5] = 1;conVec[6] = 1;conVec[7] = 1;
-  conVec[8] = 1; /*conVec[9] = 0;*/
+  conVec[0] = 0; conVec[1] = 1; conVec[2] = 1;conVec[3] = 0;
+  /*conVec[4] = 0;conVec[5] = 1;conVec[6] = 1;conVec[7] = 1;
+  conVec[8] = 1;*/ /*conVec[9] = 0;*/
   /*conVec[10] = 0;conVec[11] = 1;
     conVec[12]= 0;conVec[13] = 0;conVec[14] = 0;conVec[15] = 0;*/
   cudaCheck(cudaGetSymbolAddress((void **)&dev_sparseVec, dev_sparseConVec));
