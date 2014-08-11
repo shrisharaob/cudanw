@@ -58,6 +58,44 @@ __global__ void expDecay() {
   }
 }
 
+__global__ void computeConductanceNonAtomic() {
+  int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
+  int nPreSpks, localPreNeuronIdx, localNPreNeurons, i, j, spkNeuronId[MAX_SPKS_PER_T_STEP], localNSpks = 0, *preNeuronSparsevec;
+
+if(mNeuron < N_NEURONS) {
+    for(i = 0; i < N_NEURONS; ++i) {
+      if(dev_IF_SPK[i]) { /* too many global reads */
+	spkNeuronId[localNSpks] = i; 
+        localNSpks += 1; /* nspks in prev step*/
+    }
+    }
+    if(localNSpks > 0){
+      localPreNeuronIdx = dev_sparseIdx[mNeuron];
+      localNPreNeurons = dev_nPostNeurons[mNeuron];
+      preNeuronSparsevec = dev_sparseConVec;
+      for(i = 0; i < localNSpks; ++i) { 
+	nPreSpks = 0;
+        if(spkNeuronId[i] < NE) {
+	  for(j = 0; j < localNPreNeurons; ++j) {
+	    if(preNeuronSparsevec[localPreNeuronIdx + j] == spkNeuronId[i]){
+	      ++nPreSpks;
+	    }
+	  }
+	  dev_gE[mNeuron] += (double)nPreSpks;
+	}
+	else {
+          for(j = 0; j < localNPreNeurons; ++j) {
+	    if(preNeuronSparsevec[localPreNeuronIdx + j] == spkNeuronId[i]){
+	      ++nPreSpks;
+	    }
+	  }
+	  dev_gI[mNeuron] += (double)nPreSpks;
+	}
+      }
+    }
+  }
+}
+
 __global__ void computeConductance() {
   int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   int kNeuron;

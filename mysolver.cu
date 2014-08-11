@@ -37,7 +37,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  double tStart = 0.0, tStop = 1000.0;
+  double tStart = 0.0, tStop = 100.0;
   double *spkTimes, *vm = NULL, host_theta = 0.0; /* *vstart; 500 time steps */
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   double *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
@@ -104,8 +104,10 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaFree(dev_conVec));
   /* SPARSIFY */
   conVec[0] = 0; conVec[1] = 1; conVec[2] = 1;conVec[3] = 0;
-  /*conVec[4] = 0;conVec[5] = 1;conVec[6] = 1;conVec[7] = 1;
-  conVec[8] = 1;*/ /*conVec[9] = 0;*/
+  /*
+  conVec[4] = 0;conVec[5] = 1;conVec[6] = 1;conVec[7] = 1;
+  conVec[8] = 1;*/
+ /*conVec[9] = 0;*/
   /*conVec[10] = 0;conVec[11] = 1;
     conVec[12]= 0;conVec[13] = 0;conVec[14] = 0;conVec[15] = 0;*/
   cudaCheck(cudaGetSymbolAddress((void **)&dev_sparseVec, dev_sparseConVec));
@@ -115,7 +117,7 @@ int main(int argc, char *argv[]) {
   /*  cudaCheck(cudaMalloc((void **)&dev_sparseVec, N_NEURONS * ((int)2 * K + 1)* sizeof(int)));
   cudaCheck(cudaMalloc((void **)&dev_idxVec, N_NEURONS * sizeof(int)));
   cudaCheck(cudaMalloc((void **)&dev_nPostneuronsPtr, N_NEURONS * sizeof(int)));*/
-  GenSparseMat(conVec, N_NEURONS, N_NEURONS, sparseConVec, idxVec, nPostNeurons);
+  GenPreSparseMat(conVec, N_NEURONS, N_NEURONS, sparseConVec, idxVec, nPostNeurons);
   cudaCheck(cudaMemcpy(dev_sparseVec, sparseConVec, N_NEURONS * (2 * K + 1) * sizeof(int), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_idxVec, idxVec, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_nPostneuronsPtr, nPostNeurons, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
@@ -178,7 +180,7 @@ int main(int argc, char *argv[]) {
     devPtrs.k = k;
     rkdumbPretty<<<BlocksPerGrid, ThreadsPerBlock>>> (kernelParams, devPtrs);
     expDecay<<<BlocksPerGrid, ThreadsPerBlock>>>();
-    computeConductance<<<BlocksPerGrid, ThreadsPerBlock>>>();
+    computeConductanceNonAtomic<<<BlocksPerGrid, ThreadsPerBlock>>>();
     computeIsynap<<<BlocksPerGrid, ThreadsPerBlock>>>();
   }
   cudaCheckLastError("rkdumb kernel failed");
