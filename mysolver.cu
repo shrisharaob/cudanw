@@ -100,6 +100,9 @@ int main(int argc, char *argv[]) {
   printf(" Done! \n");
   cudaCheck(cudaMemcpy(conVec, dev_conVec, N_NEURONS * N_NEURONS * sizeof(int), cudaMemcpyDeviceToHost));
   cudaCheck(cudaFree(dev_conVec));
+  FILE *fp = ("conVec.dat", "rb");
+  fread(conVec, sizeof(*conVec), N_NEURONS * N_NEURONS, fp);
+  fclose(fp);
   /* SPARSIFY */
   conVec[0] = 0; conVec[1] = 1; conVec[2] = 1;conVec[3] = 0;
   /*conVec[4] = 0;conVec[5] = 1;conVec[6] = 1;conVec[7] = 1;
