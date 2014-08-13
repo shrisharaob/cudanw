@@ -18,7 +18,7 @@ void GenSparseMat(int *conVec,  int rows, int clms, int* sparseVec, int* idxVec,
         nPost += 1;
       }
     }
-    nPostNeurons[i] = nPost;
+    nPostNeurons[i] = nPost; 
   }
   idxVec[0] = 0;
   for(i = 1; i < rows; ++i) {

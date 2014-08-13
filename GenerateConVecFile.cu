@@ -2,10 +2,8 @@
 #include "cuda_runtime_api.h"
 #include "mycurand.h"
 #include <stdio.h>
-#define NE 10
-#define NI 10
-#define N_NEURONS (NE + NI)
-#define K 2.0
+#include "devHostConstants.h"
+#include "GenSparseMat.cu"
 
 void __cudaCheck(cudaError err, const char* file, const int line);
 #define cudaCheck(err) __cudaCheck (err, __FILE__, __LINE__)
@@ -31,7 +29,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 
 __global__ void initConVec(int *dev_conVec, int maxNeurons) {
   int mNeuron = threadIdx.x + blockIdx.x * blockDim.x;
-  int stride = gridDim.x * blockDim.x;
+  /*  int stride = gridDim.x * blockDim.x;*/
   int i;
   if(mNeuron < maxNeurons) {
     for(i = 0; i < N_NEURONS; ++i) {
@@ -104,6 +102,7 @@ __global__ void kernelGenConMat(curandState *state, int *dev_conVec, int lChunck
 
 int main() {
   int *conVec, *dev_conVecPtr, i, nChunks = 1, deviceId = 0, maxNeurons = N_NEURONS;
+  int fullConVec[N_NEURONS * N_NEURONS];
   FILE *fpConVec;
   cudaDeviceProp prop;
   cudaCheck(cudaGetDeviceProperties(&prop, deviceId));
@@ -124,12 +123,13 @@ int main() {
     exit(-1);
   }
   printf("Threads per block : %d, Blocks per grid : %d \n", ThreadsPerBlock, BlocksPerGrid);
-  fpConVec = fopen("conVec.dat", "wb"); nChunks = 2; maxNeurons = N_NEURONS / nChunks;
+  fpConVec = fopen("conVec.dat", "wb"); /*nChunks = 2; maxNeurons = N_NEURONS / nChunks;*/
   printf(" maxNeurons = %d\n nChunks = %d\n", maxNeurons, nChunks);
   cudaCheck(cudaMalloc((void **)&devStates,  N_NEURONS * sizeof(curandState)));
   cudaCheck(cudaMallocHost((void **)&conVec, (N_NEURONS / nChunks) * N_NEURONS * sizeof(*conVec)));
   cudaCheck(cudaMalloc((void **)&dev_conVecPtr, (N_NEURONS / nChunks) * N_NEURONS * sizeof(*conVec)));
   setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, time(NULL));
+  int chunckSize = (N_NEURONS / nChunks) * N_NEURONS;
   for(i = 0; i < nChunks; ++i) {
     printf("chunk %d\n", i);
     initConVec<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_conVecPtr, maxNeurons);
@@ -137,11 +137,49 @@ int main() {
     printf("done\n");
     cudaCheck(cudaMemcpy(conVec, dev_conVecPtr, (N_NEURONS / nChunks) * N_NEURONS * sizeof(int), cudaMemcpyDeviceToHost));
     printf("cpy done\n");
+    for(int j = 0; j < chunckSize; ++j) {
+      fullConVec[j + chunckSize * i] = conVec[j];
+    } 
+    /*    memcpy(fullConVec + i * sizeof(*conVec) * (N_NEURONS / nChunks) * N_NEURONS, conVec, (N_NEURONS / nChunks) * N_NEURONS * sizeof(*conVec));*/
     /* WRITE TO BINARY FILE */
-    fwrite(conVec, (N_NEURONS / nChunks) * N_NEURONS, sizeof(*conVec), fpConVec);
+      /*    fwrite(conVec, (N_NEURONS / nChunks) * N_NEURONS, sizeof(*conVec), fpConVec);*/
   }
   fclose(fpConVec);
   cudaFreeHost(conVec);
+  
+  int sparseConVec[N_NEURONS * (2 * (int)K + N_NEURONS)], idxVec[N_NEURONS], nPostNeurons[N_NEURONS];
+  GenSparseMat(fullConVec, N_NEURONS, N_NEURONS, sparseConVec, idxVec, nPostNeurons);
+  
+  FILE *fpSparseConVec, *fpIdxVec, *fpNpostNeurons;
+  fpSparseConVec = fopen("sparseConVec.dat", "wb");
+  fwrite(sparseConVec, sizeof(*sparseConVec), N_NEURONS * (2 * (int)K + N_NEURONS), fpSparseConVec);
+  fclose(fpSparseConVec);
+  fpIdxVec = fopen("idxVec.dat", "wb");
+  fwrite(idxVec, sizeof(*idxVec), N_NEURONS,  fpIdxVec);
+  fclose(fpIdxVec);
+  fpNpostNeurons = fopen("nPostNeurons.dat", "wb");
+  fwrite(nPostNeurons, sizeof(*nPostNeurons), N_NEURONS, fpNpostNeurons);
+  fclose(fpNpostNeurons);
+    
+  /*
+  fpSparseConVec = fopen("sparseConVec.dat", "rb");
+  fpIdxVec = fopen("idxVec.dat", "rb");
+  fpNpostNeurons = fopen("nPostNeurons.dat", "rb");
+  fread(sparseConVec, sizeof(*sparseConVec), N_NEURONS * (2 * K + 1), fpSparseConVec);
+  fread(idxVec, sizeof(*idxVec), N_NEURONS, fpIdxVec);
+  fread(nPostNeurons, sizeof(*nPostNeurons), N_NEURONS, fpNpostNeurons);
+  fclose(fpSparseConVec);
+  fclose(fpIdxVec);
+  fclose(fpNpostNeurons);
+
+    for(i = 0; i < N_NEURONS; ++i) {
+      printf("neuron %d projects to : ", i);
+      for(int j = 0; j < nPostNeurons[i]; ++j) {
+	printf("%d ", sparseConVec[idxVec[i] + j]);
+      }
+      printf("\n");
+    }
+  */
   /*FILE *fp;
   int buffer[N_NEURONS * N_NEURONS], j;
   fp = fopen("conVec.dat", "rb");
@@ -150,12 +188,13 @@ int main() {
   fp = fopen("conMat.csv", "w");
   printf("\nN = %d\n", N_NEURONS);
   for(i = 0; i < N_NEURONS; ++i) {
-    for(j = 0; j < N_NEURONS; ++j) {
-      fprintf(fp, "%d ", buffer[i + j * N_NEURONS]);
+    for(int j = 0; j < N_NEURONS; ++j) {
+      fprintf(fp, "%d ", fullConVec[i + j * N_NEURONS]);
+      fprintf(stdout, "%d ", fullConVec[i + j * N_NEURONS]);
     }
     fprintf(fp, "\n");
+    fprintf(stdout, "\n");
   }
   fclose(fp);*/
-  printf("\n");  
   return 0;
 }

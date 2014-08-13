@@ -34,6 +34,13 @@
 #define G_IE 0.45
 #define G_II 3.0 
 
+/*
+#define G_EE 0.0
+#define G_EI 0.00
+#define G_IE 0.0
+#define G_II 0.0 
+*/
+
 /* backgrund input */
 #define RB_E 3.0
 #define RB_I 3.0

@@ -21,5 +21,6 @@ __device__ double bgCur(double vm) {
       dev_bgCur[curConter - 1] = iBg;
     }
   }
+  D +=1;
   return iBg;
 }
