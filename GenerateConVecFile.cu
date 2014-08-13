@@ -5,20 +5,23 @@
 #include "devHostConstants.h"
 #include "GenSparseMat.cu"
 
+
 void __cudaCheck(cudaError err, const char* file, const int line);
 #define cudaCheck(err) __cudaCheck (err, __FILE__, __LINE__)
+
 void __cudaCheckLastError(const char* errorMessage, const char* file, const int line);
 #define cudaCheckLastError(msg) __cudaCheckLastError (msg, __FILE__, __LINE__)
 
-void __cudaCheck(cudaError err, const char *file, const int line) {
+void __cudaCheck(cudaError err, const char *file, const int line)
+{
   if( cudaSuccess != err) {
     fprintf(stderr, "%s(%i) : CUDA Runtime API error %d: %s.\n",
       file, line, (int)err, cudaGetErrorString( err ) );
     exit(-1);
   }
 }
-
-void __cudaCheckLastError(const char *errorMessage, const char *file, const int line) {
+void __cudaCheckLastError(const char *errorMessage, const char *file, const int line)
+{
   cudaError_t err = cudaGetLastError();
   if( cudaSuccess != err) {
     fprintf(stderr, "%s(%i) : getLastCudaError() CUDA error : %s : (%d) %s.\n",
@@ -28,9 +31,9 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 __global__ void initConVec(int *dev_conVec, int maxNeurons) {
-  int mNeuron = threadIdx.x + blockIdx.x * blockDim.x;
+  unsigned long int mNeuron = (unsigned long)threadIdx.x + blockIdx.x * blockDim.x;
   /*  int stride = gridDim.x * blockDim.x;*/
-  int i;
+  unsigned long int i;
   if(mNeuron < maxNeurons) {
     for(i = 0; i < N_NEURONS; ++i) {
       dev_conVec[mNeuron + maxNeurons * i] = 0;
@@ -50,7 +53,7 @@ __global__ void setup_kernel(curandState *state, unsigned long long seed ) {
 
 __device__ float randkernel(curandState *state, int lChunck) {
   /*RETURNS ONE SAMPLE FROM UNIFORM DISTRIBUTION*/
-  int id = threadIdx.x + blockIdx.x * blockDim.x;
+  unsigned long int id = (unsigned long int)threadIdx.x + blockIdx.x * blockDim.x;
   float randNumber;
   curandState localState = state[id]; /* state in global memory */
   randNumber = curand_uniform(&localState);
@@ -60,7 +63,7 @@ __device__ float randkernel(curandState *state, int lChunck) {
 
 __global__ void kernelGenConMat(curandState *state, int *dev_conVec, int lChunck, int maxNeurons){
   /* indexing of matrix row + clm x N_NEURONS*/
-  int id = threadIdx.x + blockIdx.x * blockDim.x;
+  unsigned long id =  (unsigned long int)threadIdx.x + blockIdx.x * blockDim.x;
   int i;
   float k, n;
   if(id < maxNeurons) {
@@ -123,18 +126,23 @@ int main() {
     exit(-1);
   }
   printf("Threads per block : %d, Blocks per grid : %d \n", ThreadsPerBlock, BlocksPerGrid);
-  fpConVec = fopen("conVec.dat", "wb"); /*nChunks = 2; maxNeurons = N_NEURONS / nChunks;*/
+  fpConVec = fopen("conVec.dat", "wb"); 
+  if(maxNeurons > 30000) { nChunks += 2;}
+  maxNeurons = N_NEURONS / nChunks;
   printf(" maxNeurons = %d\n nChunks = %d\n", maxNeurons, nChunks);
   cudaCheck(cudaMalloc((void **)&devStates,  N_NEURONS * sizeof(curandState)));
-  cudaCheck(cudaMallocHost((void **)&conVec, (N_NEURONS / nChunks) * N_NEURONS * sizeof(*conVec)));
-  cudaCheck(cudaMalloc((void **)&dev_conVecPtr, (N_NEURONS / nChunks) * N_NEURONS * sizeof(*conVec)));
+  cudaCheck(cudaMallocHost((void **)&conVec, (N_NEURONS / nChunks) * N_NEURONS * sizeof(int)));
+  cudaCheck(cudaMalloc((void **)&dev_conVecPtr, (N_NEURONS / nChunks) * N_NEURONS * sizeof(int)));
   setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, time(NULL));
-  int chunckSize = (N_NEURONS / nChunks) * N_NEURONS;
+  cudaCheckLastError("setup_kernel failed\n");
+  unsigned long int chunckSize = ((unsigned long)N_NEURONS / nChunks) * N_NEURONS;
+  printf("chunckSize = %lu \n ", chunckSize);
   for(i = 0; i < nChunks; ++i) {
     printf("chunk %d\n", i);
     initConVec<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_conVecPtr, maxNeurons);
     kernelGenConMat<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, dev_conVecPtr, nChunks, maxNeurons);
-    printf("done\n");
+    printf("done\ncopying ");
+    
     cudaCheck(cudaMemcpy(conVec, dev_conVecPtr, (N_NEURONS / nChunks) * N_NEURONS * sizeof(int), cudaMemcpyDeviceToHost));
     printf("cpy done\n");
     for(int j = 0; j < chunckSize; ++j) {
@@ -148,8 +156,9 @@ int main() {
   cudaFreeHost(conVec);
   
   int sparseConVec[N_NEURONS * (2 * (int)K + N_NEURONS)], idxVec[N_NEURONS], nPostNeurons[N_NEURONS];
+  printf("generating sparse representation ..."); fflush(stdout);
   GenSparseMat(fullConVec, N_NEURONS, N_NEURONS, sparseConVec, idxVec, nPostNeurons);
-  
+  printf("done\n");
   FILE *fpSparseConVec, *fpIdxVec, *fpNpostNeurons;
   fpSparseConVec = fopen("sparseConVec.dat", "wb");
   fwrite(sparseConVec, sizeof(*sparseConVec), N_NEURONS * (2 * (int)K + N_NEURONS), fpSparseConVec);
@@ -170,8 +179,8 @@ int main() {
   fread(nPostNeurons, sizeof(*nPostNeurons), N_NEURONS, fpNpostNeurons);
   fclose(fpSparseConVec);
   fclose(fpIdxVec);
-  fclose(fpNpostNeurons);
-
+  fclose(fpNpostNeurons);*/
+  if(N_NEURONS < 10) {
     for(i = 0; i < N_NEURONS; ++i) {
       printf("neuron %d projects to : ", i);
       for(int j = 0; j < nPostNeurons[i]; ++j) {
@@ -179,7 +188,7 @@ int main() {
       }
       printf("\n");
     }
-  */
+  }
   /*FILE *fp;
   int buffer[N_NEURONS * N_NEURONS], j;
   fp = fopen("conVec.dat", "rb");
@@ -197,4 +206,4 @@ int main() {
   }
   fclose(fp);*/
   return 0;
-}
+	    }
