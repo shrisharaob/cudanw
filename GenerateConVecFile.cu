@@ -105,19 +105,23 @@ __global__ void kernelGenConMat(curandState *state, int *dev_conVec, int lChunck
 
 int main() {
   int *conVec, *dev_conVecPtr, i, nChunks = 1, deviceId = 0, maxNeurons = N_NEURONS;
-  int fullConVec[N_NEURONS * N_NEURONS];
+  /*  int fullConVecE[NE * NE], fullConVecI[NI *NI], fullConvecIE[NE*NI], fullConVecEI[NI*NE];*/
+  int *fullConVec;
   FILE *fpConVec;
   cudaDeviceProp prop;
-  cudaCheck(cudaGetDeviceProperties(&prop, deviceId));
-  printf("Global Mem = %ld\n", prop.totalGlobalMem);
-  if(prop.totalGlobalMem < (N_NEURONS * N_NEURONS * 4 + N_NEURONS * 5)) {
-    while(prop.totalGlobalMem < ((N_NEURONS / nChunks) * N_NEURONS * 4.0   + N_NEURONS * 5.0)) {
+  unsigned long maxMem = 12079136768;
+  /*  cudaCheck(cudaGetDeviceProperties(&prop, deviceId));*/
+  /*  printf("Global Mem = %ld\n", prop.totalGlobalMem);*/
+  i = 0;
+  if(maxMem < (N_NEURONS * N_NEURONS * 4 + N_NEURONS * 5)) {
+    while(maxMem < ((N_NEURONS / nChunks) * N_NEURONS * 4.0   + N_NEURONS * 5.0)) {
       nChunks += 1;
     }
     maxNeurons = N_NEURONS / nChunks;
   }
 
   curandState *devStates;
+  fullConVec = (int *)malloc(N_NEURONS * N_NEURONS * sizeof(int));
   /* choose 256 threads per block for high occupancy */
   int ThreadsPerBlock = 512;
   int BlocksPerGrid = (N_NEURONS + ThreadsPerBlock - 1) / ThreadsPerBlock;
@@ -157,6 +161,7 @@ int main() {
   int sparseConVec[N_NEURONS * (2 * (int)K + N_NEURONS)], idxVec[N_NEURONS], nPostNeurons[N_NEURONS];
   printf("generating sparse representation ..."); fflush(stdout);
   GenSparseMat(fullConVec, N_NEURONS, N_NEURONS, sparseConVec, idxVec, nPostNeurons);
+  free(fullConVec);
   printf("done\n writing to file ... "); fflush(stdout);
   FILE *fpSparseConVec, *fpIdxVec, *fpNpostNeurons;
   fpSparseConVec = fopen("sparseConVec.dat", "wb");
