@@ -138,13 +138,12 @@ int main() {
   unsigned long int chunckSize = ((unsigned long)N_NEURONS / nChunks) * N_NEURONS;
   printf("chunckSize = %lu \n ", chunckSize);
   for(i = 0; i < nChunks; ++i) {
-    printf("chunk %d\n", i);
+    printf("generating chunk %d ... ", i);fflush(stdout);
     initConVec<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_conVecPtr, maxNeurons);
     kernelGenConMat<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, dev_conVecPtr, nChunks, maxNeurons);
-    printf("done\ncopying ");
-    
+    printf("done\ncopying dev to host ...");
     cudaCheck(cudaMemcpy(conVec, dev_conVecPtr, (N_NEURONS / nChunks) * N_NEURONS * sizeof(int), cudaMemcpyDeviceToHost));
-    printf("cpy done\n");
+    printf(" done\n");
     for(int j = 0; j < chunckSize; ++j) {
       fullConVec[j + chunckSize * i] = conVec[j];
     } 
@@ -158,7 +157,7 @@ int main() {
   int sparseConVec[N_NEURONS * (2 * (int)K + N_NEURONS)], idxVec[N_NEURONS], nPostNeurons[N_NEURONS];
   printf("generating sparse representation ..."); fflush(stdout);
   GenSparseMat(fullConVec, N_NEURONS, N_NEURONS, sparseConVec, idxVec, nPostNeurons);
-  printf("done\n");
+  printf("done\n writing to file ... "); fflush(stdout);
   FILE *fpSparseConVec, *fpIdxVec, *fpNpostNeurons;
   fpSparseConVec = fopen("sparseConVec.dat", "wb");
   fwrite(sparseConVec, sizeof(*sparseConVec), N_NEURONS * (2 * (int)K + N_NEURONS), fpSparseConVec);
@@ -169,7 +168,7 @@ int main() {
   fpNpostNeurons = fopen("nPostNeurons.dat", "wb");
   fwrite(nPostNeurons, sizeof(*nPostNeurons), N_NEURONS, fpNpostNeurons);
   fclose(fpNpostNeurons);
-    
+  printf("done\n");
   /*
   fpSparseConVec = fopen("sparseConVec.dat", "rb");
   fpIdxVec = fopen("idxVec.dat", "rb");
@@ -206,4 +205,4 @@ int main() {
   }
   fclose(fp);*/
   return 0;
-	    }
+}
