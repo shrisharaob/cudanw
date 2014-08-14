@@ -37,7 +37,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  double tStart = 0.0, tStop = 1000.0;
+  double tStart = 0.0, tStop = 100.0;
   double *spkTimes, *vm = NULL, host_theta = 0.0; /* *vstart; 500 time steps */
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   double *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
@@ -173,11 +173,29 @@ int main(int argc, char *argv[]) {
   kernelParams.tStart = tStart;
   printf("\n launching Simulation kernel ...");
   fflush(stdout);
+  int *dev_IF_SPK_Ptr = NULL, *dev_prevStepSpkIdxPtr = NULL, *host_IF_SPK = NULL, *host_prevStepSpkIdx = NULL, nSpksInPrevStep;
+  cudaCheck(cudaMallocHost((void **)&host_IF_SPK, N_NEURONS * sizeof(int)));
+  cudaCheck(cudaMallocHost((void **)&host_prevStepSpkIdx, N_NEURONS * sizeof(int)));
+  cudaCheck(cudaGetSymbolAddress((void **)&dev_IF_SPK_Ptr, dev_IF_SPK));
+  cudaCheck(cudaGetSymbolAddress((void **)&dev_prevStepSpkIdxPtr, dev_prevStepSpkIdx));
   /* TIME LOOP */
   for(k = 0; k < nSteps; ++k) { 
+    nSpksInPrevStep = 0;
     devPtrs.k = k;
     rkdumbPretty<<<BlocksPerGrid, ThreadsPerBlock>>> (kernelParams, devPtrs);
+    cudaCheckLastError("rk");
+    cudaCheck(cudaMemcpy(host_IF_SPK, dev_IF_SPK_Ptr, N_NEURONS * sizeof(int), cudaMemcpyDeviceToHost));
+    for(i = 0; i < N_NEURONS; ++i) {
+      if(host_IF_SPK[i]) {
+	host_prevStepSpkIdx[i] = nSpksInPrevStep;
+        nSpksInPrevStep += 1;
+      }
+    }
+    if(nSpksInPrevStep) { printf("\nspk! %d \n", nSpksInPrevStep); }
+    cudaCheck(cudaMemcpy(dev_prevStepSpkIdxPtr, host_prevStepSpkIdx, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
     expDecay<<<BlocksPerGrid, ThreadsPerBlock>>>();
+    /*    computeG_Optimal<<<BlocksPerGrid, ThreadsPerBlock>>>();*/
+    /*    spkSum<<<BlocksPerGrid, ThreadsPerBlock>>>();*/
     computeConductance<<<BlocksPerGrid, ThreadsPerBlock>>>();
     computeIsynap<<<BlocksPerGrid, ThreadsPerBlock>>>();
   }
@@ -274,6 +292,8 @@ int main(int argc, char *argv[]) {
   /*  cudaCheck(cudaFree(dev_sparseVec));
   cudaCheck(cudaFree(dev_idxVec));
   cudaCheck(cudaFree(dev_nPostneuronsPtr));*/
+  cudaCheck(cudaFreeHost(host_IF_SPK));
+  cudaCheck(cudaFreeHost(host_prevStepSpkIdx));
   return EXIT_SUCCESS;
 }
 
