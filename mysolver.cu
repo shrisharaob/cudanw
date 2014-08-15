@@ -37,7 +37,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  double tStart = 0.0, tStop = 100.0;
+  double tStart = 0.0, tStop = 1000.0;
   double *spkTimes, *vm = NULL, host_theta = 0.0; /* *vstart; 500 time steps */
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   double *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
@@ -54,6 +54,9 @@ int main(int argc, char *argv[]) {
   devPtr_t devPtrs;
   kernelParams_t kernelParams;
   int IF_SAVE = 1;
+  cudaStream_t stream1;
+  cudaCheck(cudaStreamCreate(&stream1));
+
   /*PARSE INPUTS*/
   if(argc >1) {
     deviceId = atoi(argv[1]);
@@ -151,7 +154,7 @@ int main(int argc, char *argv[]) {
   devPtrs.dev_time = dev_time;
   *nSpks = 0;
   cudaCheck(cudaMemcpy(dev_nSpks, nSpks, sizeof(int), cudaMemcpyHostToDevice));
-  printf("devspk ptrs: %p %p \n", dev_spkTimes, dev_spkNeuronIds);
+  /*  printf("devspk ptrs: %p %p \n", dev_spkTimes, dev_spkNeuronIds);*/
   /*===================== GENERATE CONNECTION MATRIX ====================================*/
   /*cudaCheck(cudaMemset(dev_conVec, 0, N_NEURONS * N_NEURONS * sizeof(int)));
   printf("\n launching rand generator setup kernel\n");
@@ -173,32 +176,44 @@ int main(int argc, char *argv[]) {
   kernelParams.tStart = tStart;
   printf("\n launching Simulation kernel ...");
   fflush(stdout);
-  int *dev_IF_SPK_Ptr = NULL, *dev_prevStepSpkIdxPtr = NULL, *host_IF_SPK = NULL, *host_prevStepSpkIdx = NULL, nSpksInPrevStep;
+  int *dev_IF_SPK_Ptr = NULL, *dev_prevStepSpkIdxPtr = NULL, *host_IF_SPK = NULL, *host_prevStepSpkIdx = NULL, nSpksInPrevStep, *dev_nEPtr = NULL, *dev_nIPtr = NULL;
   cudaCheck(cudaMallocHost((void **)&host_IF_SPK, N_NEURONS * sizeof(int)));
   cudaCheck(cudaMallocHost((void **)&host_prevStepSpkIdx, N_NEURONS * sizeof(int)));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_IF_SPK_Ptr, dev_IF_SPK));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_prevStepSpkIdxPtr, dev_prevStepSpkIdx));
+  cudaCheck(cudaGetSymbolAddress((void **)&dev_nEPtr, dev_ESpkCountMat));
+  cudaCheck(cudaGetSymbolAddress((void **)&dev_nIPtr, dev_ISpkCountMat));
   /* TIME LOOP */
+  size_t sizeOfInt = sizeof(int);
   for(k = 0; k < nSteps; ++k) { 
+    /*    cudaCheck(cudaMemsetAsync(dev_nEPtr, 0, N_NEURONS * N_SPKS_IN_PREV_STEP * sizeOfInt, stream1));
+	  cudaCheck(cudaMemsetAsync(dev_nIPtr, 0, N_NEURONS * N_SPKS_IN_PREV_STEP * sizeOfInt, stream1));*/
     nSpksInPrevStep = 0;
     devPtrs.k = k;
     rkdumbPretty<<<BlocksPerGrid, ThreadsPerBlock>>> (kernelParams, devPtrs);
     cudaCheckLastError("rk");
-    cudaCheck(cudaMemcpy(host_IF_SPK, dev_IF_SPK_Ptr, N_NEURONS * sizeof(int), cudaMemcpyDeviceToHost));
+    cudaCheck(cudaMemcpy(host_IF_SPK, dev_IF_SPK_Ptr, N_NEURONS * sizeOfInt, cudaMemcpyDeviceToHost));
     for(i = 0; i < N_NEURONS; ++i) {
       if(host_IF_SPK[i]) {
 	host_prevStepSpkIdx[i] = nSpksInPrevStep;
         nSpksInPrevStep += 1;
       }
     }
-    if(nSpksInPrevStep) { printf("\nspk! %d \n", nSpksInPrevStep); }
-    cudaCheck(cudaMemcpy(dev_prevStepSpkIdxPtr, host_prevStepSpkIdx, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
+    if(nSpksInPrevStep > N_SPKS_IN_PREV_STEP) { 
+      printf("\nExceeded N_SPKS_IN_PREV_STEP ! nSpksInPrevStep = %d \n", nSpksInPrevStep); 
+      exit(-1);
+    }
+    cudaCheck(cudaMemcpy(dev_prevStepSpkIdxPtr, host_prevStepSpkIdx, N_NEURONS * sizeOfInt, cudaMemcpyHostToDevice));
     expDecay<<<BlocksPerGrid, ThreadsPerBlock>>>();
-    /*    computeG_Optimal<<<BlocksPerGrid, ThreadsPerBlock>>>();*/
-    /*    spkSum<<<BlocksPerGrid, ThreadsPerBlock>>>();*/
+    /*    cudaCheck(cudaMemset(dev_nEPtr, 0, N_NEURONS * N_SPKS_IN_PREV_STEP));
+	  cudaCheck(cudaMemset(dev_nIPtr, 0, N_NEURONS * N_SPKS_IN_PREV_STEP));*/
+    /*    cudaStreamSynchronize(stream1);*/
+    /*    computeG_Optimal<<<BlocksPerGrid, ThreadsPerBlock>>>();
+	  spkSum<<<BlocksPerGrid, ThreadsPerBlock>>>(nSpksInPrevStep);*/
     computeConductance<<<BlocksPerGrid, ThreadsPerBlock>>>();
     computeIsynap<<<BlocksPerGrid, ThreadsPerBlock>>>();
   }
+  cudaCheck(cudaStreamDestroy(stream1));
   cudaCheckLastError("rkdumb kernel failed");
   /*==================== COPY RESULTS TO HOST =================================================*/
   cudaCheck(cudaMemcpy(nSpks, dev_nSpks, sizeof(int), cudaMemcpyDeviceToHost));
@@ -267,12 +282,12 @@ int main(int argc, char *argv[]) {
     fclose(fpCur);
     /*fpConMat = fopen("conMat.csv", "w");*/
     fpConMat = fopen("conVec.csv", "w");
-    for(i = 0; i < N_NEURONS; ++i) {
+    /*    for(i = 0; i < N_NEURONS; ++i) {
       for(k = 0; k < N_NEURONS; ++k) {
 	fprintf(fpConMat, "%d", conVec[i *  N_NEURONS + k]);
       }
-      /*      fprintf(fpConMat, "\n");*/
-      }
+            fprintf(fpConMat, "\n");
+      }*/
     fclose(fpConMat);
   }
   /*================== CLEANUP ===================================================================*/
