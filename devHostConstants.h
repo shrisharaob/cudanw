@@ -1,8 +1,8 @@
 #ifndef _NEURON_COUNTS
 #define _NEURON_COUNTS
 
-#define NE 50000UL
-#define NI 50000UL
+#define NE 40000UL
+#define NI 40000UL
 #define N_Neurons (NE + NI)
 #define N_NEURONS N_Neurons
 #define K 1000.0
