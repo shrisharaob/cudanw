@@ -3,7 +3,7 @@
 #include "mycurand.h"
 #include "devHostConstants.h"
 
-#define MAX_SPKS 105000000
+#define MAX_SPKS 10000000
 #define PI 3.14159265359
 #define SQRT_DT sqrt(DT)
 
@@ -53,8 +53,8 @@
 #define KFF 1.0
 #define GE_FF 0.95
 #define GI_FF 1.26
-#define R0 0.02
-#define R1 0.2
+#define R0 0.002
+#define R1 0.02
 #define INP_FREQ (4 * PI)
 #define ETA_E 0.4
 #define ETA_I 0.4
@@ -69,7 +69,7 @@ __device__ float randnXiA[N_Neurons],
                  randuPhi[N_Neurons * 3]; 
 __device__ double dev_v[N_NEURONS], dev_n[N_NEURONS], dev_z[N_NEURONS], dev_h[N_NEURONS]; 
 __device__ double dt, *thetaVec;
-__device__ double dev_gE[N_NEURONS], dev_gI[N_NEURONS], dev_isynap[N_NEURONS];
+__device__ double dev_gE[N_NEURONS], dev_gI[N_NEURONS], dev_isynap[N_NEURONS], dev_iffCurrent[N_Neurons];
 __device__ int dev_IF_SPK[N_NEURONS], curConter = 0;
 __device__ double glbCurE[5 * 4000], glbCurI[5 * 4000]; /* !!!!!! GENERALIZE */
 __device__ double rTotal[N_Neurons], gFF[N_Neurons]; /* rTotalPrev[N_Neurons];*/
@@ -78,6 +78,13 @@ __device__ curandState bgCurNoiseGenState[N_NEURONS], iffNormRandState[N_NEURONS
 __device__ double dev_bgCur[5 * 4000], dev_iff[5000];
 __device__ int dev_nPostNeurons[N_NEURONS], dev_sparseIdx[N_NEURONS]; 
 __device__ int dev_sparseConVec[N_NEURONS * 2 * (int)K + N_NEURONS];
+
+#define N_SPKS_IN_PREV_STEP 2000
+__device__ int dev_prevStepSpkIdx[N_NEURONS], /*this will hold the row id in the matrix dev_spksCountMat*/
+  dev_ESpkCountMat[N_NEURONS * N_SPKS_IN_PREV_STEP],
+  dev_ISpkCountMat[N_NEURONS * N_SPKS_IN_PREV_STEP];
+
+
 
 /* // recurrent input  */
 /* __device__ double *tempCurE, *tempCurI; */
