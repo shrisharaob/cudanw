@@ -128,9 +128,6 @@ int main() {
     exit(-1);
   }
 
-  printf("here\n %d\n", N_NEURONS);
-  fullConVec[6399999999U] = 0;
-    printf("here done \n");
   /* choose 256 threads per block for high occupancy */
   int ThreadsPerBlock = 512;
   int BlocksPerGrid = (N_NEURONS + ThreadsPerBlock - 1) / ThreadsPerBlock;
@@ -150,7 +147,6 @@ int main() {
   cudaCheckLastError("setup_kernel failed\n");
   unsigned long long int chunckSize = ((unsigned long long)N_NEURONS / nChunks) * N_NEURONS;
   printf("chunckSize = %lu \n ", chunckSize);
-  int tmpl;
   for(unsigned long long int i = 0; i < nChunks; ++i) {
     printf("generating chunk %d ... ", i);fflush(stdout);
     initConVec<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_conVecPtr, maxNeurons);
@@ -160,16 +156,11 @@ int main() {
     printf(" done\n");
     for(unsigned long long int j = 0; j < chunckSize; ++j) {
       /*      printf("%du\n", j + chunckSize * i);*/
-      tmpl = fullConVec[j + chunckSize * i];
-      /*fullConVec[j + chunckSize * i] = conVec[j];*/
+      fullConVec[j + chunckSize * i] = conVec[j];
     } 
-    /*    memcpy(fullConVec + i * sizeof(*conVec) * (N_NEURONS / nChunks) * N_NEURONS, conVec, (N_NEURONS / nChunks) * N_NEURONS * sizeof(*conVec));*/
-    /* WRITE TO BINARY FILE */
-      /*    fwrite(conVec, (N_NEURONS / nChunks) * N_NEURONS, sizeof(*conVec), fpConVec);*/
   }
   fclose(fpConVec);
   cudaFreeHost(conVec);
-  
   int sparseConVec[N_NEURONS * (2 * (int)K + N_NEURONS)], idxVec[N_NEURONS], nPostNeurons[N_NEURONS];
   printf("generating sparse representation ..."); fflush(stdout);
   GenSparseMat(fullConVec, N_NEURONS, N_NEURONS, sparseConVec, idxVec, nPostNeurons);
