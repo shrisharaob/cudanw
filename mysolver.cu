@@ -234,7 +234,7 @@ int main(int argc, char *argv[]) {
       printf("\nExceeded N_SPKS_IN_PREV_STEP ! nSpksInPrevStep = %d \n", nSpksInPrevStep); 
       exit(-1);
     }
-    cudaCheck(cudaMemcpy(dev_prevStepSpkIdxPtr, host_prevStepSpkIdx, N_NEURONS * sizeOfInt, cudaMemcpyHostToDevice));
+     cudaCheck(cudaMemcpy(dev_prevStepSpkIdxPtr, host_prevStepSpkIdx, N_NEURONS * sizeOfInt, cudaMemcpyHostToDevice));
     expDecay<<<BlocksPerGrid, ThreadsPerBlock>>>();
     cudaStreamSynchronize(stream1);
     computeG_Optimal<<<BlocksPerGrid, ThreadsPerBlock>>>();
