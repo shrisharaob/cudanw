@@ -1,5 +1,5 @@
 __device__ double bgCur(double vm) {
-  int mNeuron = threadIdx.x + blockIdx.x * blockDim.x;
+  unsigned int mNeuron = threadIdx.x + blockIdx.x * blockDim.x;
   double D = 1, iBg = 0;
   double gE, gI, gNoise;
   if(mNeuron < N_NEURONS) {

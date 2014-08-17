@@ -5,7 +5,7 @@
 
 __device__ void rk4(double *y, double *dydx, int n, double rk4X, double h, double *yout, double iSynap, double ibg, double iff)
 {
-	int i;
+	unsigned int i;
 	double xh, hh, h6, dym[N_STATEVARS], dyt[N_STATEVARS], yt[N_STATEVARS];
 	hh = h*0.5;
 	h6 = h/6.0;

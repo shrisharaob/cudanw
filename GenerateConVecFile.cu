@@ -31,7 +31,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 __global__ void initConVec(int *dev_conVec, int maxNeurons) {
-  unsigned long int mNeuron = (unsigned long)threadIdx.x + blockIdx.x * blockDim.x;
+  unsigned int mNeuron = threadIdx.x + blockIdx.x * blockDim.x;
   /*  int stride = gridDim.x * blockDim.x;*/
   unsigned long int i;
   if(mNeuron < maxNeurons) {
@@ -43,7 +43,7 @@ __global__ void initConVec(int *dev_conVec, int maxNeurons) {
 }
 
 __global__ void setup_kernel(curandState *state, unsigned long long seed ) {
-    int id = threadIdx.x + blockIdx.x * blockDim.x;
+    unsigned int id = threadIdx.x + blockIdx.x * blockDim.x;
     /* Each thread gets different seed, a different sequence
        number, no offset */
     if(id < N_NEURONS) {
@@ -53,7 +53,7 @@ __global__ void setup_kernel(curandState *state, unsigned long long seed ) {
 
 __device__ float randkernel(curandState *state, int lChunck) {
   /*RETURNS ONE SAMPLE FROM UNIFORM DISTRIBUTION*/
-  unsigned long int id = (unsigned long int)threadIdx.x + blockIdx.x * blockDim.x;
+  unsigned int id = (unsigned long int)threadIdx.x + blockIdx.x * blockDim.x;
   float randNumber;
   curandState localState = state[id]; /* state in global memory */
   randNumber = curand_uniform(&localState);
@@ -106,7 +106,7 @@ __global__ void kernelGenConMat(curandState *state, int *dev_conVec, int lChunck
 int main() {
   int *conVec, *dev_conVecPtr, i, nChunks = 1, deviceId = 0, maxNeurons = N_NEURONS;
   /*  int fullConVecE[NE * NE], fullConVecI[NI *NI], fullConvecIE[NE*NI], fullConVecEI[NI*NE];*/
-  int *fullConVec;
+  int *fullConVec = NULL;
   FILE *fpConVec;
   cudaDeviceProp prop;
   unsigned long maxMem = 12079136768;
@@ -121,7 +121,16 @@ int main() {
   }
 
   curandState *devStates;
-  fullConVec = (int *)malloc(N_NEURONS * N_NEURONS * sizeof(int));
+  fullConVec = (int *)malloc((unsigned long long)N_NEURONS * N_NEURONS * sizeof(int));
+
+  if(fullConVec == NULL) {
+    printf("fullconvec not assigned\n"); 
+    exit(-1);
+  }
+
+  printf("here\n %d\n", N_NEURONS);
+  fullConVec[6399999999U] = 0;
+    printf("here done \n");
   /* choose 256 threads per block for high occupancy */
   int ThreadsPerBlock = 512;
   int BlocksPerGrid = (N_NEURONS + ThreadsPerBlock - 1) / ThreadsPerBlock;
@@ -139,17 +148,20 @@ int main() {
   cudaCheck(cudaMalloc((void **)&dev_conVecPtr, (N_NEURONS / nChunks) * N_NEURONS * sizeof(int)));
   setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, time(NULL));
   cudaCheckLastError("setup_kernel failed\n");
-  unsigned long int chunckSize = ((unsigned long)N_NEURONS / nChunks) * N_NEURONS;
+  unsigned long long int chunckSize = ((unsigned long long)N_NEURONS / nChunks) * N_NEURONS;
   printf("chunckSize = %lu \n ", chunckSize);
-  for(i = 0; i < nChunks; ++i) {
+  int tmpl;
+  for(unsigned long long int i = 0; i < nChunks; ++i) {
     printf("generating chunk %d ... ", i);fflush(stdout);
     initConVec<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_conVecPtr, maxNeurons);
     kernelGenConMat<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, dev_conVecPtr, nChunks, maxNeurons);
     printf("done\ncopying dev to host ...");
     cudaCheck(cudaMemcpy(conVec, dev_conVecPtr, (N_NEURONS / nChunks) * N_NEURONS * sizeof(int), cudaMemcpyDeviceToHost));
     printf(" done\n");
-    for(int j = 0; j < chunckSize; ++j) {
-      fullConVec[j + chunckSize * i] = conVec[j];
+    for(unsigned long long int j = 0; j < chunckSize; ++j) {
+      /*      printf("%du\n", j + chunckSize * i);*/
+      tmpl = fullConVec[j + chunckSize * i];
+      /*fullConVec[j + chunckSize * i] = conVec[j];*/
     } 
     /*    memcpy(fullConVec + i * sizeof(*conVec) * (N_NEURONS / nChunks) * N_NEURONS, conVec, (N_NEURONS / nChunks) * N_NEURONS * sizeof(*conVec));*/
     /* WRITE TO BINARY FILE */

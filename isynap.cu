@@ -7,7 +7,7 @@
 #define MAX_SPKS_PER_T_STEP 1000
 
 __device__ double isynap(double vm, int *dev_conVec) {
-  int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
+  unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   int i, spkNeuronId[MAX_SPKS_PER_T_STEP], localNSpks = 0;
   double totIsynap = 0, gE, gI, tempCurE = 0, tempCurI = 0;
   /* compute squares of entries in data array */
@@ -51,7 +51,7 @@ __device__ double isynap(double vm, int *dev_conVec) {
 }
 
 __global__ void expDecay() {
-  int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
+  unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   if(mNeuron < N_NEURONS) {
     dev_gE[mNeuron] *= EXP_SUM;
     dev_gI[mNeuron] *= EXP_SUM;
@@ -59,7 +59,7 @@ __global__ void expDecay() {
 }
 
 __global__ void computeConductance() {
-  int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
+  unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   int kNeuron;
   if(mNeuron < N_NEURONS) {
      if(dev_IF_SPK[mNeuron]) {  
@@ -75,7 +75,7 @@ __global__ void computeConductance() {
 }
 
 __global__ void computeG_Optimal() {
-  int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
+  unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   int kNeuron, localSpkId;
   if(mNeuron < N_NEURONS) {
     if(dev_IF_SPK[mNeuron]) {  
@@ -94,7 +94,7 @@ __global__ void computeG_Optimal() {
 
 
 __global__ void spkSum(int nSpksInPrevStep) {
-  int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
+  unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   int i, gE, gI; 
   int stride = gridDim.x * blockDim.x;
   while(mNeuron < N_NEURONS) {
@@ -111,7 +111,7 @@ __global__ void spkSum(int nSpksInPrevStep) {
 }
 
 __global__ void computeIsynap(double t) {
-  int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
+  unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   double vm, tempCurE = 0, tempCurI = 0;
   int localCurConter;
   if(mNeuron < N_NEURONS) {

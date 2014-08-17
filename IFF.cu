@@ -6,7 +6,7 @@
 #include "math.h"
 /* ff input */
 __global__ void AuxRffTotal(curandState *devNormRandState, curandState *devStates) {
-  int mNeuron = threadIdx.x + blockDim.x * blockIdx.x ;
+  unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x ;
   int i;
   if(mNeuron < N_Neurons) {
     randnXiA[mNeuron] =  normRndKernel(devNormRandState);
@@ -22,7 +22,7 @@ __global__ void AuxRffTotal(curandState *devNormRandState, curandState *devState
 
 
 __device__ void RffTotal(double t) {
-  int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
+  unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   if(mNeuron < N_Neurons) {
     if(mNeuron < NE) {
       /*    rTotalPrev[mNeuron] = rTotal[mNeuron]; */
@@ -54,7 +54,7 @@ __device__ void RffTotal(double t) {
  
 
 __device__ void Gff(double t) {
-  int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
+  unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   float Itgrl;
   if(mNeuron < N_Neurons) {
     if(t > DT) {
@@ -82,7 +82,7 @@ __device__ void Gff(double t) {
 }
 
 __device__ double IFF(double vm) {
-  int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
+  unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   double iff = 0;
   if(mNeuron < N_Neurons) {
     iff = -1 * gFF[mNeuron] * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));

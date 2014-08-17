@@ -8,7 +8,7 @@
 #include "devHostConstants.h"
 
 __global__ void setup_kernel(curandState *state, unsigned long long seed ) {
-    int id = threadIdx.x + blockIdx.x * blockDim.x;
+    unsigned int id = threadIdx.x + blockIdx.x * blockDim.x;
     /* Each thread gets different seed, a different sequence
        number, no offset */
     if(id < N_NEURONS) {
@@ -18,7 +18,7 @@ __global__ void setup_kernel(curandState *state, unsigned long long seed ) {
 
 __device__ double randkernel(curandState *state) {
   /*RETURNS ONE SAMPLE FROM UNIFORM DISTRIBUTION*/
-  int id = threadIdx.x + blockIdx.x * blockDim.x;
+  unsigned int id = threadIdx.x + blockIdx.x * blockDim.x;
   float randNumber;
   curandState localState = state[id]; /* state in global memory */
   randNumber = curand_uniform(&localState);
@@ -28,7 +28,7 @@ __device__ double randkernel(curandState *state) {
 
 __device__ double normRndKernel(curandState *state) {
   /*RETURNS ONE SAMPLE FROM UNIFORM DISTRIBUTION*/
-  int id = threadIdx.x + blockIdx.x * blockDim.x;
+  unsigned int id = threadIdx.x + blockIdx.x * blockDim.x;
   float randNumber;
   curandState localState = state[id]; /* state in global memory */
   randNumber = curand_normal(&localState);
@@ -37,14 +37,14 @@ __device__ double normRndKernel(curandState *state) {
 }
 /* same as setup_kernel, but avoids passing device pointers from host */
 __global__ void setupBGCurGenerator(unsigned long long seed) {
-  int id = threadIdx.x + blockIdx.x * blockDim.x;
+  unsigned int id = threadIdx.x + blockIdx.x * blockDim.x;
   if(id < N_Neurons) {
     curand_init(seed * (id + 23), id, 0, &bgCurNoiseGenState[id]);
   }
 }
 
 __global__ void setupIFFRndGenerator(unsigned long long seed) {
-  int id = threadIdx.x + blockIdx.x * blockDim.x;
+  unsigned int id = threadIdx.x + blockIdx.x * blockDim.x;
   if(id < N_Neurons) {
     curand_init(seed * (id + 23), id, 0, &iffNormRandState[id]);
   }
@@ -52,7 +52,7 @@ __global__ void setupIFFRndGenerator(unsigned long long seed) {
 
 __global__ void kernelGenConMat(curandState *state, int *dev_conVec){
   /* indexing of matrix row + clm x N_NEURONS*/
-  int id = threadIdx.x + blockIdx.x * blockDim.x;
+  unsigned int id = threadIdx.x + blockIdx.x * blockDim.x;
   int i;
   float k, n;
   
