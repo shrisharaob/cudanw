@@ -3,6 +3,7 @@
 #include "globalVars.h"
 #include "devFunctionProtos.h"
 #include "cudaRandFuncs.cu" /* nvcc doesn't compile without the source !*/
+#include "math.h"
 /* ff input */
 __global__ void AuxRffTotal(curandState *devNormRandState, curandState *devStates) {
   int mNeuron = threadIdx.x + blockDim.x * blockIdx.x ;
@@ -24,7 +25,7 @@ __device__ void RffTotal(double t) {
   int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   if(mNeuron < N_Neurons) {
     if(mNeuron < NE) {
-//    /*    rTotalPrev[mNeuron] = rTotal[mNeuron]; 
+      /*    rTotalPrev[mNeuron] = rTotal[mNeuron]; */
       rTotal[mNeuron] = CFF * K * (R0 + R1 * log10(1 + CONTRAST)) 
 	+ sqrt(CFF * K) * R0 * randnXiA[mNeuron]
 	+ sqrt(CFF * K) * R1 * log10(1 + CONTRAST) * (randnXiA[mNeuron] 
@@ -33,7 +34,7 @@ __device__ void RffTotal(double t) {
 		      + ETA_E * MU_E * 0.5 * (randwZiA[mNeuron * 4 + 2] * cos(2 * theta + INP_FREQ * t - randuPhi[mNeuron * 3 + 1]) + randwZiA[mNeuron * 4 + 3] * cos(2 * theta - INP_FREQ * t + randuPhi[mNeuron * 3 + 2])));
     }
     if(mNeuron >= NE) {
-//      /*      rTotalPrev[mNeuron] = rTotal[mNeuron]; 
+      /*      rTotalPrev[mNeuron] = rTotal[mNeuron]; */
       rTotal[mNeuron] = CFF * K * (R0 + R1 * log10(1 + CONTRAST)) 
 	+ sqrt(CFF * K) * R0 * randnXiA[mNeuron]
 	+ sqrt(CFF * K) * R1 * log10(1 + CONTRAST) * (randnXiA[mNeuron] 
@@ -44,6 +45,9 @@ __device__ void RffTotal(double t) {
 				      + randwZiA[mNeuron * 4 + 3] 
 				      * cos(2 * theta - INP_FREQ * t + randuPhi[mNeuron * 3 + 2])));
 
+    }
+    if(mNeuron == 10) {
+      dev_iff[curConter - 1] = rTotal[mNeuron];
     }
   }
 }
@@ -83,9 +87,9 @@ __device__ double IFF(double vm) {
   if(mNeuron < N_Neurons) {
     iff = -1 * gFF[mNeuron] * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
   }
-  if(mNeuron == 16003) {
-      dev_iff[curConter - 1] = iff;
-  }
+  /*if(mNeuron == 0) {
+    dev_iff[curConter - 1] = rTotal[mNeuron];
+    }*/
   return iff;
 }
 #endif

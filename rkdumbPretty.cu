@@ -31,6 +31,7 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
   if(mNeuron < N_NEURONS) {
     if(k == 0) {
       dev_v[mNeuron] = (-1 * 70) +  (40 * randkernel(dev_state)); /* Vm(0) ~ U(-70, -30)*/
+      dev_v[mNeuron] = -60;
       dev_n[mNeuron] = 0.3176;
       dev_z[mNeuron] = 0.1;
       dev_h[mNeuron] = 0.5961;
@@ -48,7 +49,7 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
     v[2] = dev_z[mNeuron];
     v[3] = dev_h[mNeuron];
     isynapNew = dev_isynap[mNeuron];
-
+    iff = dev_iffCurrent[mNeuron];
     /* runge kutta 4 */
     derivs(x, v, dv, isynapNew, ibg, iff);
     rk4(v, dv, N_STATEVARS, x, DT, vout, isynapNew, ibg, iff);

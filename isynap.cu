@@ -110,7 +110,7 @@ __global__ void spkSum(int nSpksInPrevStep) {
   }
 }
 
-__global__ void computeIsynap() {
+__global__ void computeIsynap(double t) {
   int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   double vm, tempCurE = 0, tempCurI = 0;
   int localCurConter;
@@ -133,6 +133,12 @@ __global__ void computeIsynap() {
 	curConter += 1;
       }
     }
+    	/* bg current */
+	/*	ibg = bgCur(vmOld); /* make sure AuxRffTotal<<<  >>> is run begore calling bgCur */
+	/* FF input current*/
+    RffTotal(t);
+    Gff(t);
+    dev_iffCurrent[mNeuron] = IFF(vm);
   }
 }
 #endif
