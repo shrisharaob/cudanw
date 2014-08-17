@@ -31,13 +31,14 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
   if(mNeuron < N_NEURONS) {
     if(k == 0) {
       dev_v[mNeuron] = (-1 * 70) +  (40 * randkernel(dev_state)); /* Vm(0) ~ U(-70, -30)*/
-      dev_v[mNeuron] = -60;
       dev_n[mNeuron] = 0.3176;
       dev_z[mNeuron] = 0.1;
       dev_h[mNeuron] = 0.5961;
       dev_isynap[mNeuron] = 0;
       dev_gE[mNeuron] = 0;
       dev_gI[mNeuron] = 0;
+      gaussNoiseE[mNeuron] = 0;
+      gaussNoiseI[mNeuron] = 0;
     }
     localLastNSteps = nstep - STORE_LAST_N_STEPS;
     /* TIMELOOP */

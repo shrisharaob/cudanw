@@ -79,7 +79,7 @@ __device__ double dev_bgCur[5 * 4000], dev_iff[5000];
 __device__ int dev_nPostNeurons[N_NEURONS], dev_sparseIdx[N_NEURONS]; 
 __device__ int dev_sparseConVec[N_NEURONS * 2 * (int)K + N_NEURONS];
 
-#define N_SPKS_IN_PREV_STEP 2000
+#define N_SPKS_IN_PREV_STEP 3000
 __device__ int dev_prevStepSpkIdx[N_NEURONS], /*this will hold the row id in the matrix dev_spksCountMat*/
   dev_ESpkCountMat[N_NEURONS * N_SPKS_IN_PREV_STEP],
   dev_ISpkCountMat[N_NEURONS * N_SPKS_IN_PREV_STEP];

@@ -110,16 +110,16 @@ int main() {
   FILE *fpConVec;
   cudaDeviceProp prop;
   unsigned long maxMem = 12079136768;
-  /*  cudaCheck(cudaGetDeviceProperties(&prop, deviceId));*/
-  /*  printf("Global Mem = %ld\n", prop.totalGlobalMem);*/
+  cudaCheck(cudaGetDeviceProperties(&prop, deviceId));
+  printf("Global Mem = %ld\n", prop.totalGlobalMem);
   i = 0;
+  maxMem = prop.totalGlobalMem;
   if(maxMem < (N_NEURONS * N_NEURONS * 4 + N_NEURONS * 5)) {
     while(maxMem < ((N_NEURONS / nChunks) * N_NEURONS * 4.0   + N_NEURONS * 5.0)) {
       nChunks += 1;
     }
     maxNeurons = N_NEURONS / nChunks;
   }
-
   curandState *devStates;
   fullConVec = (int *)malloc((unsigned long long)N_NEURONS * N_NEURONS * sizeof(int));
 

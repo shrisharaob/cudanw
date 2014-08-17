@@ -95,9 +95,9 @@ __device__ double z_inf(double(vm)) {
 __device__ void derivs(double t, double stateVar[], double dydx[], double isynap, double ibg, double iff) {
   double cur = 0;
   unsigned int kNeuron = threadIdx.x + blockDim.x * blockIdx.x;
-  double bgPrefactor = 0.0, iffPrefactor = 0.0;
+  double bgPrefactor = 1.0, iffPrefactor = 1.0;
   if(kNeuron < N_NEURONS) {
-    cur = 0.1 * sqrt(K);
+    /*    cur = 0.1 * sqrt(K);*/ cur = 3.0;
     /*    cur = 1;*/
     /*if((kNeuron == 0 & t >= 30 & t <= 35) | (kNeuron == 1 & t >= 280 & t <= 285)) {cur = 10;} 
       else {cur = 0.0;}*/
