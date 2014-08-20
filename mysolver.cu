@@ -37,7 +37,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  double tStart = 0.0, tStop = 3000.0;
+  double tStart = 0.0, tStop = 5000.0;
   double *spkTimes, *vm = NULL, host_theta = 0.0; /* *vstart; 500 time steps */
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   double *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
@@ -217,8 +217,8 @@ int main(int argc, char *argv[]) {
   cudaEventRecord(start0, 0);
 
   for(k = 0; k < nSteps; ++k) { 
-    cudaCheck(cudaMemsetAsync(dev_nEPtr, 0, N_NEURONS * N_SPKS_IN_PREV_STEP * sizeOfInt, stream1));
-	  cudaCheck(cudaMemsetAsync(dev_nIPtr, 0, N_NEURONS * N_SPKS_IN_PREV_STEP * sizeOfInt, stream1));
+    /*    cudaCheck(cudaMemsetAsync(dev_nEPtr, 0, N_NEURONS * N_SPKS_IN_PREV_STEP * sizeOfInt, stream1));
+	  cudaCheck(cudaMemsetAsync(dev_nIPtr, 0, N_NEURONS * N_SPKS_IN_PREV_STEP * sizeOfInt, stream1));*/
     nSpksInPrevStep = 0;
     devPtrs.k = k;
     rkdumbPretty<<<BlocksPerGrid, ThreadsPerBlock>>> (kernelParams, devPtrs);
@@ -231,15 +231,16 @@ int main(int argc, char *argv[]) {
       }
     }
     if(nSpksInPrevStep > N_SPKS_IN_PREV_STEP) { 
-      printf("\nExceeded N_SPKS_IN_PREV_STEP ! nSpksInPrevStep = %d \n", nSpksInPrevStep); 
-      exit(-1);
+      printf("\nExceeded N_SPKS_IN_PREV_STEP ! nSpksInPrevStep = %d, step = %d \n", nSpksInPrevStep, k); 
+      nSpksInPrevStep = N_SPKS_IN_PREV_STEP;
+      /*      exit(-1);*/
     }
-     cudaCheck(cudaMemcpy(dev_prevStepSpkIdxPtr, host_prevStepSpkIdx, N_NEURONS * sizeOfInt, cudaMemcpyHostToDevice));
+    cudaCheck(cudaMemcpy(dev_prevStepSpkIdxPtr, host_prevStepSpkIdx, N_NEURONS * sizeOfInt, cudaMemcpyHostToDevice));
     expDecay<<<BlocksPerGrid, ThreadsPerBlock>>>();
-    cudaStreamSynchronize(stream1);
+    /*    cudaStreamSynchronize(stream1);
     computeG_Optimal<<<BlocksPerGrid, ThreadsPerBlock>>>();
-    spkSum<<<BlocksPerGrid, ThreadsPerBlock>>>(nSpksInPrevStep);
-    /*    computeConductance<<<BlocksPerGrid, ThreadsPerBlock>>>();*/
+    spkSum<<<BlocksPerGrid, ThreadsPerBlock>>>(nSpksInPrevStep);*/
+    computeConductance<<<BlocksPerGrid, ThreadsPerBlock>>>();
     computeIsynap<<<BlocksPerGrid, ThreadsPerBlock>>>(k*DT);
   }
 
@@ -261,15 +262,15 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaMemcpy(host_time, dev_time, lastNStepsToStore * N_NEURONS * sizeof(double), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(host_isynap, synapticCurrent, lastNStepsToStore * N_NEURONS * sizeof(double), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(vm, dev_vm, lastNStepsToStore * N_NEURONS * sizeof(double), cudaMemcpyDeviceToHost));
-  double curE[5 * 4000], curI[5 * 4000], ibgCur[5 * 4000], *dev_curE, *dev_curI, *dev_ibg, curIff[5000], *dev_curiff;
+  double curE[N_CURRENT_STEPS_TO_STORE], curI[N_CURRENT_STEPS_TO_STORE], ibgCur[N_CURRENT_STEPS_TO_STORE], *dev_curE, *dev_curI, *dev_ibg, curIff[N_CURRENT_STEPS_TO_STORE], *dev_curiff;
   cudaCheck(cudaGetSymbolAddress((void **)&dev_curE, glbCurE));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_curI, glbCurI));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_ibg, dev_bgCur));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_curiff, dev_iff));
-  cudaCheck(cudaMemcpy(curE, dev_curE, 5 * 4000 * sizeof(double), cudaMemcpyDeviceToHost));
-  cudaCheck(cudaMemcpy(curI, dev_curI, 5 * 4000 * sizeof(double), cudaMemcpyDeviceToHost));
-  cudaCheck(cudaMemcpy(ibgCur, dev_ibg, 5 * 4000 * sizeof(double), cudaMemcpyDeviceToHost));
-  cudaCheck(cudaMemcpy(curIff, dev_curiff, 5000 * sizeof(double), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(curE, dev_curE, N_CURRENT_STEPS_TO_STORE * sizeof(double), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(curI, dev_curI, N_CURRENT_STEPS_TO_STORE * sizeof(double), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(ibgCur, dev_ibg, N_CURRENT_STEPS_TO_STORE * sizeof(double), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(curIff, dev_curiff, N_CURRENT_STEPS_TO_STORE * sizeof(double), cudaMemcpyDeviceToHost));
   printf("\n nSpks = %d\n", *nSpks);
   printf(" MAX SPKS stored on GPU = %d \n", MAX_SPKS); 
   printf("\n Simulation completed ! \n");
@@ -304,8 +305,9 @@ int main(int argc, char *argv[]) {
     }
     fclose(fp);
     FILE* fpCur = fopen("currents.csv", "w");
-    for(i = 0; i < 5000; ++i) {
+    for(i = 0; i < N_CURRENT_STEPS_TO_STORE; ++i) {
       fprintf(fpCur, "%f;%f;%f;%f\n", curE[i], curI[i], ibgCur[i], curIff[i]);
+      /*      fprintf(fpCur, "%f\n", curIff[i]);*/
     }
     fclose(fpCur);
     fpConMat = fopen("conMat.csv", "w");

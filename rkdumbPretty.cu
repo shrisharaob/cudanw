@@ -35,11 +35,13 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
       dev_z[mNeuron] = 0.1;
       dev_h[mNeuron] = 0.5961;
       dev_isynap[mNeuron] = 0;
-      dev_gE[mNeuron] = 0;
-      dev_gI[mNeuron] = 0;
-      gaussNoiseE[mNeuron] = 0;
-      gaussNoiseI[mNeuron] = 0;
+      dev_gE[mNeuron] = 0.0;
+      dev_gI[mNeuron] = 0.0;
+      gaussNoiseE[mNeuron] = 0.0;
+      gaussNoiseI[mNeuron] = 0.0;
       gFF[mNeuron] = 0.0;
+      rTotal[mNeuron] = 0.0;
+      gffItgrl[mNeuron] = 0.0;
     }
     localLastNSteps = nstep - STORE_LAST_N_STEPS;
     /* TIMELOOP */
@@ -52,6 +54,7 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
     v[3] = dev_h[mNeuron];
     isynapNew = dev_isynap[mNeuron];
     iff = dev_iffCurrent[mNeuron];
+    ibg = bgCur(vmOld);
     /* runge kutta 4 */
     derivs(x, v, dv, isynapNew, ibg, iff);
     rk4(v, dv, N_STATEVARS, x, DT, vout, isynapNew, ibg, iff);

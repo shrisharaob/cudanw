@@ -2,6 +2,7 @@
 #define _GLOBALVARS_
 #include "mycurand.h"
 #include "devHostConstants.h"
+#include "math.h"
 
 #define MAX_SPKS 10000000
 #define PI 3.14159265359
@@ -42,40 +43,45 @@
 */
 
 /* backgrund input */
-#define RB_E 3.0
-#define RB_I 3.0
+#define RB_E 0.002
+#define RB_I 0.002
 
 #define G_EB (0.3 /sqrt(K))
 #define G_IB (0.4 /sqrt(K))
 
 /* ff input */
-#define CFF 0.1
-#define KFF 1.0
+#define CFF 0.1000000000
+#define KFF 200.0
 #define GE_FF 0.95
 #define GI_FF 1.26
 #define R0 0.002
 #define R1 0.02
-#define INP_FREQ (4 * PI)
+#define INP_FREQ (0.004 * PI)
 #define ETA_E 0.4
 #define ETA_I 0.4
 #define MU_E 0.1
 #define MU_I 0.1
-#define GFF_E 0.95
-#define GFF_I 1.26
+#define GFF_E (0.95 / sqrt(K))
+#define GFF_I (1.26 / sqrt(K))
 
 __device__ float randnXiA[N_Neurons], 
                  randuDelta[N_Neurons], 
                  randwZiA[N_Neurons * 4], 
                  randuPhi[N_Neurons * 3]; 
 __device__ double dev_v[N_NEURONS], dev_n[N_NEURONS], dev_z[N_NEURONS], dev_h[N_NEURONS]; 
+__device__ double gffItgrl[N_NEURONS];
 __device__ double dt, *thetaVec;
 __device__ double dev_gE[N_NEURONS], dev_gI[N_NEURONS], dev_isynap[N_NEURONS], dev_iffCurrent[N_Neurons];
 __device__ int dev_IF_SPK[N_NEURONS], curConter = 0;
-__device__ double glbCurE[5 * 4000], glbCurI[5 * 4000]; /* !!!!!! GENERALIZE */
+
+#define SAVE_CURRENT_FOR_NEURON 2
+#define N_CURRENT_STEPS_TO_STORE 5000
+
+__device__ double glbCurE[N_CURRENT_STEPS_TO_STORE], glbCurI[N_CURRENT_STEPS_TO_STORE]; /* !!!!!! GENERALIZE */
 __device__ double rTotal[N_Neurons], gFF[N_Neurons]; /* rTotalPrev[N_Neurons];*/
 __device__ float gaussNoiseE[NE], gaussNoiseI[NI];
 __device__ curandState bgCurNoiseGenState[N_NEURONS], iffNormRandState[N_NEURONS];
-__device__ double dev_bgCur[5 * 4000], dev_iff[5000];
+__device__ double dev_bgCur[N_CURRENT_STEPS_TO_STORE], dev_iff[N_CURRENT_STEPS_TO_STORE];
 __device__ int dev_nPostNeurons[N_NEURONS], dev_sparseIdx[N_NEURONS]; 
 __device__ int dev_sparseConVec[N_NEURONS * 2 * (int)K + N_NEURONS];
 

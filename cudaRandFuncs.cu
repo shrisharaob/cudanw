@@ -46,7 +46,7 @@ __global__ void setupBGCurGenerator(unsigned long long seed) {
 __global__ void setupIFFRndGenerator(unsigned long long seed) {
   unsigned int id = threadIdx.x + blockIdx.x * blockDim.x;
   if(id < N_Neurons) {
-    curand_init(seed * (id + 23), id, 0, &iffNormRandState[id]);
+    curand_init(seed * (id + 7), id, 0, &iffNormRandState[id]);
   }
 }
 

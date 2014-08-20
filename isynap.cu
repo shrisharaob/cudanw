@@ -125,9 +125,9 @@ __global__ void computeIsynap(double t) {
       tempCurI = -1 * dev_gI[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP * G_II * (RHO * (vm - V_I) + (1 - RHO) * (E_L - V_I));
     }
     dev_isynap[mNeuron] = tempCurE + tempCurI; 
-    if(mNeuron == 1) {
+    if(mNeuron == SAVE_CURRENT_FOR_NEURON) {
       localCurConter = curConter;
-      if(localCurConter < 5 * 4000) {
+      if(localCurConter < N_CURRENT_STEPS_TO_STORE) {
 	glbCurE[localCurConter] = tempCurE;
 	glbCurI[localCurConter] = tempCurI;
 	curConter += 1;

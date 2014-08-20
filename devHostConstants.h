@@ -13,6 +13,6 @@
 #define STORE_LAST_T_MILLISEC 100.0
 #define STORE_LAST_N_STEPS (STORE_LAST_T_MILLISEC / DT)
 
-__constant__ float CONTRAST = 0.3;
-__constant__ float theta;
+__constant__ double CONTRAST = 0.0;
+__constant__ double theta;
 #endif
