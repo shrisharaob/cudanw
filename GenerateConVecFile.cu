@@ -203,26 +203,35 @@ int main() {
   fclose(fp);*/
   
   printf("convec.csv ..."); fflush(stdout);
-  FILE *fp;
+  FILE *fp, *fp01;
   /*  int nEE[NE], nEI[NE], nIE[NI], nII[NI];*/
   /*  int ncounts[N_NEURONS];*/
-  fp = fopen("conMat.csv", "w");
+  /*  fp = fopen("conMat.csv", "w");*/
+  fp01 = fopen("countI.csv", "w");  fp = fopen("countE.csv", "w");
   printf("\nN = %d\n", N_NEURONS);
-  int count = 0;
+  int countE = 0, countI = 0;
   for(i = 0; i < N_NEURONS; ++i) {
-    count = 0;
+    countI = 0;
+    countE = 0;
     for(int j = 0; j < N_NEURONS; ++j) {
       /*      fprintf(fp, "%d ", fullConVec[i + j * N_NEURONS]);*/
-      /*      fprintf(stdout, "%d ", fullConVec[i + j * N_NEURONS]);*/
-      count += fullConVec[i * N_NEURONS + j];   
+      /*	fprintf(stdout, "%d ", fullConVec[i + j * N_NEURONS]);*/
+	if(j < NE) {
+	  countE += fullConVec[i * N_NEURONS + j];   
+	}
+	else {
+	  countI += fullConVec[i * N_NEURONS + j];   
+	}
     }
+    fprintf(fp, "%d\n", countE); 
+    fprintf(fp01, "%d\n", countI);
     /*    ncounts[i] = count;*/
-    fprintf(fp, "%d\n", count);
-    /*    printf("\n");*/
-    /*    fprintf(fp, "\n");*/
+    /*    printf("\n");    fprintf(fp, "\n");*/
+    /*    fprintf(stdout, "\n");*/
   }
   fprintf(stdout, " done\n");
-  fclose(fp);
+  fclose(fp);   
+  fclose(fp01);
   free(fullConVec);
   return 0;
 }

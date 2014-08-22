@@ -2,7 +2,7 @@
 #define _NEURON_COUNTS
 
 #define NE 30000U
-#define NI 30000U
+#define NI 10000U
 #define N_Neurons (NE + NI)
 #define N_NEURONS N_Neurons
 #define K 2000.0
