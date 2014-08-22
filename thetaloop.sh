@@ -4,12 +4,18 @@ fldr="/home/dhansel/cuda/cudanw/"
 spkfile="spkTimes.csv"
 fn="spkTimes_theta" 
 extn=".csv"
-make
-
-for n in {90..126..18}
+DEVICE_ID=0
+IF_SAVE=0
+#make
+#./genconvec.out
+for THETA in {45..360..45}
 do
-    echo $n
-    ./nw.out 1 $n
-    mv $fldr$spkfile $fldr$fn$n$extn
+    echo $THETA
+    if [ $THETA == 315 ]; then
+	./nw.out $DEVICE_ID $IF_SAVE $THETA
+    else
+	./nw.out $DEVICE_ID 1 $THETA	
+    fi
+    mv $fldr$spkfile $fldr$fn$THETA$extn
 done
 

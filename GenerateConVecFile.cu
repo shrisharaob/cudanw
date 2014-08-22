@@ -164,9 +164,9 @@ int main() {
   int sparseConVec[N_NEURONS * (2 * (int)K + N_NEURONS)], idxVec[N_NEURONS], nPostNeurons[N_NEURONS];
   printf("generating sparse representation ..."); fflush(stdout);
   GenSparseMat(fullConVec, N_NEURONS, N_NEURONS, sparseConVec, idxVec, nPostNeurons);
-  free(fullConVec);
+
   printf("done\n writing to file ... "); fflush(stdout);
-  FILE *fpSparseConVec, *fpIdxVec, *fpNpostNeurons;
+  /*  FILE *fpSparseConVec, *fpIdxVec, *fpNpostNeurons;
   fpSparseConVec = fopen("sparseConVec.dat", "wb");
   fwrite(sparseConVec, sizeof(*sparseConVec), N_NEURONS * (2 * (int)K + N_NEURONS), fpSparseConVec);
   fclose(fpSparseConVec);
@@ -175,7 +175,7 @@ int main() {
   fclose(fpIdxVec);
   fpNpostNeurons = fopen("nPostNeurons.dat", "wb");
   fwrite(nPostNeurons, sizeof(*nPostNeurons), N_NEURONS, fpNpostNeurons);
-  fclose(fpNpostNeurons);
+  fclose(fpNpostNeurons);*/
   printf("done\n");
   /*
   fpSparseConVec = fopen("sparseConVec.dat", "rb");
@@ -196,21 +196,33 @@ int main() {
       printf("\n");
     }
   }
-  /*FILE *fp;
+  /*
   int buffer[N_NEURONS * N_NEURONS], j;
   fp = fopen("conVec.dat", "rb");
   fread(buffer, sizeof(int), N_NEURONS * N_NEURONS, fp);
-  fclose(fp);
+  fclose(fp);*/
+  
+  printf("convec.csv ..."); fflush(stdout);
+  FILE *fp;
+  /*  int nEE[NE], nEI[NE], nIE[NI], nII[NI];*/
+  /*  int ncounts[N_NEURONS];*/
   fp = fopen("conMat.csv", "w");
   printf("\nN = %d\n", N_NEURONS);
+  int count = 0;
   for(i = 0; i < N_NEURONS; ++i) {
+    count = 0;
     for(int j = 0; j < N_NEURONS; ++j) {
-      fprintf(fp, "%d ", fullConVec[i + j * N_NEURONS]);
-      fprintf(stdout, "%d ", fullConVec[i + j * N_NEURONS]);
+      /*      fprintf(fp, "%d ", fullConVec[i + j * N_NEURONS]);*/
+      /*      fprintf(stdout, "%d ", fullConVec[i + j * N_NEURONS]);*/
+      count += fullConVec[i * N_NEURONS + j];   
     }
-    fprintf(fp, "\n");
-    fprintf(stdout, "\n");
+    /*    ncounts[i] = count;*/
+    fprintf(fp, "%d\n", count);
+    /*    printf("\n");*/
+    /*    fprintf(fp, "\n");*/
   }
-  fclose(fp);*/
+  fprintf(stdout, " done\n");
+  fclose(fp);
+  free(fullConVec);
   return 0;
 }

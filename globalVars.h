@@ -4,13 +4,14 @@
 #include "devHostConstants.h"
 #include "math.h"
 
-#define MAX_SPKS 10000000
+#define MAX_SPKS 80000000
 #define PI 3.14159265359
 #define SQRT_DT sqrt(DT)
 
+
 #define Cm 1.0 /* microF / cm^2  */
 #define E_Na 55.0 /* mV */
-#define E_K -90.0
+#define E_K -80.0 /*-90*/
 #define E_L -65.0
 #define G_Na 100.0 /* mS/cm^2 */
 #define G_K 40.0
@@ -28,7 +29,7 @@
 
 /* params synapseb */
 #define INV_TAU_SYNAP (1 / TAU_SYNAP)
-#define V_E  0.0
+#define V_E 0.0
 #define V_I -80.0
 #define G_EE 0.15
 #define G_EI 2.00
@@ -36,10 +37,10 @@
 #define G_II 3.0 
 
 /*
-#define G_EE 0.0
-#define G_EI 0.00
-#define G_IE 0.0
-#define G_II 0.0 
+#define G_EE 3.0
+#define G_EI 3.0
+#define G_IE 3.0
+#define G_II 3.0 
 */
 
 /* backgrund input */

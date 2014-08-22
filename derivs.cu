@@ -95,7 +95,7 @@ __device__ double z_inf(double(vm)) {
 __device__ void derivs(double t, double stateVar[], double dydx[], double isynap, double ibg, double iff) {
   double cur = 0.0;
   unsigned int kNeuron = threadIdx.x + blockDim.x * blockIdx.x;
-  double bgPrefactor = 1.0, iffPrefactor = 1.0;
+  double bgPrefactor = 1.0, iffPrefactor = 0.0;
   if(kNeuron < N_NEURONS) {
     /*    cur = 0.1 * sqrt(K);*/
     /*if((kNeuron == 0 & t >= 30 & t <= 35) | (kNeuron == 1 & t >= 280 & t <= 285)) {cur = 10;} 
@@ -115,7 +115,7 @@ __device__ void derivs(double t, double stateVar[], double dydx[], double isynap
                                    - G_Na * pow(m_inf(stateVar[0]), 3) * stateVar[3] * (stateVar[0] - E_Na) 
                                    - G_K * pow(stateVar[1], 4) * (stateVar[0] - E_K) 
                                    - G_L_I * (stateVar[0] - E_L)
-		       - G_adapt * stateVar[2] * (stateVar[0] - E_K) + isynap + bgPrefactor * ibg + iffPrefactor * iff);
+		       - 0.0 * G_adapt * stateVar[2] * (stateVar[0] - E_K) + isynap + bgPrefactor * ibg + iffPrefactor * iff);
       }
      
   dydx[1] = alpha_n(stateVar[0]) * (1 - stateVar[1]) - beta_n(stateVar[0]) * stateVar[1];

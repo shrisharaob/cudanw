@@ -37,7 +37,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  double tStart = 0.0, tStop = 5000.0;
+  double tStart = 0.0, tStop = 3000.0;
   double *spkTimes, *vm = NULL, host_theta = 0.0; /* *vstart; 500 time steps */
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   double *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
@@ -75,7 +75,8 @@ int main(int argc, char *argv[]) {
   lastNStepsToStore = (int)floor(STORE_LAST_T_MILLISEC  / DT);
   //  nSteps = 800;
   printf("\n N  = %d \n NE = %d \n NI = %d \n K  = %d \n tStop = %3.2f seconds nSteps = %d\n\n", N_NEURONS, NE, NI, (int)K, tStop / 1000.0, nSteps);
-  printf(" theta = %2.1f\n", host_theta);
+  
+  printf(" theta = %2.1f contrast = %2.1f\n", host_theta, HOST_CONTRAST);
   
   /* choose 256 threads per block for high occupancy */
   int ThreadsPerBlock = 128;
@@ -223,25 +224,28 @@ int main(int argc, char *argv[]) {
     devPtrs.k = k;
     rkdumbPretty<<<BlocksPerGrid, ThreadsPerBlock>>> (kernelParams, devPtrs);
     cudaCheckLastError("rk");
-    cudaCheck(cudaMemcpy(host_IF_SPK, dev_IF_SPK_Ptr, N_NEURONS * sizeOfInt, cudaMemcpyDeviceToHost));
+    /*cudaCheck(cudaMemcpy(host_IF_SPK, dev_IF_SPK_Ptr, N_NEURONS * sizeOfInt, cudaMemcpyDeviceToHost));
     for(i = 0; i < N_NEURONS; ++i) {
       if(host_IF_SPK[i]) {
 	host_prevStepSpkIdx[i] = nSpksInPrevStep;
         nSpksInPrevStep += 1;
       }
-    }
+      }*//*
     if(nSpksInPrevStep > N_SPKS_IN_PREV_STEP) { 
       printf("\nExceeded N_SPKS_IN_PREV_STEP ! nSpksInPrevStep = %d, step = %d \n", nSpksInPrevStep, k); 
       nSpksInPrevStep = N_SPKS_IN_PREV_STEP;
-      /*      exit(-1);*/
-    }
-    cudaCheck(cudaMemcpy(dev_prevStepSpkIdxPtr, host_prevStepSpkIdx, N_NEURONS * sizeOfInt, cudaMemcpyHostToDevice));
+      /*      exit(-1);
+    }*/
+    /*    cudaCheck(cudaMemcpy(dev_prevStepSpkIdxPtr, host_prevStepSpkIdx, N_NEURONS * sizeOfInt, cudaMemcpyHostToDevice));*/
     expDecay<<<BlocksPerGrid, ThreadsPerBlock>>>();
+    cudaCheckLastError("exp");
     /*    cudaStreamSynchronize(stream1);
     computeG_Optimal<<<BlocksPerGrid, ThreadsPerBlock>>>();
     spkSum<<<BlocksPerGrid, ThreadsPerBlock>>>(nSpksInPrevStep);*/
     computeConductance<<<BlocksPerGrid, ThreadsPerBlock>>>();
+    cudaCheckLastError("g");
     computeIsynap<<<BlocksPerGrid, ThreadsPerBlock>>>(k*DT);
+    cudaCheckLastError("isyp");
   }
 
   cudaCheck(cudaStreamDestroy(stream1));
@@ -278,22 +282,23 @@ int main(int argc, char *argv[]) {
   fprintf(fpElapsedTime, "%d %f %d\n", N_NEURONS, elapsedTime, *nSpks);
   fclose(fpElapsedTime);
   /* ================= SAVE TO DISK =============================================================*/
+
+  printf(" saving results to disk ... "); 
+  fflush(stdout);
+  fpSpkTimes = fopen("spkTimes.csv", "w");
+  int totalNSpks = *nSpks;
+  printf(" saving spikes ...");
+  fflush(stdout);
+  if(*nSpks > MAX_SPKS) {
+    totalNSpks = MAX_SPKS;
+    printf("\n ***** WARNING MAX_SPKS EXCEEDED limit of %d *****\n", MAX_SPKS);
+  }
+  for(i = 1; i <= totalNSpks; ++i) {
+    fprintf(fpSpkTimes, "%f;%f\n", spkTimes[i], (double)spkNeuronIds[i]);
+  }
+  fclose(fpSpkTimes);
+  printf("done\n");
   if(IF_SAVE) {  
-    printf(" saving results to disk ... "); 
-    fflush(stdout);
-    fpSpkTimes = fopen("spkTimes.csv", "w");
-    int totalNSpks = *nSpks;
-    printf(" saving spikes ...");
-    fflush(stdout);
-    if(*nSpks > MAX_SPKS) {
-      totalNSpks = MAX_SPKS;
-      printf("\n ***** WARNING MAX_SPKS EXCEEDED limit of %d *****\n", MAX_SPKS);
-    }
-    for(i = 1; i <= totalNSpks; ++i) {
-      fprintf(fpSpkTimes, "%f;%f\n", spkTimes[i], (double)spkNeuronIds[i]);
-    }
-    fclose(fpSpkTimes);
-    printf("done\n");
     fp = fopen("vm.csv", "w");
     for(i = 0; i < lastNStepsToStore; ++i) {
       fprintf(fp, "%f ", host_time[i]);
@@ -341,6 +346,7 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaFree(dev_nPostneuronsPtr));*/
   cudaCheck(cudaFreeHost(host_IF_SPK));
   cudaCheck(cudaFreeHost(host_prevStepSpkIdx));
+  /*  cudaDeviceReset()*/
   return EXIT_SUCCESS;
 }
 

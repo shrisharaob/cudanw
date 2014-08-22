@@ -42,21 +42,25 @@ __device__ void RffTotal(double t) {
 
 __device__ void Gff(double t) {
   unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
+  double tmp = 0.0;
   if(mNeuron < N_Neurons) {
     if(t > DT) {
-      gffItgrl[mNeuron] = gffItgrl[mNeuron] * (1 - DT / TAU_SYNAP) + (SQRT_DT * INV_TAU_SYNAP) * normRndKernel(iffNormRandState);
+      tmp = gffItgrl[mNeuron];
+      tmp = tmp * (1 - DT / TAU_SYNAP) + (SQRT_DT * INV_TAU_SYNAP) * normRndKernel(iffNormRandState);
+      tmp = 0;
       if(mNeuron < NE) {
-	gFF[mNeuron] =   GFF_E * (rTotal[mNeuron] + sqrt(rTotal[mNeuron]) * gffItgrl[mNeuron]);
+	gFF[mNeuron] =   GFF_E * (rTotal[mNeuron] + sqrt(rTotal[mNeuron]) * tmp);
       }
       if(mNeuron >= NE) {
-	gFF[mNeuron] =  GFF_I * (rTotal[mNeuron] + sqrt(rTotal[mNeuron]) * gffItgrl[mNeuron]);
+	gFF[mNeuron] =  GFF_I * (rTotal[mNeuron] + sqrt(rTotal[mNeuron]) * tmp);
       }
+      gffItgrl[mNeuron] = tmp;
     }
     else {
       gffItgrl[mNeuron] = 0.0;
       gFF[mNeuron] = 0.0;
     }
-
+    
   }
 }
 

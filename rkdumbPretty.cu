@@ -37,8 +37,12 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
       dev_isynap[mNeuron] = 0;
       dev_gE[mNeuron] = 0.0;
       dev_gI[mNeuron] = 0.0;
-      gaussNoiseE[mNeuron] = 0.0;
-      gaussNoiseI[mNeuron] = 0.0;
+      if(mNeuron < NE) {
+	gaussNoiseE[mNeuron] = 0.0;
+      }
+      else {
+	gaussNoiseI[mNeuron - NE] = 0.0;
+      }
       gFF[mNeuron] = 0.0;
       rTotal[mNeuron] = 0.0;
       gffItgrl[mNeuron] = 0.0;
@@ -83,15 +87,6 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
 	}
       }
     }
-
-	/*	__syncthreads();  CRUTIAL step to ensure that dev_IF_spk is updated by all threads */
-	/*        isynapNew = SparseIsynap(v[0], dev_nPostNeurons, dev_sparseConVec, dev_sparseIdx, IF_SPK);*/
-	/* bg current */
-	/*	ibg = bgCur(vmOld); /* make sure AuxRffTotal<<<  >>> is run begore calling bgCur */
-	/* FF input current*/
-	/*	RffTotal(x);
-	Gff(x);
-	iff = IFF(vmOld);*/
   }
 }
 #endif
