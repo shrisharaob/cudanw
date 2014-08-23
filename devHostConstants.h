@@ -1,7 +1,7 @@
 #ifndef _NEURON_COUNTS
 #define _NEURON_COUNTS
 
-#define NE 40000U
+#define NE 10000U
 #define NI 10000U
 #define N_Neurons (NE + NI)
 #define N_NEURONS N_Neurons
@@ -12,7 +12,7 @@
 #define MAX_UNI_RANDOM_VEC_LENGTH 10000000 //make constant 1e7
 #define STORE_LAST_T_MILLISEC 1.0
 #define STORE_LAST_N_STEPS (STORE_LAST_T_MILLISEC / DT)
-#define HOST_CONTRAST 0.0
+#define HOST_CONTRAST 30.0
 
 __constant__ double CONTRAST = HOST_CONTRAST;
 __constant__ double theta;

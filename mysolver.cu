@@ -37,7 +37,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  double tStart = 0.0, tStop = 3000.0;
+  double tStart = 0.0, tStop = 2000.0;
   double *spkTimes, *vm = NULL, host_theta = 0.0; /* *vstart; 500 time steps */
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   double *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
