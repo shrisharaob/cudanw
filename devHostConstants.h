@@ -1,7 +1,7 @@
 #ifndef _NEURON_COUNTS
 #define _NEURON_COUNTS
 
-#define NE 30000U
+#define NE 40000U
 #define NI 10000U
 #define N_Neurons (NE + NI)
 #define N_NEURONS N_Neurons
