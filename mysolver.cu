@@ -216,7 +216,8 @@ int main(int argc, char *argv[]) {
   /* SETUP TIMER EVENTS ON DEVICE */
   cudaEventCreate(&stop0); cudaEventCreate(&start0);
   cudaEventRecord(start0, 0);
-
+  unsigned int spksE = 0, spksI = 0;
+  FILE *fpIFR = fopen("instant_fr.csv", "w");
   for(k = 0; k < nSteps; ++k) { 
     /*    cudaCheck(cudaMemsetAsync(dev_nEPtr, 0, N_NEURONS * N_SPKS_IN_PREV_STEP * sizeOfInt, stream1));
 	  cudaCheck(cudaMemsetAsync(dev_nIPtr, 0, N_NEURONS * N_SPKS_IN_PREV_STEP * sizeOfInt, stream1));*/
@@ -224,13 +225,27 @@ int main(int argc, char *argv[]) {
     devPtrs.k = k;
     rkdumbPretty<<<BlocksPerGrid, ThreadsPerBlock>>> (kernelParams, devPtrs);
     cudaCheckLastError("rk");
-    /*cudaCheck(cudaMemcpy(host_IF_SPK, dev_IF_SPK_Ptr, N_NEURONS * sizeOfInt, cudaMemcpyDeviceToHost));
+    cudaCheck(cudaMemcpy(host_IF_SPK, dev_IF_SPK_Ptr, N_NEURONS * sizeOfInt, cudaMemcpyDeviceToHost));
+  
     for(i = 0; i < N_NEURONS; ++i) {
       if(host_IF_SPK[i]) {
-	host_prevStepSpkIdx[i] = nSpksInPrevStep;
-        nSpksInPrevStep += 1;
+	if(i < NE) {
+	  spksE += 1;
+	}
+	else{
+	  spksI += 1;
+	}
+	/*	    host_prevStepSpkIdx[i] = nSpksInPrevStep;
+		    nSpksInPrevStep += 1;*/
       }
-      }*//*
+    }
+    if(!(k%2000)) {
+      fprintf(fpIFR, "%f %f \n", ((double)spksE) / (0.05 * (double)NE), ((double)spksI) / (0.05 * (double)NI));fflush(fpIFR);
+      fprintf(stdout, "%f %f \n", ((double)spksE) / (0.05 * (double)NE), ((double)spksI) / (0.05 * (double)NI));
+      spksE = 0; 
+      spksI = 0;
+    }
+    /*
     if(nSpksInPrevStep > N_SPKS_IN_PREV_STEP) { 
       printf("\nExceeded N_SPKS_IN_PREV_STEP ! nSpksInPrevStep = %d, step = %d \n", nSpksInPrevStep, k); 
       nSpksInPrevStep = N_SPKS_IN_PREV_STEP;
@@ -247,7 +262,7 @@ int main(int argc, char *argv[]) {
     computeIsynap<<<BlocksPerGrid, ThreadsPerBlock>>>(k*DT);
     cudaCheckLastError("isyp");
   }
-
+  fclose(fpIFR);
   cudaCheck(cudaStreamDestroy(stream1));
   cudaCheckLastError("rkdumb kernel failed");
   cudaEventRecord(stop0, 0);

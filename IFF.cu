@@ -47,7 +47,7 @@ __device__ void Gff(double t) {
     if(t > DT) {
       tmp = gffItgrl[mNeuron];
       tmp = tmp * (1 - DT / TAU_SYNAP) + (SQRT_DT * INV_TAU_SYNAP) * normRndKernel(iffNormRandState);
-      tmp = 0;
+      /*      tmp = 0;*/
       if(mNeuron < NE) {
 	gFF[mNeuron] =   GFF_E * (rTotal[mNeuron] + sqrt(rTotal[mNeuron]) * tmp);
       }
