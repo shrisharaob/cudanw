@@ -8,7 +8,7 @@ DEVICE_ID=0
 IF_SAVE=0
 #make
 #./genconvec.out
-for THETA in {45..360..45}
+for THETA in {0..360..45}
 do
     echo $THETA
     if [ $THETA == 315 ]; then
