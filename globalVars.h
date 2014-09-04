@@ -58,8 +58,8 @@
 #define R0 0.002
 #define R1 0.02
 #define INP_FREQ (0.004 * PI)
-#define ETA_E 1.2
-#define ETA_I 1.2
+#define ETA_E 0.0
+#define ETA_I 0.0
 #define MU_E 0.0
 #define MU_I 0.0
 #define GFF_E (0.95 / sqrt(K))
