@@ -58,8 +58,8 @@
 #define R0 0.002
 #define R1 0.02
 #define INP_FREQ (0.004 * PI)
-#define ETA_E 0.0
-#define ETA_I 0.0
+#define ETA_E 1.2
+#define ETA_I 1.2
 #define MU_E 0.0
 #define MU_I 0.0
 #define GFF_E (0.95 / sqrt(K))
@@ -80,7 +80,7 @@ __device__ int dev_IF_SPK[N_NEURONS], curConter = 0;
 
 __device__ double glbCurE[N_CURRENT_STEPS_TO_STORE], glbCurI[N_CURRENT_STEPS_TO_STORE]; /* !!!!!! GENERALIZE */
 __device__ double rTotal[N_Neurons], gFF[N_Neurons]; /* rTotalPrev[N_Neurons];*/
-__device__ float gaussNoiseE[NE], gaussNoiseI[NI];
+__device__ double gaussNoiseE[NE], gaussNoiseI[NI];
 __device__ curandState bgCurNoiseGenState[N_NEURONS], iffNormRandState[N_NEURONS];
 __device__ double dev_bgCur[N_CURRENT_STEPS_TO_STORE], dev_iff[N_CURRENT_STEPS_TO_STORE];
 __device__ int dev_nPostNeurons[N_NEURONS], dev_sparseIdx[N_NEURONS]; 

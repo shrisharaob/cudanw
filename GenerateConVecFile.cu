@@ -148,7 +148,6 @@ int main() {
     printf("BlocksPerGrid exceds valid number of allowed blocks of 65536");
     exit(-1);
   }
-  
   fpConVec = fopen("conVec.dat", "wb"); 
   cudaCheck(cudaMalloc((void **)&devStates,  N_NEURONS * sizeof(curandState)));
   cudaCheck(cudaMallocHost((void **)&conVec, (N_NEURONS / nChunks) * N_NEURONS * sizeof(int)));
@@ -173,7 +172,9 @@ int main() {
   }
   fclose(fpConVec);
   cudaFreeHost(conVec);
-  int sparseConVec[N_NEURONS * (2 * (int)K + N_NEURONS)], idxVec[N_NEURONS], nPostNeurons[N_NEURONS];
+  int idxVec[N_NEURONS], nPostNeurons[N_NEURONS];
+  int *sparseConVec;
+  sparseConVec = (int *)malloc((unsigned long long)N_NEURONS * (2ULL + (unsigned long long)K + N_NEURONS) * sizeof(int));
   printf("generating sparse representation ..."); fflush(stdout);
   GenSparseMat(fullConVec, N_NEURONS, N_NEURONS, sparseConVec, idxVec, nPostNeurons);
 
@@ -245,5 +246,6 @@ int main() {
   fclose(fp);   
   fclose(fp01);
   free(fullConVec);
+  free(sparseConVec);
   return 0;
 }

@@ -1,4 +1,4 @@
- #ifndef _RKDUMBPRETTY_
+#ifndef _RKDUMBPRETTY_
 #define _RKDUMBPRETTY_
 #include <cuda.h>
 #include "globalVars.h"
@@ -38,10 +38,10 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
       dev_gE[mNeuron] = 0.0;
       dev_gI[mNeuron] = 0.0;
       if(mNeuron < NE) {
-	gaussNoiseE[mNeuron] = 0.0;
+        gaussNoiseE[mNeuron] = 0.0;
       }
       else {
-	gaussNoiseI[mNeuron - NE] = 0.0;
+        gaussNoiseI[mNeuron - NE] = 0.0;
       }
       gFF[mNeuron] = 0.0;
       rTotal[mNeuron] = 0.0;

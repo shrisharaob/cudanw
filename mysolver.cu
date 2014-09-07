@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
   //  nSteps = 800;
   printf("\n N  = %d \n NE = %d \n NI = %d \n K  = %d \n tStop = %3.2f seconds nSteps = %d\n\n", N_NEURONS, NE, NI, (int)K, tStop / 1000.0, nSteps);
   
-  printf(" theta = %2.1f contrast = %2.1f\n", host_theta, HOST_CONTRAST);
+  printf(" theta = %2.1f contrast = %2.1f\n, ksi = %f\n", host_theta, HOST_CONTRAST, ETA_E);
   
   /* choose 256 threads per block for high occupancy */
   int ThreadsPerBlock = 128;
@@ -239,7 +239,7 @@ int main(int argc, char *argv[]) {
 		    nSpksInPrevStep += 1;*/
       }
     }
-    if(!(k%1000)) {
+    if(!(k%2000)) {
       fprintf(fpIFR, "%f %f \n", ((double)spksE) / (0.05 * (double)NE), ((double)spksI) / (0.05 * (double)NI));fflush(fpIFR);
       fprintf(stdout, "%f %f \n", ((double)spksE) / (0.05 * (double)NE), ((double)spksI) / (0.05 * (double)NI));
       spksE = 0; 

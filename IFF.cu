@@ -27,23 +27,20 @@ __device__ void RffTotal(double t) {
     if(mNeuron < NE) {
       /**  !!!!! COS IN RADIANS ?????? */
 
-      /*
       rTotal[mNeuron] = CFF * K * (R0 +  R1 * log10(1.000 + CONTRAST))
 	+ sqrt(CFF * K) * R0 * randnXiA[mNeuron]
 	+ sqrt(CFF * K) * R1 * log10(1 + CONTRAST) * (randnXiA[mNeuron] 
 		      + ETA_E * randwZiA[mNeuron * 4] * cos(2 * (theta - randuDelta[mNeuron])) 
 		      + MU_E * randwZiA[mNeuron *4 + 1] * cos(INP_FREQ * t - randuPhi[mNeuron * 3])
-		      + ETA_E * MU_E * 0.5 * (randwZiA[mNeuron * 4 + 2] * cos(2 * theta + INP_FREQ * t - randuPhi[mNeuron * 3 + 1]) + randwZiA[mNeuron * 4 + 3] * cos(2 * theta - INP_FREQ * t + randuPhi[mNeuron * 3 + 2])));*/
+		      + ETA_E * MU_E * 0.5 * (randwZiA[mNeuron * 4 + 2] * cos(2 * theta + INP_FREQ * t - randuPhi[mNeuron * 3 + 1]) + randwZiA[mNeuron * 4 + 3] * cos(2 * theta - INP_FREQ * t + randuPhi[mNeuron * 3 + 2])));
     }
     if(mNeuron >= NE) {
       /*      rTotalPrev[mNeuron] = rTotal[mNeuron]; */
 
-      /*
       rTotal[mNeuron] = CFF * K * (R0 + R1 * log10(1.000 + CONTRAST)) + sqrt(CFF * K) * R0 * randnXiA[mNeuron] + sqrt(CFF * K) * R1 * log10(1 + CONTRAST) * (randnXiA[mNeuron] + ETA_I * randwZiA[mNeuron * 4] * cos(2 * (theta - randuDelta[mNeuron])) + MU_I * randwZiA[mNeuron * 4 + 1] * cos(INP_FREQ * t - randuPhi[mNeuron * 3]) + ETA_I * MU_I * 0.5 * (randwZiA[mNeuron * 4 + 2] * cos(2 * theta + INP_FREQ * t - randuPhi[mNeuron * 3 + 1]) + randwZiA[mNeuron * 4 + 3] * cos(2 * theta - INP_FREQ * t + randuPhi[mNeuron * 3 + 2])));
-      */
     }
-
-    rTotal[mNeuron] = (R0 + R1 * log10(1 + CONTRAST)) * (CFF * K + sqrt(CFF *K) * randnXiA[mNeuron]);
+    /*
+      rTotal[mNeuron] = (R0 + R1 * log10(1 + CONTRAST)) * (CFF * K + sqrt(CFF *K) * randnXiA[mNeuron]);*/
 
   }
 }
@@ -56,7 +53,6 @@ __device__ void Gff(double t) {
     if(t > DT) {
       tmp = gffItgrl[mNeuron];
       tmp = tmp * (1 - DT / TAU_SYNAP) + (SQRT_DT * INV_TAU_SYNAP) * normRndKernel(iffNormRandState);
-      tmp = 0;
       if(mNeuron < NE) {
 	gFF[mNeuron] =   GFF_E * (rTotal[mNeuron] + sqrt(rTotal[mNeuron]) * tmp);
       }
