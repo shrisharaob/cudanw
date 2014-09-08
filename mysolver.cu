@@ -37,7 +37,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  double tStart = 0.0, tStop = 3000.0;
+  double tStart = 0.0, tStop = 25000.0;
   double *spkTimes, *vm = NULL, host_theta = 0.0; /* *vstart; 500 time steps */
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   double *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaStreamCreate(&stream1));
 
   /*PARSE INPUTS*/
-  if(argc >1) {
+  if(argc > 1) {
     deviceId = atoi(argv[1]);
     if(argc > 2) {
       IF_SAVE = atoi(argv[2]);
@@ -69,6 +69,7 @@ int main(int argc, char *argv[]) {
   }
   printf("\n Computing on GPU%d \n", deviceId);
   cudaCheck(cudaSetDevice(deviceId));
+  host_theta = PI * host_theta / (180.0); /* convert to radians */
   cudaMemcpyToSymbol(theta, &host_theta, sizeof(host_theta));
   /* ================= INITIALIZE ===============================================*/
   nSteps = (tStop - tStart) / DT;
@@ -239,7 +240,7 @@ int main(int argc, char *argv[]) {
 		    nSpksInPrevStep += 1;*/
       }
     }
-    if(!(k%2000)) {
+    if(!(k%1000)) {
       fprintf(fpIFR, "%f %f \n", ((double)spksE) / (0.05 * (double)NE), ((double)spksI) / (0.05 * (double)NI));fflush(fpIFR);
       fprintf(stdout, "%f %f \n", ((double)spksE) / (0.05 * (double)NE), ((double)spksI) / (0.05 * (double)NI));
       spksE = 0; 
