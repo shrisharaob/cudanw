@@ -210,7 +210,7 @@ int main(int argc, char *argv[]) {
   
   
   int *dev_IF_SPK_Ptr = NULL, *dev_prevStepSpkIdxPtr = NULL, *host_IF_SPK = NULL, *host_prevStepSpkIdx = NULL,  *dev_nEPtr = NULL, *dev_nIPtr = NULL;
-  /*  int nSpksInPrevStep;*/
+  unsigned long nSpksInPrevStep;
   cudaCheck(cudaMallocHost((void **)&host_IF_SPK, N_NEURONS * sizeof(int)));
   cudaCheck(cudaMallocHost((void **)&host_prevStepSpkIdx, N_NEURONS * sizeof(int)));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_IF_SPK_Ptr, dev_IF_SPK));
@@ -224,15 +224,44 @@ int main(int argc, char *argv[]) {
   cudaEventRecord(start0, 0);
   unsigned int spksE = 0, spksI = 0;
   FILE *fpIFR = fopen("instant_fr.csv", "w");
+  
+  unsigned long *histVec = NULL, *dev_histVec = NULL; /* for storing the post-synaptic neurons to be updated */
+  unsigned long long histVecIndx = 0;
+  cudaCheck(cudaMallocHost((void **)&histVec, N_NEURONS * (unsigned long long)K * sizeof(unsigned long)));
+  cudaCheck(cudaMalloc((void **)&dev_histVec, N_NEURONS * (unsigned long long)K * sizeof(unsigned long)));
+/*
+        test_xform xform;
+        test_sumfun sum;
+
+ */
+  int *dev_histCount = NULL, *histCount = NULL;
+  cudaCheck(cudaMalloc((void **)&dev_histCount, sizeof(int) * N_NEURONS));
+  cudaCheck(cudaMallocHost((void **)&histCount, sizeof(int) * N_NEURONS));
   for(k = 0; k < nSteps; ++k) { 
     /*    cudaCheck(cudaMemsetAsync(dev_nEPtr, 0, N_NEURONS * N_SPKS_IN_PREV_STEP * sizeOfInt, stream1));
 	  cudaCheck(cudaMemsetAsync(dev_nIPtr, 0, N_NEURONS * N_SPKS_IN_PREV_STEP * sizeOfInt, stream1));*/
-    /*    nSpksInPrevStep = 0;*/
+    nSpksInPrevStep = 0;
+    histVecIndx = 0;
     devPtrs.k = k;
     rkdumbPretty<<<BlocksPerGrid, ThreadsPerBlock>>> (kernelParams, devPtrs);
-    cudaCheckLastError("rk");
-    cudaCheck(cudaMemcpy(host_IF_SPK, dev_IF_SPK_Ptr, N_NEURONS * sizeOfInt, cudaMemcpyDeviceToHost));
-  
+        cudaCheckLastError("rk");
+        cudaCheck(cudaMemcpy(host_IF_SPK, dev_IF_SPK_Ptr, (long long unsigned)N_NEURONS * sizeOfInt, cudaMemcpyDeviceToHost));
+        
+        for(i = 0; i < N_NEURONS; ++i) {
+          if(host_IF_SPK[i]){
+            nSpksInPrevStep += 1;
+            for(int jj = 0; jj < nPostNeurons[i]; ++jj) {
+              histVec[histVecIndx++] = sparseConVec[idxVec[i] + jj];
+            }
+          }
+        }
+        cudaCheck(cudaMemcpy(dev_histVec, histVec, histVecIndx * sizeof(unsigned long), cudaMemcpyHostToDevice));
+        /*
+          callHistogramKernel<histigram_atomic_int, 1>(dev_histVec, xform, sum, 0, N_NEURONS, 0, histCount, N, true)
+
+
+         */
+        /*
     for(i = 0; i < N_NEURONS; ++i) {
       if(host_IF_SPK[i]) {
 	if(i < NE) {
@@ -240,17 +269,19 @@ int main(int argc, char *argv[]) {
 	}
 	else{
 	  spksI += 1;
-	}
+      }
+
+    */
 	/*	    host_prevStepSpkIdx[i] = nSpksInPrevStep;
 		    nSpksInPrevStep += 1;*/
-      }
+    /* }
     }
     if(!(k%1000)) {
       fprintf(fpIFR, "%f %f \n", ((double)spksE) / (0.05 * (double)NE), ((double)spksI) / (0.05 * (double)NI));fflush(fpIFR);
       fprintf(stdout, "%f %f \n", ((double)spksE) / (0.05 * (double)NE), ((double)spksI) / (0.05 * (double)NI));
       spksE = 0; 
       spksI = 0;
-    }
+      }*/
     /*
     if(nSpksInPrevStep > N_SPKS_IN_PREV_STEP) { 
       printf("\nExceeded N_SPKS_IN_PREV_STEP ! nSpksInPrevStep = %d, step = %d \n", nSpksInPrevStep, k); 
@@ -263,11 +294,17 @@ int main(int argc, char *argv[]) {
     /*    cudaStreamSynchronize(stream1);
     computeG_Optimal<<<BlocksPerGrid, ThreadsPerBlock>>>();
     spkSum<<<BlocksPerGrid, ThreadsPerBlock>>>(nSpksInPrevStep);*/
+    
+    
+    
+
     computeConductance<<<BlocksPerGrid, ThreadsPerBlock>>>();
     cudaCheckLastError("g");
     computeIsynap<<<BlocksPerGrid, ThreadsPerBlock>>>(k*DT);
     cudaCheckLastError("isyp");
   }
+  cudaCheck(cudaFreeHost(histVec));
+  cudaCheck(cudaFree(dev_histVec));
   fclose(fpIFR);
   cudaCheck(cudaStreamDestroy(stream1));
   cudaCheckLastError("rkdumb kernel failed");
