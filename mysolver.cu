@@ -37,7 +37,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  double tStart = 0.0, tStop = 25000.0;
+  double tStart = 0.0, tStop = 1000.0;
   double *spkTimes, *vm = NULL, host_theta = 0.0; /* *vstart; 500 time steps */
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   double *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
@@ -75,9 +75,9 @@ int main(int argc, char *argv[]) {
   nSteps = (tStop - tStart) / DT;
   lastNStepsToStore = (int)floor(STORE_LAST_T_MILLISEC  / DT);
   //  nSteps = 800;
-  printf("\n N  = %d \n NE = %d \n NI = %d \n K  = %d \n tStop = %3.2f seconds nSteps = %d\n\n", N_NEURONS, NE, NI, (int)K, tStop / 1000.0, nSteps);
+  printf("\n N  = %llu \n NE = %llu \n NI = %llu \n K  = %d \n tStop = %3.2f seconds nSteps = %d\n\n", N_NEURONS, NE, NI, (int)K, tStop / 1000.0, nSteps);
   
-  printf(" theta = %2.1f contrast = %2.1f\n, ksi = %f\n", host_theta, HOST_CONTRAST, ETA_E);
+  printf(" theta = %2.3f contrast = %2.1f\n, ksi = %f\n", host_theta, HOST_CONTRAST, ETA_E);
   
   /* choose 256 threads per block for high occupancy */
   int ThreadsPerBlock = 128;
@@ -128,9 +128,13 @@ int main(int argc, char *argv[]) {
   fpSparseConVec = fopen("sparseConVec.dat", "rb");
   fpIdxVec = fopen("idxVec.dat", "rb");
   fpNpostNeurons = fopen("nPostNeurons.dat", "rb");
-  fread(sparseConVec, sizeof(*sparseConVec), N_NEURONS * (2 * K + 1), fpSparseConVec);
-  fread(idxVec, sizeof(*idxVec), N_NEURONS, fpIdxVec);
-  fread(nPostNeurons, sizeof(*nPostNeurons), N_NEURONS, fpNpostNeurons);
+  int dummy;
+  dummy = fread(sparseConVec, sizeof(*sparseConVec), N_NEURONS * (2 * (int)K + 1), fpSparseConVec);
+  if(dummy != N_NEURONS * (2 * (int)K + 1)) {
+    printf("sparseConvec read error ? \n");
+  }
+  dummy = fread(idxVec, sizeof(*idxVec), N_NEURONS, fpIdxVec);
+  dummy = fread(nPostNeurons, sizeof(*nPostNeurons), N_NEURONS, fpNpostNeurons);
   fclose(fpSparseConVec);
   fclose(fpIdxVec);
   fclose(fpNpostNeurons);
@@ -205,7 +209,8 @@ int main(int argc, char *argv[]) {
   
   
   
-  int *dev_IF_SPK_Ptr = NULL, *dev_prevStepSpkIdxPtr = NULL, *host_IF_SPK = NULL, *host_prevStepSpkIdx = NULL, nSpksInPrevStep, *dev_nEPtr = NULL, *dev_nIPtr = NULL;
+  int *dev_IF_SPK_Ptr = NULL, *dev_prevStepSpkIdxPtr = NULL, *host_IF_SPK = NULL, *host_prevStepSpkIdx = NULL,  *dev_nEPtr = NULL, *dev_nIPtr = NULL;
+  /*  int nSpksInPrevStep;*/
   cudaCheck(cudaMallocHost((void **)&host_IF_SPK, N_NEURONS * sizeof(int)));
   cudaCheck(cudaMallocHost((void **)&host_prevStepSpkIdx, N_NEURONS * sizeof(int)));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_IF_SPK_Ptr, dev_IF_SPK));
@@ -222,7 +227,7 @@ int main(int argc, char *argv[]) {
   for(k = 0; k < nSteps; ++k) { 
     /*    cudaCheck(cudaMemsetAsync(dev_nEPtr, 0, N_NEURONS * N_SPKS_IN_PREV_STEP * sizeOfInt, stream1));
 	  cudaCheck(cudaMemsetAsync(dev_nIPtr, 0, N_NEURONS * N_SPKS_IN_PREV_STEP * sizeOfInt, stream1));*/
-    nSpksInPrevStep = 0;
+    /*    nSpksInPrevStep = 0;*/
     devPtrs.k = k;
     rkdumbPretty<<<BlocksPerGrid, ThreadsPerBlock>>> (kernelParams, devPtrs);
     cudaCheckLastError("rk");
@@ -295,7 +300,7 @@ int main(int argc, char *argv[]) {
   printf(" MAX SPKS stored on GPU = %d \n", MAX_SPKS); 
   printf("\n Simulation completed ! \n");
   fpElapsedTime = fopen("elapsedTime.csv", "a+");
-  fprintf(fpElapsedTime, "%d %f %d\n", N_NEURONS, elapsedTime, *nSpks);
+  fprintf(fpElapsedTime, "%llu %f %d\n", N_NEURONS, elapsedTime, *nSpks);
   fclose(fpElapsedTime);
   /* ================= SAVE TO DISK =============================================================*/
 
