@@ -1,8 +1,11 @@
 #ifndef _GLOBALVARS_
 #define _GLOBALVARS_
+
 #include "mycurand.h"
 #include "devHostConstants.h"
 #include "math.h"
+#include <assert.h>
+
 
 #define MAX_SPKS 80000000
 #define PI 3.14159265359
@@ -129,5 +132,32 @@ typedef struct {
   double tStart, tStop;
   int nSteps;
 } kernelParams_t;
+
+
+/* histogram */
+// minimal test - 1 key per input index
+/*struct test_xform {
+  __host__ __device__
+  void operator() (unsigned long* input, unsigned long long i, unsigned long long* res_idx, int* res, int nres) const {
+    *res_idx++ = input[i];
+    *res++ = 1;
+  }
+};
+  */
+
+struct test_xform {
+  __host__ __device__
+  void operator() (int* input, int i, int* res_idx, int* res, int nres) const {
+    *res_idx++ = input[i];
+    *res++ = 1;
+  }
+};
+
+// Sum-functor to be used for reduction - just a normal sum of two integers
+struct test_sumfun {
+  __device__ __host__ int operator() (int res1, int res2) const{
+    return res1 + res2;
+  }
+};
 
 #endif

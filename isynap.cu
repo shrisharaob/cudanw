@@ -50,11 +50,17 @@ __device__ double isynap(double vm, int *dev_conVec) {
   return totIsynap;
 }
 
-__global__ void expDecay() {
+__global__ void expDecay(int *dev_histCountE, int *dev_histCountI) {
   unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   if(mNeuron < N_NEURONS) {
     dev_gE[mNeuron] *= EXP_SUM;
     dev_gI[mNeuron] *= EXP_SUM;
+    if(mNeuron == 0) {
+      for(int i = 0; i < N_NEURONS; ++i) {
+        dev_histCountE[i] = 0;
+        dev_histCountI[i] = 0;
+      }
+    }
   }
 }
 
@@ -73,6 +79,18 @@ __global__ void computeConductance() {
      } 
   }
 }
+
+
+
+__global__ void computeConductanceHist(int *dev_histCountE, int *dev_histCountI) {
+  unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
+  int stride = gridDim.x * blockDim.x;
+  while(mNeuron < N_NEURONS) {
+      dev_gE[mNeuron] += (double)dev_histCountE[mNeuron];
+      dev_gI[mNeuron] += (double)dev_histCountI[mNeuron];
+      mNeuron += stride;
+  }
+}     
 
 __global__ void computeG_Optimal() {
   unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
@@ -128,9 +146,9 @@ __global__ void computeIsynap(double t) {
     if(mNeuron == SAVE_CURRENT_FOR_NEURON) {
       localCurConter = curConter;
       if(localCurConter < N_CURRENT_STEPS_TO_STORE) {
-	glbCurE[localCurConter] = tempCurE;
-	glbCurI[localCurConter] = tempCurI;
-	curConter += 1;
+        glbCurE[localCurConter] = tempCurE;
+        glbCurI[localCurConter] = tempCurI;
+        curConter += 1;
       }
     }
     	/* bg current */
