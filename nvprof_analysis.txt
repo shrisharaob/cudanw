@@ -1,0 +1,96 @@
+==7005== NVPROF is profiling process 7005, command: ./nw.out
+
+ Computing on GPU0 
+
+ N  = 20000 
+ NE = 10000 
+ NI = 10000 
+ K  = 2000 
+ tStop = 1.00 seconds nSteps = 20000
+
+ theta = 0.000 contrast = 100.0
+, ksi = 1.200000
+Threads per block : 128, Blocks per grid : 157 
+ GPU memory allocation successful ! 
+ 
+ launching Simulation kernel ...0.000000 0.000000 
+5.560000 10.328000 
+5.372000 9.742000 
+5.764000 9.816000 
+6.096000 10.032000 
+6.064000 9.974000 
+6.134000 10.000000 
+6.022000 10.024000 
+6.080000 9.978000 
+6.138000 10.010000 
+6.058000 10.010000 
+6.070000 9.980000 
+6.088000 10.008000 
+6.050000 10.004000 
+6.024000 10.000000 
+6.108000 10.026000 
+6.032000 9.970000 
+6.150000 9.990000 
+6.098000 10.024000 
+6.038000 9.998000 
+ Done ! 
+
+ elapsed time = 57117.062500ms 
+devspk ptrs: 0xf43ee0000 0xf6a140000 
+
+ nSpks = 160002
+ MAX SPKS stored on GPU = 80000000 
+
+ Simulation completed ! 
+ saving results to disk ...  saving spikes ...done
+==7005== Profiling application: ./nw.out
+==7005== Profiling result:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 30.86%  6.77711s     38130  177.74us  176.63us  178.81us  void multireduceKernel<int, test_sumfun>(int*, int, int, int, test_sumfun, int, int, int*)
+ 22.25%  4.88595s     33730  144.85us  133.88us  514.22us  void histogramKernel_multipass<histogram_type=1, int=1, bool=0, int*, test_xform, test_sumfun, int, int>(int*, test_xform, test_sumfun, int, int, int, int*, int, int, int, int)
+ 16.78%  3.68598s     38130  96.668us  27.967us  154.81us  void histogramKernel_multipass<histogram_type=1, int=1, bool=1, int*, test_xform, test_sumfun, int, int>(int*, test_xform, test_sumfun, int, int, int, int*, int, int, int, int)
+  9.83%  2.15972s    114395  18.879us  1.9840us  62.126ms  [CUDA memcpy HtoD]
+  7.24%  1.59085s     20000  79.542us  76.894us  97.885us  rkdumbPretty(kernelParams_t, devPtr_t)
+  6.52%  1.43221s     58141  24.633us  3.5520us  142.16ms  [CUDA memcpy DtoH]
+  3.50%  768.40ms     20000  38.420us  17.088us  42.175us  computeIsynap(double)
+  2.02%  443.35ms     38130  11.627us  11.200us  11.872us  void initKernel<int>(int*, int, int, int)
+  0.49%  108.16ms     20000  5.4070us  3.3600us  5.9200us  computeConductanceHist(int*, int*)
+  0.43%  93.666ms     20000  4.6830us  4.1280us  5.3440us  expDecay(int*, int*)
+  0.03%  6.1778ms         2  3.0889ms  3.0711ms  3.1068ms  setup_kernel(curandStateXORWOW*, __int64)
+  0.02%  4.2335ms         2  2.1167ms  1.4140ms  2.8195ms  [CUDA memset]
+  0.01%  3.1120ms         1  3.1120ms  3.1120ms  3.1120ms  setupIFFRndGenerator(__int64)
+  0.01%  3.0875ms         1  3.0875ms  3.0875ms  3.0875ms  setupBGCurGenerator(__int64)
+  0.00%  134.20us         1  134.20us  134.20us  134.20us  AuxRffTotal(curandStateXORWOW*, curandStateXORWOW*)
+  0.00%  1.7600us         1  1.7600us  1.7600us  1.7600us  detectCudaArchKernel(int*)
+
+==7005== API calls:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 31.93%  17.6435s    172535  102.26us  22.110us  142.19ms  cudaMemcpy
+ 24.60%  13.5948s     38130  356.54us  326.54us  1.1905ms  cudaGetDeviceProperties
+ 20.63%  11.3992s     76272  149.45us  9.4730us  10.288ms  cudaMalloc
+ 15.63%  8.63547s     76272  113.22us  9.3780us  12.344ms  cudaFree
+  4.70%  2.59737s    228126  11.385us  6.9190us  565.33us  cudaLaunch
+  0.83%  457.16ms        12  38.096ms  8.4530us  197.26ms  cudaMallocHost
+  0.58%  320.90ms   1388029     231ns     142ns  343.74us  cudaSetupArgument
+  0.36%  201.21ms         1  201.21ms  201.21ms  201.21ms  cudaStreamCreate
+  0.24%  133.58ms        11  12.144ms  7.7750us  76.006ms  cudaFreeHost
+  0.15%  84.875ms    228126     372ns     178ns  340.01us  cudaConfigureCall
+  0.15%  81.766ms     76260  1.0720us     553ns  159.68us  cudaThreadSetCacheConfig
+  0.09%  50.672ms     38130  1.3280us  1.0200us  2.0147ms  cudaThreadGetCacheConfig
+  0.06%  32.414ms     38130     850ns     696ns  328.18us  cudaGetDevice
+  0.04%  22.203ms     80001     277ns     186ns  326.29us  cudaGetLastError
+  0.00%  1.0538ms       166  6.3470us     421ns  227.11us  cuDeviceGetAttribute
+  0.00%  134.39us         2  67.197us  62.015us  72.379us  cuDeviceTotalMem
+  0.00%  104.67us         2  52.336us  47.849us  56.823us  cuDeviceGetName
+  0.00%  60.825us         2  30.412us  11.965us  48.860us  cudaMemset
+  0.00%  21.077us         1  21.077us  21.077us  21.077us  cudaMemcpyToSymbol
+  0.00%  19.065us         1  19.065us  19.065us  19.065us  cudaStreamDestroy
+  0.00%  16.854us         2  8.4270us  5.0570us  11.797us  cudaEventRecord
+  0.00%  8.0560us         2  4.0280us  1.0420us  7.0140us  cudaEventCreate
+  0.00%  7.8230us        11     711ns     256ns  2.1100us  cudaGetSymbolAddress
+  0.00%  7.3640us         1  7.3640us  7.3640us  7.3640us  cudaEventElapsedTime
+  0.00%  6.9180us         1  6.9180us  6.9180us  6.9180us  cudaEventSynchronize
+  0.00%  4.8100us         2  2.4050us  1.4590us  3.3510us  cudaEventDestroy
+  0.00%  3.4410us         1  3.4410us  3.4410us  3.4410us  cudaSetDevice
+  0.00%  2.2030us         2  1.1010us     614ns  1.5890us  cuDeviceGetCount
+  0.00%  2.0940us         4     523ns     479ns     599ns  cuDeviceGet
