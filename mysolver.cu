@@ -11,6 +11,7 @@
 #include <time.h>
 #include "globalVars.h"
 #include "aux.cu"
+#include "cuda_histogram.h"
 
 void __cudaCheck(cudaError err, const char* file, const int line);
 #define cudaCheck(err) __cudaCheck (err, __FILE__, __LINE__)
@@ -210,13 +211,16 @@ int main(int argc, char *argv[]) {
   
   
   int *dev_IF_SPK_Ptr = NULL, *dev_prevStepSpkIdxPtr = NULL, *host_IF_SPK = NULL, *host_prevStepSpkIdx = NULL,  *dev_nEPtr = NULL, *dev_nIPtr = NULL;
-  /*  int nSpksInPrevStep;*/
+  int nSpksInPrevStep;
   cudaCheck(cudaMallocHost((void **)&host_IF_SPK, N_NEURONS * sizeof(int)));
   cudaCheck(cudaMallocHost((void **)&host_prevStepSpkIdx, N_NEURONS * sizeof(int)));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_IF_SPK_Ptr, dev_IF_SPK));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_prevStepSpkIdxPtr, dev_prevStepSpkIdx));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_nEPtr, dev_ESpkCountMat));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_nIPtr, dev_ISpkCountMat));
+  for(i = 0; i < N_NEURONS; ++i) {
+    host_IF_SPK[i] = 0;
+  }
   /* TIME LOOP */
   size_t sizeOfInt = sizeof(int);
   /* SETUP TIMER EVENTS ON DEVICE */
@@ -224,15 +228,41 @@ int main(int argc, char *argv[]) {
   cudaEventRecord(start0, 0);
   unsigned int spksE = 0, spksI = 0;
   FILE *fpIFR = fopen("instant_fr.csv", "w");
+  int *histVec = NULL, *dev_histVec = NULL; /* for storing the post-synaptic neurons to be updated */
+  int histVecIndx = 0;
+  unsigned int histVecLength = N_NEURONS * (int)K;
+  if((unsigned long long)K >= NE | (unsigned long long)K >= NI) {
+    histVecLength = (unsigned int)(N_NEURONS * N_NEURONS);
+  }
+  cudaCheck(cudaMallocHost((void **)&histVec, histVecLength * sizeof(*histVec)));
+  cudaCheck(cudaMalloc((void **)&dev_histVec, histVecLength * sizeof(*dev_histVec)));
+  test_xform xform; // defined in cuda_histogram.h
+  test_sumfun sum;  // defined in cuda_histogram.h
+  int *dev_histCountE = NULL, *histCountE = NULL, *dev_histCountI = NULL, *histCountI = NULL;;
+  cudaCheck(cudaMalloc((void **)&dev_histCountE, sizeof(int) * N_NEURONS));
+  cudaCheck(cudaMallocHost((void **)&histCountE, sizeof(int) * N_NEURONS));
+  cudaCheck(cudaMalloc((void **)&dev_histCountI, sizeof(int) * N_NEURONS));
+  cudaCheck(cudaMallocHost((void **)&histCountI, sizeof(int) * N_NEURONS));
+
+
   for(k = 0; k < nSteps; ++k) { 
     /*    cudaCheck(cudaMemsetAsync(dev_nEPtr, 0, N_NEURONS * N_SPKS_IN_PREV_STEP * sizeOfInt, stream1));
 	  cudaCheck(cudaMemsetAsync(dev_nIPtr, 0, N_NEURONS * N_SPKS_IN_PREV_STEP * sizeOfInt, stream1));*/
     /*    nSpksInPrevStep = 0;*/
     devPtrs.k = k;
+    nSpksInPrevStep = 0;
+    histVecIndx = 0;
+    for(i = 0; i < N_NEURONS; ++i) {
+      histCountI[i] = 0;
+      histCountE[i] = 0;
+    }
+
     rkdumbPretty<<<BlocksPerGrid, ThreadsPerBlock>>> (kernelParams, devPtrs);
     cudaCheckLastError("rk");
-    cudaCheck(cudaMemcpy(host_IF_SPK, dev_IF_SPK_Ptr, N_NEURONS * sizeOfInt, cudaMemcpyDeviceToHost));
-  
+    if(k > 0) {
+      cudaCheck(cudaMemcpy(host_IF_SPK, dev_IF_SPK_Ptr, N_NEURONS * sizeOfInt, cudaMemcpyDeviceToHost));
+    }
+    /*instantaneous firing rate, rect non-overlapping window */
     for(i = 0; i < N_NEURONS; ++i) {
       if(host_IF_SPK[i]) {
 	if(i < NE) {
@@ -251,23 +281,56 @@ int main(int argc, char *argv[]) {
       spksE = 0; 
       spksI = 0;
     }
-    /*
-    if(nSpksInPrevStep > N_SPKS_IN_PREV_STEP) { 
-      printf("\nExceeded N_SPKS_IN_PREV_STEP ! nSpksInPrevStep = %d, step = %d \n", nSpksInPrevStep, k); 
-      nSpksInPrevStep = N_SPKS_IN_PREV_STEP;
-      /*      exit(-1);
-    }*/
-    /*    cudaCheck(cudaMemcpy(dev_prevStepSpkIdxPtr, host_prevStepSpkIdx, N_NEURONS * sizeOfInt, cudaMemcpyHostToDevice));*/
-    expDecay<<<BlocksPerGrid, ThreadsPerBlock>>>();
+    /*-----------------------------------------------------------------------*/
+    expDecay<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_histCountE, dev_histCountI);
     cudaCheckLastError("exp");
-    /*    cudaStreamSynchronize(stream1);
-    computeG_Optimal<<<BlocksPerGrid, ThreadsPerBlock>>>();
-    spkSum<<<BlocksPerGrid, ThreadsPerBlock>>>(nSpksInPrevStep);*/
-    computeConductance<<<BlocksPerGrid, ThreadsPerBlock>>>();
+    for(i = 0; i < NE; ++i) {
+      if(host_IF_SPK[i]){
+      nSpksInPrevStep += 1;
+        for(int jj = 0; jj < nPostNeurons[i]; ++jj) {
+          histVec[histVecIndx++] = sparseConVec[idxVec[i] + jj];
+        }
+      }
+    }
+    if(nSpksInPrevStep) {
+      cudaCheck(cudaMemcpy(dev_histVec, histVec, histVecIndx * sizeof(int), cudaMemcpyHostToDevice));
+      callHistogramKernel<histogram_atomic_inc, 1>(dev_histVec, xform, sum, 0, histVecIndx, 0, &histCountE[0], (int)N_NEURONS);
+      cudaCheck(cudaMemcpy(dev_histCountE, histCountE, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
+    }
+
+    histVecIndx = 0;
+    nSpksInPrevStep = 0; 
+    for(i = NE; i < N_NEURONS; ++i) {
+      if(host_IF_SPK[i]){
+        nSpksInPrevStep += 1;
+        for(int jj = 0; jj < nPostNeurons[i]; ++jj) {
+          histVec[histVecIndx++] = sparseConVec[idxVec[i] + jj];
+        }
+      }
+    }
+    
+    if(nSpksInPrevStep) {
+      cudaCheck(cudaMemcpy(dev_histVec, histVec, histVecIndx * sizeof(int), cudaMemcpyHostToDevice));
+      callHistogramKernel<histogram_atomic_inc, 1>(dev_histVec, xform, sum, 0, histVecIndx, 0, &histCountI[0], (int)N_NEURONS);
+      cudaCheck(cudaMemcpy(dev_histCountI, histCountI, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
+    }
+
+
+    /*    expDecay<<<BlocksPerGrid, ThreadsPerBlock>>>();*/
+
+    /*computeConductance<<<BlocksPerGrid, ThreadsPerBlock>>>();*/
+    
+    computeConductanceHist<<<(N_NEURONS + 512 - 1) / 512, 512>>>(dev_histCountE, dev_histCountI);
     cudaCheckLastError("g");
     computeIsynap<<<BlocksPerGrid, ThreadsPerBlock>>>(k*DT);
     cudaCheckLastError("isyp");
   }
+  cudaCheck(cudaFreeHost(histVec));
+  cudaCheck(cudaFree(dev_histVec));
+  cudaCheck(cudaFree(dev_histCountE));
+  cudaCheck(cudaFree(dev_histCountI));
+  cudaCheck(cudaFreeHost(histCountE));  
+  cudaCheck(cudaFreeHost(histCountI));
   fclose(fpIFR);
   cudaCheck(cudaStreamDestroy(stream1));
   cudaCheckLastError("rkdumb kernel failed");
