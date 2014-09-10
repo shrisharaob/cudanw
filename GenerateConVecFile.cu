@@ -155,11 +155,11 @@ int main() {
   setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, time(NULL));
   cudaCheckLastError("setup_kernel failed\n");
   unsigned long long int chunckSize = ((unsigned long long)N_NEURONS / nChunks) * N_NEURONS;
-  printf("chunckSize = %lu \n ", chunckSize);
+  printf("chunckSize = %llu \n ", chunckSize);
   BlocksPerGrid = (maxNeurons + ThreadsPerBlock - 1) / ThreadsPerBlock;
   printf("Threads per block : %d, Blocks per grid : %d \n", ThreadsPerBlock, BlocksPerGrid);
   for(unsigned long long int i = 0; i < nChunks; ++i) {
-    printf("generating chunk %d ... ", i);fflush(stdout);
+    printf("generating chunk %llu ... ", i);fflush(stdout);
     initConVec<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_conVecPtr, maxNeurons);
     kernelGenConMat<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, dev_conVecPtr, i, maxNeurons);
     printf("done\ncopying dev to host ...");
@@ -221,7 +221,7 @@ int main() {
   /*  int ncounts[N_NEURONS];*/
   /*  fp = fopen("conMat.csv", "w");*/
   fp01 = fopen("countI.csv", "w");  fp = fopen("countE.csv", "w");
-  printf("\nN = %d\n", N_NEURONS);
+  printf("\nN = %llu\n", N_NEURONS);
   int countE = 0, countI = 0;
   for(i = 0; i < N_NEURONS; ++i) {
     countI = 0;
