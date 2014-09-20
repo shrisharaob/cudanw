@@ -260,8 +260,10 @@ int main(int argc, char *argv[]) {
     rkdumbPretty<<<BlocksPerGrid, ThreadsPerBlock>>> (kernelParams, devPtrs);
     cudaCheckLastError("rk");
     if(k > 0) {
-      cudaCheck(cudaMemcpy(host_IF_SPK, dev_IF_SPK_Ptr, N_NEURONS * sizeOfInt, cudaMemcpyDeviceToHost));
+      /*      cudaCheck(cudaMemcpy(host_IF_SPK, dev_IF_SPK_Ptr, N_NEURONS * sizeOfInt, cudaMemcpyDeviceToHost));*/
+      cudaCheck(cudaMemcpyAsync(host_IF_SPK, dev_IF_SPK_Ptr, N_NEURONS * sizeOfInt, cudaMemcpyDeviceToHost, stream1));
     }
+    cudaCheck(cudaStreamSynchronize(stream1));
     /*instantaneous firing rate, rect non-overlapping window */
     for(i = 0; i < N_NEURONS; ++i) {
       if(host_IF_SPK[i]) {
@@ -295,9 +297,10 @@ int main(int argc, char *argv[]) {
     if(nSpksInPrevStep) {
       cudaCheck(cudaMemcpy(dev_histVec, histVec, histVecIndx * sizeof(int), cudaMemcpyHostToDevice));
       callHistogramKernel<histogram_atomic_inc, 1>(dev_histVec, xform, sum, 0, histVecIndx, 0, &histCountE[0], (int)N_NEURONS);
-      cudaCheck(cudaMemcpy(dev_histCountE, histCountE, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
+      /*      cudaCheck(cudaMemcpy(dev_histCountE, histCountE, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));*/
+      cudaCheck(cudaMemcpyAsync(dev_histCountE, histCountE, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice, stream1));
     }
-
+    
     histVecIndx = 0;
     nSpksInPrevStep = 0; 
     for(i = NE; i < N_NEURONS; ++i) {
@@ -312,14 +315,15 @@ int main(int argc, char *argv[]) {
     if(nSpksInPrevStep) {
       cudaCheck(cudaMemcpy(dev_histVec, histVec, histVecIndx * sizeof(int), cudaMemcpyHostToDevice));
       callHistogramKernel<histogram_atomic_inc, 1>(dev_histVec, xform, sum, 0, histVecIndx, 0, &histCountI[0], (int)N_NEURONS);
-      cudaCheck(cudaMemcpy(dev_histCountI, histCountI, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
+      /*      cudaCheck(cudaMemcpy(dev_histCountI, histCountI, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));*/
+      cudaCheck(cudaMemcpyAsync(dev_histCountI, histCountI, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice, stream1));
     }
 
 
     /*    expDecay<<<BlocksPerGrid, ThreadsPerBlock>>>();*/
 
     /*computeConductance<<<BlocksPerGrid, ThreadsPerBlock>>>();*/
-    
+    cudaCheck(cudaStreamSynchronize(stream1));
     computeConductanceHist<<<(N_NEURONS + 512 - 1) / 512, 512>>>(dev_histCountE, dev_histCountI);
     cudaCheckLastError("g");
     computeIsynap<<<BlocksPerGrid, ThreadsPerBlock>>>(k*DT);

@@ -30,7 +30,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
   }
 }
 
-__global__ void initConVec(int *dev_conVec, int maxNeurons) {
+__global__ void initConVec(float *dev_conVec, int maxNeurons) {
   unsigned int mNeuron = threadIdx.x + blockIdx.x * blockDim.x;
   /*  int stride = gridDim.x * blockDim.x;*/
   unsigned long int i;
@@ -65,7 +65,7 @@ __device__ float randkernel(curandState *state, unsigned long int kNeuron) {
 
 /*__global__ kernelGenConMat0();*/
 
-__global__ void kernelGenConMat(curandState *state, int *dev_conVec, int lChunck, int maxNeurons){
+__global__ void kernelGenConMat(curandState *state, flaot *dev_conVec, int lChunck, int maxNeurons){
   /* indexing of matrix row + clm x N_NEURONS*/
   unsigned long id =  (unsigned long int)threadIdx.x + blockIdx.x * blockDim.x;
   unsigned long int kNeuron = id + lChunck * maxNeurons;
@@ -83,38 +83,80 @@ __global__ void kernelGenConMat(curandState *state, int *dev_conVec, int lChunck
     }
     for(i = 0; i < N_NEURONS; ++i) {
       if(i < NE) {  /* E --> E */
-	if(k/n >= randkernel(state, kNeuron)) { /* neuron[id] receives input from i ? */
-	  dev_conVec[id + i * maxNeurons] = 1;
-	}
+        if(k/n >= randkernel(state, kNeuron)) { /* neuron[id] receives input from i ? */
+          dev_conVec[id + i * maxNeurons] = 1;
+        }
       }
       if(i >= NE) { /* E --> I */
-	if(k/n >= randkernel(state, kNeuron)) { /* neuron[id] receives input from i ? */
-	  dev_conVec[id + i * maxNeurons] = 1;
-	} 
+        if(k/n >= randkernel(state, kNeuron)) { /* neuron[id] receives input from i ? */
+          dev_conVec[id + i * maxNeurons] = 1;
+        } 
       }
     }
-      /*    }*/
+    /*    }*/
     /* I --> EI */
     /*
-    if(id >= NE & NI > 0) {
+      if(id >= NE & NI > 0) {
       n = (float)NI;
       for(i = 0; i < N_NEURONS; ++i) {
-        if(i < NE) {  /* I --> E 
-          if(k/n >= randkernel(state, kNeuron)) { /* neuron[id] receives input from i ? 
-            dev_conVec[id + i * maxNeurons] = 1;
-          } 
-        }
-        if(i >= NE) { /* I --> I 
-          if(k/n >= randkernel(state, kNeuron)) { /* neuron[id] receives input from i ? 
-            dev_conVec[id + i * maxNeurons] = 1;
-          } 
-        }
-     }      }*/
+      if(i < NE) {  /* I --> E 
+      if(k/n >= randkernel(state, kNeuron)) { /* neuron[id] receives input from i ? 
+      dev_conVec[id + i * maxNeurons] = 1;
+      } 
+      }
+      if(i >= NE) { /* I --> I 
+      if(k/n >= randkernel(state, kNeuron)) { /* neuron[id] receives input from i ? 
+      dev_conVec[id + i * maxNeurons] = 1;
+      } 
+      }
+      }      }*/
   }
 }
 
+__global__ void kernelGenConMatSparseE2E(curandState *state, float *dev_conVec, int lChunck, int maxNeurons){
+  /* indexing of matrix row + clm x N_NEURONS*/
+  unsigned long id =  (unsigned long int)threadIdx.x + blockIdx.x * blockDim.x;
+  unsigned long int kNeuron = id + lChunck * maxNeurons;
+  unsigned long int i;
+  float k, n;
+  if(id < maxNeurons & kNeuron < N_NEURONS) {
+    k = (float)K;
+    /* E --> EI */
+    /*    if(id < N_NEURONS & NE > 0) {*/
+    if(kNeuron < NE) {
+      n = (float)NE;
+    }
+    else {
+      n = (float)NI;
+    }
+    for(i = 0; i < N_NEURONS; ++i) {
+      if(i < NE) {  /* E --> E */
+        if(id < NE) {
+          if(sqrt(k)/n >= randkernel(state, kNeuron)) { /* neuron[id] receives input from i ? */
+          dev_conVec[id + i * maxNeurons] = 1;
+          }
+        }
+        else {
+         if(k/n >= randkernel(state, kNeuron)) { /* neuron[id] receives input from i ? */
+          dev_conVec[id + i * maxNeurons] = 1;
+          }
+        }
+      }
+      if(i >= NE) { /* E --> I */
+        if(k/n >= randkernel(state, kNeuron)) { /* neuron[id] receives input from i ? */
+          dev_conVec[id + i * maxNeurons] = 1;
+        } 
+      }
+    }
+
+  }
+}
+
+
+
 int main() {
-  int *conVec, *dev_conVecPtr, i, nChunks = 1, deviceId = 0, maxNeurons = N_NEURONS;
+  int *conVec, i, nChunks = 1, deviceId = 0, maxNeurons = N_NEURONS;
+  float *dev_conVecPtr;
   /*  int fullConVecE[NE * NE], fullConVecI[NI *NI], fullConvecIE[NE*NI], fullConVecEI[NI*NE];*/
   int *fullConVec = NULL;
   FILE *fpConVec;
@@ -151,7 +193,7 @@ int main() {
   fpConVec = fopen("conVec.dat", "wb"); 
   cudaCheck(cudaMalloc((void **)&devStates,  N_NEURONS * sizeof(curandState)));
   cudaCheck(cudaMallocHost((void **)&conVec, (N_NEURONS / nChunks) * N_NEURONS * sizeof(int)));
-  cudaCheck(cudaMalloc((void **)&dev_conVecPtr, (N_NEURONS / nChunks) * N_NEURONS * sizeof(int)));
+  cudaCheck(cudaMalloc((void **)&dev_conVecPtr, (N_NEURONS / nChunks) * N_NEURONS * sizeof(float)));
   setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, time(NULL));
   cudaCheckLastError("setup_kernel failed\n");
   unsigned long long int chunckSize = ((unsigned long long)N_NEURONS / nChunks) * N_NEURONS;
@@ -162,8 +204,9 @@ int main() {
     printf("generating chunk %llu ... ", i);fflush(stdout);
     initConVec<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_conVecPtr, maxNeurons);
     kernelGenConMat<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, dev_conVecPtr, i, maxNeurons);
+    /*    kernelGenConMatSparseE2E<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, dev_conVecPtr, i, maxNeurons);*/
     printf("done\ncopying dev to host ...");
-    cudaCheck(cudaMemcpy(conVec, dev_conVecPtr, (N_NEURONS / nChunks) * N_NEURONS * sizeof(int), cudaMemcpyDeviceToHost));
+    cudaCheck(cudaMemcpy(conVec, dev_conVecPtr, (N_NEURONS / nChunks) * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
     printf(" done\n");
     for(unsigned long long int j = 0; j < chunckSize; ++j) {
       /*      printf("%du\n", j + chunckSize * i);*/
