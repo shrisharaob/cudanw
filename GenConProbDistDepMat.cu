@@ -2,7 +2,7 @@
 #define _CONNECTION_PROB_
 #include <stdio.h>
 #include <cuda.h>
-
+#include "devHostConstants.h"
 
 /* GENERATE CONNECTION MATRIX */
 __device__ double XCordinate(unsigned long int neuronIdx) {
@@ -15,7 +15,7 @@ __device__ double XCordinate(unsigned long int neuronIdx) {
   return fmod((double)neuronIdx, sqrt(nA)) * (L / (sqrt(nA) - 1));
 }
 
-__device_ double YCordinate(unsigned long int neuronIdx) {
+__device__ double YCordinate(unsigned long  neuronIdx) {
   double nA = (double)NE;
   if(neuronIdx > NE) {
     neuronIdx -= NE;
@@ -41,124 +41,43 @@ __global__ void KernelGenConProbMat(float *dev_conVec) {
     xa = XCordinate(mNeuron);
     ya = YCordinate(mNeuron);
     for(i = 0; i < N_NEURONS; ++i) {
-      if((float)conProb(xa, ya, XCordinate(i), YCordinate(i)) >= randkernel(state, kNeuron)) { 
-        dev_conVec[mNeuron + i * N_NEURONS] = 1;
-      }
+      dev_conVec[mNeuron + i * N_NEURONS] = (float)conProb(xa, ya, XCordinate(i), YCordinate(i)); 
     }
     mNeuron += stride;
   }
 }
 
 __global__ void KernelConProbPreFactor(float *dev_conVec) {
-  // compute pre-factor zB[clm] = K / sum(conProd(:, clm))
-  unsigned long mNeuron = (unsigned long)(threadIdx.x + blockIdx.x * blockDim.x);
+  /*  COMPUTE PRE-FACTOR AND MULTIPLY zB[clm] = K / sum(conProd(:, clm)) */
+  unsigned long mNeuron = (unsigned long)(threadIdx.x + blockIdx.x * blockDim.x); // each column is a thread
   unsigned long int i;
-   int stride = gridDim.x * blockDim.x;
- 
-
- for(clmId = 1; clmId <= N_Neurons; ++clmId) {
-    for(rowId = 1; rowId <= NE; ++rowId) {
-      zE[clmId] += conProb[rowId][clmId];
-    }
-    zE[clmId] = (double)K / zE[clmId];
-    for(rowId = NE + 1; rowId <= N_Neurons; ++rowId) {
-      zI[clmId] += conProb[rowId][clmId];
-    }
-    //    printf("%f ", zI[clmId]);
-    zI[clmId] =(double)K /  zI[clmId];
-    //    printf("%f \n", zI[clmId]);
+  double preFactorE2All, preFactorI2All;
+  int stride = gridDim.x * blockDim.x;
+  while(mNeuron < N_NEURONS) {
+    preFactorI2All = 0.0;
+    preFactorE2All = 0.0;
+    for(i = 0; i < N_NEURONS; ++i) { // sum over rows
+      if(i < NE) {
+        preFactorE2All += (double)dev_conVec[i + mNeuron * N_NEURONS];
+      }
+      else {
+        preFactorI2All += (double)dev_conVec[i + mNeuron * N_NEURONS];
+      }
+    }     
+    preFactorI2All = (double)K / preFactorI2All;
+    preFactorE2All = (double)K / preFactorE2All;
+    /* now multiply the prefactor */
+    for(i = 0; i < N_NEURONS; ++i) { 
+      if(i < NE) {
+        dev_conVec[i + mNeuron * N_NEURONS] *= (float)preFactorE2All;
+      }
+      else {
+        dev_conVec[i + mNeuron * N_NEURONS] *= (float)preFactorI2All;
+      }
+    }     
+    mNeuron += stride;
   }
 }
 
-void genConMat() {
-  double **conProb, *zE, *zI, xDiff, yDiff, z1, denom, ranttt, tempZI;
-  int clmId, rowId, IF_CONNECT;
-  long idum = -1 * rand();
-  FILE *conProbFP, *conMatFP;
-  strcpy(filebase, FILEBASE);
-  conProbFP = fopen(strcat(filebase,"conProbMat"), "w");
-  strcpy(filebase, FILEBASE);
-  conMatFP = fopen(strcat(filebase,"conMatFp"), "w");
-  strcpy(filebase, FILEBASE);
-  conProb = matrix(1, N_Neurons, 1, N_Neurons);
-  strcpy(filebase, FILEBASE);
-  zI = vector(1, N_Neurons);
-  zE = vector(1, N_Neurons);
-  z1 =   (1 / sqrt(2 * PI * CON_SIGMA));
-  denom = (2 * CON_SIGMA * CON_SIGMA);
-  // connection probablity for E cells
-  for(rowId =1; rowId <= NE; ++rowId) {
-    for(clmId = 1; clmId <= NE; ++clmId) {
-      xDiff = XCordinate(rowId, NE) - XCordinate(clmId, NE);
-      yDiff = YCordinate(rowId, NE) - YCordinate(clmId, NE);
-      conProb[rowId][clmId] =  z1 * z1 * exp(-1 * pow(fmod(xDiff, L), 2) / (denom)) * z1 * z1 * exp(-1 * pow(fmod(yDiff, L), 2) / (denom));
-      fprintf(conProbFP ,"%f ", conProb[rowId][clmId]);
-    }
-    for (clmId = NE + 1; clmId <= N_Neurons; ++clmId) {
-      xDiff = XCordinate(rowId, NE) - XCordinate(clmId - NE, NI);
-      yDiff = YCordinate(rowId, NE) - YCordinate(clmId - NE, NI);
-      conProb[rowId][clmId] =  z1 * z1 * exp(-1 * pow(fmod(xDiff, L), 2) / (denom))
-        * z1 * z1 * exp(-1 * pow(fmod(yDiff, L), 2) / (denom));
-      fprintf(conProbFP, "%f ", conProb[rowId][clmId]);
-    }
-    fprintf(conProbFP, "\n");
-  }
-  // connection probablity for I cells
-  for(rowId = 1 + NE; rowId <= N_Neurons; ++rowId) {
-    for(clmId = 1; clmId <= NE; ++clmId) {
-      xDiff = XCordinate(rowId - NE, NI) - XCordinate(clmId, NE);
-      yDiff = YCordinate(rowId - NE, NI) - YCordinate(clmId, NE);
-      conProb[rowId][clmId] = z1 * z1 * exp(-1 * pow(fmod(xDiff, L), 2) / (denom))
-        * z1 * z1 * exp(-1 * pow(fmod(yDiff, L), 2) / (denom));
-      fprintf(conProbFP ,"%f ", conProb[rowId][clmId]);
-    }
-    for (clmId = NE + 1; clmId <= N_Neurons; ++clmId) {
-      xDiff = XCordinate(rowId - NE, NI) - XCordinate(clmId - NE, NI);
-      yDiff = YCordinate(rowId - NE, NI) - YCordinate(clmId - NE, NI);
-      conProb[rowId][clmId] = z1 * z1 * exp(-1 * pow(fmod(xDiff, L), 2) / (denom))
-        * z1 * z1 * exp(-1 * pow(fmod(yDiff, L), 2) / (denom));
-      fprintf(conProbFP, "%f ", conProb[rowId][clmId]);
-    }
-    fprintf(conProbFP, "\n");
-  }
-  fclose(conProbFP);
-  // compute pre-factor zB[clm] = K / sum(conProd(:, clm))
-  for(clmId = 1; clmId <= N_Neurons; ++clmId) {
-    for(rowId = 1; rowId <= NE; ++rowId) {
-      zE[clmId] += conProb[rowId][clmId];
-    }
-    //printf("b - %f ", zE[clmId]);
-    zE[clmId] = (double)K / zE[clmId];
-    //printf("a - %f \n", zE[clmId]);
-    for(rowId = NE + 1; rowId <= N_Neurons; ++rowId) {
-      zI[clmId] += conProb[rowId][clmId];
-    }
-    //printf("%f ", zI[clmId]);
-    zI[clmId] =(double)K /  zI[clmId];
-    //printf("%f \n", zI[clmId]);
-  }
-  // randomly connect neurons with probability given by conProb
-  for(rowId = 1; rowId <= NE; ++rowId) {
-    for(clmId = 1; clmId <= N_Neurons; ++clmId) {
-      //printf("%f %ld \n", ranttt, idum);
-      if(ran2(&idum) <=  zE[clmId] * conProb[rowId][clmId]) {
-        conMat[rowId][clmId] = 1;
-      }
-      fprintf(conMatFP ,"%f ", conMat[rowId][clmId]);
-    }
-    fprintf(conMatFP, "\n");
-  }
-  srand(time(NULL));  
-  for(rowId = 1 + NE; rowId <= N_Neurons; ++rowId) {
-    for(clmId = 1; clmId <= N_Neurons; ++clmId) {
-      //  printf("%ld \n", idum);
-      if(ran2(&idum) <=  zI[clmId] * conProb[rowId][clmId]) {
-        conMat[rowId][clmId] = 1;
-      }
-      fprintf(conMatFP,"%f ", conMat[rowId][clmId]);
-    }
-    fprintf(conMatFP,"\n");
-  }
-  fclose(conMatFP);
-}
+
 #endif

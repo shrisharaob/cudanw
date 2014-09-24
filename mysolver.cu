@@ -38,7 +38,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  double tStart = 0.0, tStop = 1000.0;
+  double tStart = 0.0, tStop = 3000.0;
   double *spkTimes, *vm = NULL, host_theta = 0.0; /* *vstart; 500 time steps */
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   double *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
@@ -243,8 +243,8 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaMallocHost((void **)&histCountE, sizeof(int) * N_NEURONS));
   cudaCheck(cudaMalloc((void **)&dev_histCountI, sizeof(int) * N_NEURONS));
   cudaCheck(cudaMallocHost((void **)&histCountI, sizeof(int) * N_NEURONS));
-
-
+  int tmp;
+  printf("\n\n\n\n %d\n\n\n\n", sparseConVec[835584ULL]);
   for(k = 0; k < nSteps; ++k) { 
     /*    cudaCheck(cudaMemsetAsync(dev_nEPtr, 0, N_NEURONS * N_SPKS_IN_PREV_STEP * sizeOfInt, stream1));
 	  cudaCheck(cudaMemsetAsync(dev_nIPtr, 0, N_NEURONS * N_SPKS_IN_PREV_STEP * sizeOfInt, stream1));*/
@@ -290,7 +290,9 @@ int main(int argc, char *argv[]) {
       if(host_IF_SPK[i]){
       nSpksInPrevStep += 1;
         for(int jj = 0; jj < nPostNeurons[i]; ++jj) {
-          histVec[histVecIndx++] = sparseConVec[idxVec[i] + jj];
+          tmp = sparseConVec[idxVec[i] + jj];
+          histVec[histVecIndx++] = tmp;
+            /*          histVec[histVecIndx++] = sparseConVec[idxVec[i] + jj];*/
         }
       }
     }

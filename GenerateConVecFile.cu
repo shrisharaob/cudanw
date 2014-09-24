@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include "devHostConstants.h"
 #include "GenSparseMat.cu"
-
+#include "GenConProbDistDepMat.cu"
 
 void __cudaCheck(cudaError err, const char* file, const int line);
 #define cudaCheck(err) __cudaCheck (err, __FILE__, __LINE__)
@@ -65,7 +65,7 @@ __device__ float randkernel(curandState *state, unsigned long int kNeuron) {
 
 /*__global__ kernelGenConMat0();*/
 
-__global__ void kernelGenConMat(curandState *state, flaot *dev_conVec, int lChunck, int maxNeurons){
+__global__ void kernelGenConMat(curandState *state, float *dev_conVec, int lChunck, int maxNeurons){
   /* indexing of matrix row + clm x N_NEURONS*/
   unsigned long id =  (unsigned long int)threadIdx.x + blockIdx.x * blockDim.x;
   unsigned long int kNeuron = id + lChunck * maxNeurons;
@@ -154,14 +154,86 @@ __global__ void kernelGenConMatSparseE2E(curandState *state, float *dev_conVec, 
 
 
 
-int main() {
-  int *conVec, i, nChunks = 1, deviceId = 0, maxNeurons = N_NEURONS;
-  float *dev_conVecPtr;
+
+__global__ void KernelGenDistDepConMat(curandState *state, float *dev_conVec, int lChunck, int maxNeurons){
+  /* GENERATE CONNECTION MATRIX WITH ANOTOMIC CONNECTIVITY PROFILE */
+  /* indexing of matrix row + clm x N_NEURONS*/
+  unsigned long id =  (unsigned long int)threadIdx.x + blockIdx.x * blockDim.x;
+  unsigned long int kNeuron = id + lChunck * maxNeurons;
+  unsigned long int i;
+  if(id < maxNeurons & kNeuron < N_NEURONS) {
+    /*    k = (float)K;
+    if(kNeuron < NE) {
+      n = (float)NE;
+    }
+    else {
+      n = (float)NI;
+    }*/
+    for(i = 0; i < N_NEURONS; ++i) {
+      if(i < NE) {  /* E --> E/I */
+        if(dev_conVec[id + i * maxNeurons] >= randkernel(state, kNeuron)) { /* neuron[id] receives input from i ? */
+          dev_conVec[id + i * maxNeurons] = 1;
+        }
+        else{
+          dev_conVec[id + i * maxNeurons] = 0;
+        }
+      }
+      if(i >= NE) { /* I --> E/I */
+        if(dev_conVec[id + i * maxNeurons] >= randkernel(state, kNeuron)) { /* neuron[id] receives input from i ? */
+          dev_conVec[id + i * maxNeurons] = 1;
+        } 
+        else{
+          dev_conVec[id + i * maxNeurons] = 0;
+        }
+      }
+    }
+  }
+}
+
+
+void IsSquare(unsigned long long x, unsigned long long y) {
+  double z, IF_EXIT = 0;
+  z = sqrt(x);
+  if((unsigned long long)z * z != x) {
+    IF_EXIT = 1;
+    printf("\n NE is not a perfect square ! \n");
+    printf("next perfect square is : %llu \n", (unsigned long long)(ceil(z) * ceil(z)));
+  }
+  z = sqrt(y);
+  if((unsigned long long)z * z != y) {
+    IF_EXIT = 1;
+    printf("\n NI is not a perfect square ! \n");
+    printf("next perfect square is : %llu \n", (unsigned long long)(ceil(z) * ceil(z)));
+  }
+  if(IF_EXIT) {
+    printf("\n\n Connection Matrix not generated !!\n");
+    exit(-1);
+  }
+}
+
+
+
+int main(int argc, char *argv[]) {
+  int i, nChunks = 1, deviceId = 0, maxNeurons = N_NEURONS;
+  float *dev_conVecPtr, *conVec;
   /*  int fullConVecE[NE * NE], fullConVecI[NI *NI], fullConvecIE[NE*NI], fullConVecEI[NI*NE];*/
-  int *fullConVec = NULL;
+  float*fullConVec = NULL, *conProbMat = NULL;
   FILE *fpConVec;
   cudaDeviceProp prop;
   unsigned long maxMem = 12079136768;
+  enum ConMat_type {
+    random, sparseE2E, distDependent 
+  };
+  ConMat_type conMatType = distDependent;
+  if(argc > 1) {
+    if(atoi(argv[1]) == 0) 
+      conMatType = random;
+    if(atoi(argv[1]) == 1)
+      conMatType = distDependent; /* DEFAULT */
+    if(atoi(argv[1]) == 2)
+      conMatType = sparseE2E;
+  }
+      
   cudaCheck(cudaGetDeviceProperties(&prop, deviceId));
   printf("Global Mem = %ld\n", prop.totalGlobalMem);
   i = 0;
@@ -176,8 +248,8 @@ int main() {
   maxNeurons = N_NEURONS / nChunks;
   printf(" maxNeurons = %d\n nChunks = %d\n", maxNeurons, nChunks);
   curandState *devStates;
-  fullConVec = (int *)malloc((unsigned long long)N_NEURONS * N_NEURONS * sizeof(int));
-
+  fullConVec = (float *)malloc((unsigned long long)N_NEURONS * N_NEURONS * sizeof(float));
+  conProbMat = (float *)malloc((unsigned long long)N_NEURONS * N_NEURONS * sizeof(float));
   if(fullConVec == NULL) {
     printf("fullconvec not assigned\n"); 
     exit(-1);
@@ -192,7 +264,7 @@ int main() {
   }
   fpConVec = fopen("conVec.dat", "wb"); 
   cudaCheck(cudaMalloc((void **)&devStates,  N_NEURONS * sizeof(curandState)));
-  cudaCheck(cudaMallocHost((void **)&conVec, (N_NEURONS / nChunks) * N_NEURONS * sizeof(int)));
+  cudaCheck(cudaMallocHost((void **)&conVec, (N_NEURONS / nChunks) * N_NEURONS * sizeof(float)));
   cudaCheck(cudaMalloc((void **)&dev_conVecPtr, (N_NEURONS / nChunks) * N_NEURONS * sizeof(float)));
   setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, time(NULL));
   cudaCheckLastError("setup_kernel failed\n");
@@ -203,8 +275,24 @@ int main() {
   for(unsigned long long int i = 0; i < nChunks; ++i) {
     printf("generating chunk %llu ... ", i);fflush(stdout);
     initConVec<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_conVecPtr, maxNeurons);
-    kernelGenConMat<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, dev_conVecPtr, i, maxNeurons);
-    /*    kernelGenConMatSparseE2E<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, dev_conVecPtr, i, maxNeurons);*/
+    switch(conMatType) {
+    case random:
+      kernelGenConMat<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, dev_conVecPtr, i, maxNeurons);
+      break;
+    case distDependent:
+      /* ARRANGE NEURONS ON A SQUARE GRID, REQUIRES THAT SQRT(NA) IS AN INTEGER */
+      IsSquare(NE, NI);
+      KernelGenConProbMat<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_conVecPtr);
+      KernelConProbPreFactor<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_conVecPtr);
+      cudaCheck(cudaMemcpy(conProbMat, dev_conVecPtr, (unsigned long long)N_NEURONS * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
+      KernelGenDistDepConMat<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, dev_conVecPtr, i, maxNeurons);
+      break;
+    case sparseE2E:
+      kernelGenConMatSparseE2E<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, dev_conVecPtr, i, maxNeurons);
+      break;
+    default:
+      kernelGenConMat<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, dev_conVecPtr, i, maxNeurons);
+    }
     printf("done\ncopying dev to host ...");
     cudaCheck(cudaMemcpy(conVec, dev_conVecPtr, (N_NEURONS / nChunks) * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
     printf(" done\n");
@@ -243,7 +331,7 @@ int main() {
   fclose(fpSparseConVec);
   fclose(fpIdxVec);
   fclose(fpNpostNeurons);*/
-  if(N_NEURONS < 10) {
+  if(N_NEURONS < 20) {
     for(i = 0; i < N_NEURONS; ++i) {
       printf("neuron %d projects to : ", i);
       for(int j = 0; j < nPostNeurons[i]; ++j) {
@@ -259,10 +347,10 @@ int main() {
   fclose(fp);*/
   
   printf("convec.csv ..."); fflush(stdout);
-  FILE *fp, *fp01;
+  FILE *fp, *fp01, *fpConMat;
   /*  int nEE[NE], nEI[NE], nIE[NI], nII[NI];*/
   /*  int ncounts[N_NEURONS];*/
-  /*  fp = fopen("conMat.csv", "w");*/
+  fpConMat = fopen("conMat.csv", "w");
   fp01 = fopen("countI.csv", "w");  fp = fopen("countE.csv", "w");
   printf("\nN = %llu\n", N_NEURONS);
   int countE = 0, countI = 0;
@@ -270,25 +358,28 @@ int main() {
     countI = 0;
     countE = 0;
     for(int j = 0; j < N_NEURONS; ++j) {
-      /*      fprintf(fp, "%d ", fullConVec[i + j * N_NEURONS]);*/
+      fprintf(fpConMat, "%1.1f ", fullConVec[i + j * N_NEURONS]);
+      /*      fprintf(fpConMat, "%1.1f ", conProbMat[i + j * N_NEURONS]);*/
       /*	fprintf(stdout, "%d ", fullConVec[i + j * N_NEURONS]);*/
-	if(j < NE) {
-	  countE += fullConVec[i * N_NEURONS + j];   
-	}
-	else {
-	  countI += fullConVec[i * N_NEURONS + j];   
-	}
+      if(j < NE) {
+        countE += fullConVec[i * N_NEURONS + j];   
+      }
+      else {
+        countI += fullConVec[i * N_NEURONS + j];   
+      }
     }
     fprintf(fp, "%d\n", countE); 
     fprintf(fp01, "%d\n", countI);
-    /*    ncounts[i] = count;*/
-    /*    printf("\n");    fprintf(fp, "\n");*/
-    /*    fprintf(stdout, "\n");*/
+    fprintf(fpConMat, "\n");
   }
   fprintf(stdout, " done\n");
+  free(conProbMat);
   fclose(fp);   
   fclose(fp01);
+  fclose(fpConMat);
   free(fullConVec);
   free(sparseConVec);
   return 0;
 }
+
+

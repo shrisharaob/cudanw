@@ -24,8 +24,9 @@
 #define N_STATEVARS 4 /* equals the number of 1st order ode's */
 
 /* params patch */
-#define L 1.0
+/*#define L 1.0
 #define CON_SIGMA (L / 5.0)
+*/
 
 /* params synapseb */
 #define INV_TAU_SYNAP (1 / TAU_SYNAP)

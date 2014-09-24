@@ -1,6 +1,6 @@
 #ifndef _GENSPARSEMAT_
 #define _GENSPARSEMAT_
-void GenSparseMat(int *conVec,  int rows, int clms, int* sparseVec, int* idxVec, int* nPostNeurons ) {
+void GenSparseMat(float *conVec,  int rows, int clms, int* sparseVec, int* idxVec, int* nPostNeurons ) {
   /* generate sparse representation
      conVec       : input vector / flattened matrix 
      sparseVec    : sparse vector

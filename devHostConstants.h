@@ -16,4 +16,14 @@
 
 __constant__ double CONTRAST = HOST_CONTRAST;
 __constant__ double theta;
+
+
+/* params patch */
+#define L 1.0
+#define CON_SIGMA (L / 1.0)
+
+
+#define PI 3.14159265359
+
+
 #endif
