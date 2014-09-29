@@ -24,12 +24,30 @@ __device__ double YCordinate(unsigned long  neuronIdx) {
   return floor((double)neuronIdx / sqrt(nA)) * (L / (sqrt(nA) - 1));   
 }
 
+__device__ double Gaussian2D(double x, double y) {
+  double z1 (1 / sqrt(2 * PI * CON_SIGMA)); // make global var
+  double denom = (2 * CON_SIGMA * CON_SIGMA); // global var
+  return  z1 * z1 * exp(-1 * pow(x, 2) / (denom)) * z1 * z1 * exp(-1 * pow(y, 2) / (denom));
+}
 
 __device__ double conProb(double xa, double ya, double xb, double yb) {
   /* returns connection probablity given cordinates (xa, ya) and (xb, yb) */
-  double z1 (1 / sqrt(2 * PI * CON_SIGMA)); // make global var
-  double denom = (2 * CON_SIGMA * CON_SIGMA); // global var
-  return z1 * z1 * exp(-1 * pow(fmod(xa - xb, L), 2) / (denom)) * z1 * z1 * exp(-1 * pow(fmod(ya - yb, L), 2) / (denom));
+  /*  double z1 (1 / sqrt(2 * PI * CON_SIGMA)); // make global var
+  double denom = (2 * CON_SIGMA * CON_SIGMA); // global var*/
+  double x0, x1, y0, y1, result; 
+  x0 = fmod(abs(xa-xb), L);
+  x1 = fmod(abs(xa-xb), -1 * L);
+  y0 = fmod(abs(ya-yb), L);
+  y1 = fmod(abs(ya-yb), -1 * L);
+  result = Gaussian2D(x0, y0) + Gaussian2D(x1, y1);
+  if(x0 == 0 && x1 == 0) {
+    result *= sqrt(0.5);
+  }
+  if(y0 == 0 && y1 == 0) {
+    result *= sqrt(0.5);
+  }
+  /*  return z1 * z1 * exp(-1 * pow(fmod(xa - xb, L), 2) / (denom)) * z1 * z1 * exp(-1 * pow(fmod(ya - yb, L), 2) / (denom));*/
+  return result;
 }
 
 __global__ void KernelGenConProbMat(float *dev_conVec) {

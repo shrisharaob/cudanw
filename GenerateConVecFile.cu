@@ -190,6 +190,45 @@ __global__ void KernelGenDistDepConMat(curandState *state, float *dev_conVec, in
   }
 }
 
+__global__ void KernelGenConmatBiDir(curandState *state, float *dev_conVec, int lChunck, int maxNeurons){
+  /* GENERATE CONNECTION MATRIX WITH ANOTOMIC CONNECTIVITY PROFILE */
+  /* indexing of matrix row + clm x N_NEURONS*/
+  unsigned long id =  (unsigned long int)threadIdx.x + blockIdx.x * blockDim.x;
+  unsigned long int kNeuron = id + lChunck * maxNeurons;
+  unsigned long int i;
+  double alpha = 0.2, pBi, pUni, p, k, n;
+
+  if(id < maxNeurons & kNeuron < N_NEURONS) {
+    k = (double)K;
+    if(kNeuron < NE) {
+      n = (double)NE;
+    }
+    else {
+      n = (double)NI;
+    }
+    p = k / n;
+    pBi = alpha * p + (1 - alpha) * p * p;
+    pUni = (1 - alpha) * p * (1 - p);
+    
+    for(i = 0; i < id; ++i) {
+      if(pBi >= randkernel(state, kNeuron)) {
+        dev_conVec[id + i * N_NEURONS] = 1; // id --> i
+        dev_conVec[i + id * N_NEURONS] = 1; //  i --> id
+      }
+      else {
+        if(2 * piUni >= randkernel(state, kNeuron)) {
+          if(randkernel(state, kNeuron) > 0.5) {
+            dev_conVec[id + i * N_NEURONS] = 1; // id --> i
+          }
+          else {
+            dev_conVec[i + id * N_NEURONS] = 1; //  i --> id
+          }
+        }
+      }
+    }
+  }
+}
+
 
 void IsSquare(unsigned long long x, unsigned long long y) {
   double z, IF_EXIT = 0;
@@ -222,7 +261,7 @@ int main(int argc, char *argv[]) {
   cudaDeviceProp prop;
   unsigned long maxMem = 12079136768;
   enum ConMat_type {
-    random, sparseE2E, distDependent 
+    random, sparseE2E, distDependent, biDir
   };
   ConMat_type conMatType = distDependent;
   if(argc > 1) {
@@ -358,7 +397,7 @@ int main(int argc, char *argv[]) {
     countI = 0;
     countE = 0;
     for(int j = 0; j < N_NEURONS; ++j) {
-      fprintf(fpConMat, "%1.1f ", fullConVec[i + j * N_NEURONS]);
+      /*      fprintf(fpConMat, "%1.1f ", fullConVec[i + j * N_NEURONS]);*/
       /*      fprintf(fpConMat, "%1.1f ", conProbMat[i + j * N_NEURONS]);*/
       /*	fprintf(stdout, "%d ", fullConVec[i + j * N_NEURONS]);*/
       if(j < NE) {
@@ -370,7 +409,7 @@ int main(int argc, char *argv[]) {
     }
     fprintf(fp, "%d\n", countE); 
     fprintf(fp01, "%d\n", countI);
-    fprintf(fpConMat, "\n");
+    /*    fprintf(fpConMat, "\n");*/
   }
   fprintf(stdout, " done\n");
   free(conProbMat);
