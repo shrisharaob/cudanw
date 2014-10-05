@@ -5,6 +5,7 @@
 #include "devHostConstants.h"
 #include "GenSparseMat.cu"
 #include "GenConProbDistDepMat.cu"
+#include "tinyRNG.cu"
 
 void __cudaCheck(cudaError err, const char* file, const int line);
 #define cudaCheck(err) __cudaCheck (err, __FILE__, __LINE__)
@@ -216,7 +217,7 @@ __global__ void KernelGenConmatBiDir(curandState *state, float *dev_conVec, int 
         dev_conVec[i + id * N_NEURONS] = 1; //  i --> id
       }
       else {
-        if(2 * piUni >= randkernel(state, kNeuron)) {
+        if(2 * pUni >= randkernel(state, kNeuron)) {
           if(randkernel(state, kNeuron) > 0.5) {
             dev_conVec[id + i * N_NEURONS] = 1; // id --> i
           }
@@ -253,7 +254,7 @@ void IsSquare(unsigned long long x, unsigned long long y) {
 
 
 int main(int argc, char *argv[]) {
-  int i, nChunks = 1, deviceId = 0, maxNeurons = N_NEURONS;
+  int i, nChunks = 1, deviceId = 0, maxNeurons = N_NEURONS, bidirType = 0;
   float *dev_conVecPtr, *conVec;
   /*  int fullConVecE[NE * NE], fullConVecI[NI *NI], fullConvecIE[NE*NI], fullConVecEI[NI*NE];*/
   float*fullConVec = NULL, *conProbMat = NULL;
@@ -263,14 +264,21 @@ int main(int argc, char *argv[]) {
   enum ConMat_type {
     random, sparseE2E, distDependent, biDir
   };
-  ConMat_type conMatType = distDependent;
+  ConMat_type conMatType = biDir; 
   if(argc > 1) {
     if(atoi(argv[1]) == 0) 
       conMatType = random;
     if(atoi(argv[1]) == 1)
-      conMatType = distDependent; /* DEFAULT */
+      conMatType = distDependent; 
     if(atoi(argv[1]) == 2)
       conMatType = sparseE2E;
+    if(atoi(argv[1]) == 3)
+      conMatType = biDir;/* DEFAULT */
+  }
+  if(argc >2) {
+    if(atoi(argv[2]) == 1) {
+      bidirType = 1;
+    }
   }
       
   cudaCheck(cudaGetDeviceProperties(&prop, deviceId));
@@ -316,9 +324,11 @@ int main(int argc, char *argv[]) {
     initConVec<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_conVecPtr, maxNeurons);
     switch(conMatType) {
     case random:
+      printf("\n random conmat \n");
       kernelGenConMat<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, dev_conVecPtr, i, maxNeurons);
       break;
     case distDependent:
+      printf("\n anatomic conmat \n");
       /* ARRANGE NEURONS ON A SQUARE GRID, REQUIRES THAT SQRT(NA) IS AN INTEGER */
       IsSquare(NE, NI);
       KernelGenConProbMat<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_conVecPtr);
@@ -329,17 +339,35 @@ int main(int argc, char *argv[]) {
     case sparseE2E:
       kernelGenConMatSparseE2E<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, dev_conVecPtr, i, maxNeurons);
       break;
+    case biDir:
+      printf("\nBi-dir\n");
+      ConMatBiDir(fullConVec, bidirType);
+      break;
     default:
       kernelGenConMat<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, dev_conVecPtr, i, maxNeurons);
     }
-    printf("done\ncopying dev to host ...");
-    cudaCheck(cudaMemcpy(conVec, dev_conVecPtr, (N_NEURONS / nChunks) * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
-    printf(" done\n");
-    for(unsigned long long int j = 0; j < chunckSize; ++j) {
+
+    if(conMatType != biDir) {
+      printf("done\ncopying dev to host ...");
+      cudaCheck(cudaMemcpy(conVec, dev_conVecPtr, (N_NEURONS / nChunks) * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
+      printf(" done\n");
+      for(unsigned long long int j = 0; j < chunckSize; ++j) {
       /*      printf("%du\n", j + chunckSize * i);*/
-      fullConVec[j + chunckSize * i] = conVec[j];
-    } 
+        fullConVec[j + chunckSize * i] = conVec[j];
+      } 
+    }
   }
+
+  //   printf("done\ncopying dev to host ...");
+  //   cudaCheck(cudaMemcpy(conVec, dev_conVecPtr, (N_NEURONS / nChunks) * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
+  //   printf(" done\n");
+  //   for(unsigned long long int j = 0; j < chunckSize; ++j) {
+  //     /*      printf("%du\n", j + chunckSize * i);*/
+  //     fullConVec[j + chunckSize * i] = conVec[j];
+  //   } 
+  // }
+
+
   fclose(fpConVec);
   cudaFreeHost(conVec);
   int idxVec[N_NEURONS], nPostNeurons[N_NEURONS];
