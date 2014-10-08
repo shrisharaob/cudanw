@@ -22,9 +22,9 @@ __device__ double bgCur(double vm) {
       iBg = -1 * gI * (RHO * vm + (1 - RHO) * E_L);
       gaussNoiseI[mNeuron - NE] = gNoise;
     }
-    if(mNeuron == SAVE_CURRENT_FOR_NEURON) {
+    /*    if(mNeuron == SAVE_CURRENT_FOR_NEURON) {
       dev_bgCur[curConter - 1] = gNoise;
-    }
+      }*/
   }
   D +=1;
   return iBg;

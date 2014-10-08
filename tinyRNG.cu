@@ -17,11 +17,12 @@ void ConMatBiDir(float *conVec, int bidirType) {
                 1  E-E
   */
 
-  double alpha = 0.3, pBi, pUni, p, k, n;
+  double alpha = 0.0, pBi, pUni, p, k, n;
   unsigned long long i, j;
   tinymt32_t state;
   uint32_t seed = time(0);
   tinymt32_init(&state, seed);
+  alpha = (double)ALPHA;
   p = (double)K / (double)NE;
   pBi = alpha * p + (1 - alpha) * p * p;
   pUni = 2 * (1 - alpha) * p * (1 - p);

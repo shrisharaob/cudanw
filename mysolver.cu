@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
   double *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
   int *dev_conVec = NULL, *dev_nSpks, *dev_spkNeuronIds;
   FILE *fp, *fpConMat, *fpSpkTimes, *fpElapsedTime;
-  double *host_isynap, *synapticCurrent;
+  double *host_isynap, *synapticCurrent = NULL;
   /*  int *conVec;*/
   curandState *devStates, *devNormRandState;
   cudaEvent_t start0, stop0;
@@ -154,16 +154,16 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaMemcpy(dev_nPostneuronsPtr, nPostNeurons, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
  /* ================= ALLOCATE PAGELOCKED MEMORY ON HOST =========================*/
   cudaCheck(cudaMallocHost((void **)&spkTimes, MAX_SPKS  * sizeof(*spkTimes)));
-  cudaCheck(cudaMallocHost((void **)&host_isynap, lastNStepsToStore * N_NEURONS * sizeof(*host_isynap)));
-  cudaCheck(cudaMallocHost((void **)&vm,  lastNStepsToStore * N_NEURONS * sizeof(*vm)));
-  cudaCheck(cudaMallocHost((void **)&host_time,  lastNStepsToStore * N_NEURONS * sizeof(*vm)));
+  /*  cudaCheck(cudaMallocHost((void **)&host_isynap, lastNStepsToStore * N_NEURONS * sizeof(*host_isynap)));*/
+  cudaCheck(cudaMallocHost((void **)&vm,  lastNStepsToStore * N_NEURONS_TO_STORE * sizeof(*vm)));
+  cudaCheck(cudaMallocHost((void **)&host_time,  lastNStepsToStore * sizeof(*vm)));
   cudaCheck(cudaMallocHost((void **)&nSpks, sizeof(*nSpks)));
   cudaCheck(cudaMallocHost((void **)&spkNeuronIds, MAX_SPKS * sizeof(*spkNeuronIds)));
   /* ================= ALLOCATE GLOBAL MEMORY ON DEVICE ===========================*/
   /*cudaCheck(cudaMalloc((void **)&dev_conVec, N_NEURONS * N_NEURONS * sizeof(int)));*/
-  cudaCheck(cudaMalloc((void **)&dev_vm, lastNStepsToStore * N_NEURONS * sizeof(double)));
-  cudaCheck(cudaMalloc((void **)&dev_time, lastNStepsToStore * N_NEURONS * sizeof(double)));
-  cudaCheck(cudaMalloc((void **)&synapticCurrent, lastNStepsToStore * N_NEURONS * sizeof(double)));
+  cudaCheck(cudaMalloc((void **)&dev_vm, lastNStepsToStore * N_NEURONS_TO_STORE * sizeof(double)));
+  cudaCheck(cudaMalloc((void **)&dev_time, lastNStepsToStore * sizeof(double)));
+  /*  cudaCheck(cudaMalloc((void **)&synapticCurrent, lastNStepsToStore * N_NEURONS * sizeof(double)));*/
   cudaCheck(cudaMalloc((void **)&dev_spkTimes, MAX_SPKS * sizeof(*dev_spkTimes)));
   cudaCheck(cudaMalloc((void **)&dev_nSpks, sizeof(int)));
   cudaCheck(cudaMalloc((void **)&dev_spkNeuronIds, MAX_SPKS * sizeof(*dev_spkNeuronIds)));
@@ -317,8 +317,9 @@ int main(int argc, char *argv[]) {
     if(nSpksInPrevStep) {
       cudaCheck(cudaMemcpy(dev_histVec, histVec, histVecIndx * sizeof(int), cudaMemcpyHostToDevice));
       callHistogramKernel<histogram_atomic_inc, 1>(dev_histVec, xform, sum, 0, histVecIndx, 0, &histCountI[0], (int)N_NEURONS);
-      /*      cudaCheck(cudaMemcpy(dev_histCountI, histCountI, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));*/
-      cudaCheck(cudaMemcpyAsync(dev_histCountI, histCountI, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice, stream1));
+      cudaCheckLastError("HIST");
+      cudaCheck(cudaMemcpy(dev_histCountI, histCountI, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
+      /*      cudaCheck(cudaMemcpyAsync(dev_histCountI, histCountI, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice, stream1));*/
     }
 
 
@@ -352,10 +353,10 @@ int main(int argc, char *argv[]) {
   printf("devspk ptrs: %p %p \n", dev_spkTimes, dev_spkNeuronIds);
   cudaCheck(cudaMemcpy(spkTimes, dev_spkTimes, MAX_SPKS * sizeof(double), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(spkNeuronIds, dev_spkNeuronIds, MAX_SPKS * sizeof(int), cudaMemcpyDeviceToHost));
-  cudaCheck(cudaMemcpy(vm, dev_vm, lastNStepsToStore * N_NEURONS * sizeof(double), cudaMemcpyDeviceToHost));
-  cudaCheck(cudaMemcpy(host_time, dev_time, lastNStepsToStore * N_NEURONS * sizeof(double), cudaMemcpyDeviceToHost));
-  cudaCheck(cudaMemcpy(host_isynap, synapticCurrent, lastNStepsToStore * N_NEURONS * sizeof(double), cudaMemcpyDeviceToHost));
-  cudaCheck(cudaMemcpy(vm, dev_vm, lastNStepsToStore * N_NEURONS * sizeof(double), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(vm, dev_vm, lastNStepsToStore * N_NEURONS_TO_STORE * sizeof(double), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(host_time, dev_time, lastNStepsToStore * sizeof(double), cudaMemcpyDeviceToHost));
+  /*  cudaCheck(cudaMemcpy(host_isynap, synapticCurrent, lastNStepsToStore * N_NEURONS * sizeof(double), cudaMemcpyDeviceToHost));*/
+  /*  cudaCheck(cudaMemcpy(vm, dev_vm, lastNStepsToStore * N_NEURONS * sizeof(double), cudaMemcpyDeviceToHost));*/
   double curE[N_CURRENT_STEPS_TO_STORE], curI[N_CURRENT_STEPS_TO_STORE], ibgCur[N_CURRENT_STEPS_TO_STORE], *dev_curE, *dev_curI, *dev_ibg, curIff[N_CURRENT_STEPS_TO_STORE], *dev_curiff;
   cudaCheck(cudaGetSymbolAddress((void **)&dev_curE, glbCurE));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_curI, glbCurI));
@@ -388,16 +389,19 @@ int main(int argc, char *argv[]) {
   }
   fclose(fpSpkTimes);
   printf("done\n");
+  printf("saving vm to disk ....");
+  fflush(stdout);
   if(IF_SAVE) {  
     fp = fopen("vm.csv", "w");
     for(i = 0; i < lastNStepsToStore; ++i) {
       fprintf(fp, "%f ", host_time[i]);
-      for(k = 0; k < N_NEURONS; ++k) {
+      for(k = 0; k < N_NEURONS_TO_STORE; ++k) {
 	/*	fprintf(fp, "%f %f ", vm[k + i *  N_NEURONS], host_isynap[k + i * N_NEURONS]);*/
-	fprintf(fp, "%f ", vm[k + i *  N_NEURONS]);
+        fprintf(fp, "%f ", vm[k + i *  N_NEURONS_TO_STORE]);
       }
       fprintf(fp, "\n");
     }
+    printf("\n%d %d\n", i, k);
     fclose(fp);
     FILE* fpCur = fopen("currents.csv", "w");
     for(i = 0; i < N_CURRENT_STEPS_TO_STORE; ++i) {
@@ -417,16 +421,17 @@ int main(int argc, char *argv[]) {
       }*/
     fclose(fpConMat);
   }
+  printf("done\n");
   /*================== CLEANUP ===================================================================*/
   cudaCheck(cudaFreeHost(vm));
   cudaCheck(cudaFreeHost(host_time));
-  cudaCheck(cudaFreeHost(host_isynap));
+  /*  cudaCheck(cudaFreeHost(host_isynap));*/
   cudaCheck(cudaFreeHost(spkTimes));
   cudaCheck(cudaFreeHost(spkNeuronIds));
   cudaCheck(cudaFreeHost(nSpks));
   cudaCheck(cudaFree(dev_vm));
   cudaCheck(cudaFree(dev_time));
-  cudaCheck(cudaFree(synapticCurrent));
+  /*  cudaCheck(cudaFree(synapticCurrent));*/
   cudaCheck(cudaFree(dev_spkNeuronIds));
   cudaCheck(cudaFree(dev_spkTimes));
   cudaCheck(cudaFree(dev_nSpks));

@@ -68,11 +68,11 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
     dev_n[mNeuron] = vout[1];
     dev_z[mNeuron] = vout[2];
     dev_h[mNeuron] = vout[3];
-    if(k >= localLastNSteps) {
-      y[mNeuron + N_NEURONS * (k - localLastNSteps)] = vout[0];
-      synapticCurrent[mNeuron + N_NEURONS *  (k - localLastNSteps)] = isynapNew;
+    if(k >= localLastNSteps & mNeuron < N_NEURONS_TO_STORE) {
+      y[mNeuron + N_NEURONS_TO_STORE * (k - localLastNSteps)] = vout[0];
+      /*      synapticCurrent[mNeuron + N_NEURONS *  (k - localLastNSteps)] = isynapNew;*/
       if(mNeuron == 0) {
-	dev_time[k - localLastNSteps] = x;
+        dev_time[k - localLastNSteps] = x;
       }
     }
     if(k > 2) {
