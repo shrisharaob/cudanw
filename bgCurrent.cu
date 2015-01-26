@@ -5,7 +5,7 @@ __device__ double bgCur(double vm) {
   if(mNeuron < N_NEURONS) {
     if(mNeuron < NE) {
       gNoise = gaussNoiseE[mNeuron];
-      gNoise = gNoise * (1 - DT * INV_TAU_SYNAP) + SQRT_DT  * INV_TAU_SYNAP * normRndKernel(bgCurNoiseGenState);
+      gNoise = gNoise * (1 - DT * INV_TAU_BG) + SQRT_DT  * INV_TAU_BG * normRndKernel(bgCurNoiseGenState);
       /*gNoise = 0;*/
       gE = G_EB * K * (RB_E + sqrt(RB_E / K) * gNoise);
       /*gE = G_EB * K * RB_E;*/
@@ -15,7 +15,7 @@ __device__ double bgCur(double vm) {
     }
     if(mNeuron >= NE) {
       gNoise = gaussNoiseI[mNeuron - NE];
-      gNoise = gNoise * (1 - DT * INV_TAU_SYNAP) +  SQRT_DT  * INV_TAU_SYNAP * normRndKernel(bgCurNoiseGenState);
+      gNoise = gNoise * (1 - DT * INV_TAU_BG) +  SQRT_DT  * INV_TAU_BG * normRndKernel(bgCurNoiseGenState);
       /*      gNoise = 0;*/
       gI = G_IB * K * (RB_I + sqrt(RB_I / K) * gNoise);
       /*      gI = G_IB * K * RB_I;*/

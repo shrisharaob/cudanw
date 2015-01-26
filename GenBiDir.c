@@ -6,11 +6,12 @@
 #include <time.h>
 
 void ConMatBiDir(float *conVec) {
-  double alpha = 0.3, pBi, pUni, p, k, n;
+  double alpha, pBi, pUni, p, k, n;
   unsigned long long i, j;
   const gsl_rng_type * T;
   gsl_rng * r;
   p = (double)K / (double)NE;
+  alpha = 0.3;
   pBi = alpha * p + (1 - alpha) * p * p;
   pUni = 2 * (1 - alpha) * p * (1 - p);
 

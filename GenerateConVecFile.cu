@@ -114,6 +114,43 @@ __global__ void kernelGenConMat(curandState *state, float *dev_conVec, int lChun
   }
 }
 
+__global__ void kernelFixedEII(curandState *fixedState, curandState *state, float *dev_conVec, int lChunck, int maxNeurons){
+  /* indexing of matrix row + clm x N_NEURONS*/
+  unsigned long id =  (unsigned long int)threadIdx.x + blockIdx.x * blockDim.x;
+  unsigned long int kNeuron = id + lChunck * maxNeurons;
+  unsigned long int i;
+  float k, n;
+  curandState *threadState;
+  if(id < maxNeurons & kNeuron < N_NEURONS) {
+    k = (float)K;
+    if(kNeuron < NE) {
+      n = (float)NE;
+    }
+    else {
+      n = (float)NI;
+    }
+    for(i = 0; i < N_NEURONS; ++i) { 
+      if(i < NE && kNeuron < NE) { /* E --> E */
+	threadState = state; // bad practice !!!!
+      }
+      else {
+	threadState = fixedState;
+      }
+      if(i < NE) {  
+	if(k/n >= randkernel(threadState, kNeuron)) { /* neuron[id] receives input from i ? */
+          dev_conVec[id + i * maxNeurons] = 1;
+        }
+      }
+      if(i >= NE) { /* E --> I */
+        if(k/n >= randkernel(threadState, kNeuron)) { /* neuron[id] receives input from i ? */
+          dev_conVec[id + i * maxNeurons] = 1;
+        } 
+      }
+    }
+  }
+}
+
+
 __global__ void kernelGenConMatSparseE2E(curandState *state, float *dev_conVec, int lChunck, int maxNeurons){
   /* indexing of matrix row + clm x N_NEURONS*/
   unsigned long id =  (unsigned long int)threadIdx.x + blockIdx.x * blockDim.x;
@@ -134,12 +171,12 @@ __global__ void kernelGenConMatSparseE2E(curandState *state, float *dev_conVec, 
       if(i < NE) {  /* E --> E */
         if(id < NE) {
           if(sqrt(k)/n >= randkernel(state, kNeuron)) { /* neuron[id] receives input from i ? */
-          dev_conVec[id + i * maxNeurons] = 1;
+	    dev_conVec[id + i * maxNeurons] = 1;
           }
         }
         else {
          if(k/n >= randkernel(state, kNeuron)) { /* neuron[id] receives input from i ? */
-          dev_conVec[id + i * maxNeurons] = 1;
+	   dev_conVec[id + i * maxNeurons] = 1;
           }
         }
       }
@@ -149,12 +186,8 @@ __global__ void kernelGenConMatSparseE2E(curandState *state, float *dev_conVec, 
         } 
       }
     }
-
   }
 }
-
-
-
 
 __global__ void KernelGenDistDepConMat(curandState *state, float *dev_conVec, int lChunck, int maxNeurons){
   /* GENERATE CONNECTION MATRIX WITH ANOTOMIC CONNECTIVITY PROFILE */
@@ -197,7 +230,7 @@ __global__ void KernelGenConmatBiDir(curandState *state, float *dev_conVec, int 
   unsigned long id =  (unsigned long int)threadIdx.x + blockIdx.x * blockDim.x;
   unsigned long int kNeuron = id + lChunck * maxNeurons;
   unsigned long int i;
-  double alpha = 0.2, pBi, pUni, p, k, n;
+  double alpha = ALPHA, pBi, pUni, p, k, n;
 
   if(id < maxNeurons & kNeuron < N_NEURONS) {
     k = (double)K;
@@ -251,8 +284,6 @@ void IsSquare(unsigned long long x, unsigned long long y) {
   }
 }
 
-
-
 int main(int argc, char *argv[]) {
   int i, nChunks = 1, deviceId = 0, maxNeurons = N_NEURONS, bidirType = 0;
   float *dev_conVecPtr, *conVec;
@@ -262,7 +293,7 @@ int main(int argc, char *argv[]) {
   cudaDeviceProp prop;
   unsigned long maxMem = 12079136768;
   enum ConMat_type {
-    random, sparseE2E, distDependent, biDir
+    random, sparseE2E, distDependent, biDir, fixedEII
   };
   ConMat_type conMatType = biDir; 
   if(argc > 1) {
@@ -274,13 +305,14 @@ int main(int argc, char *argv[]) {
       conMatType = sparseE2E;
     if(atoi(argv[1]) == 3)
       conMatType = biDir;/* DEFAULT */
+    if(atoi(argv[1]) == 5)
+      conMatType = fixedEII;
   }
   if(argc >2) {
-    if(atoi(argv[2]) == 1) {
-      bidirType = 1;
-    }
+    //    if(atoi(argv[2]) == 1) {
+    bidirType = atoi(argv[2]);
+      //}
   }
-      
   cudaCheck(cudaGetDeviceProperties(&prop, deviceId));
   printf("Global Mem = %ld\n", prop.totalGlobalMem);
   i = 0;
@@ -294,14 +326,13 @@ int main(int argc, char *argv[]) {
   /*  if(maxNeurons > 30000) { nChunks += 2;}*/
   maxNeurons = N_NEURONS / nChunks;
   printf(" maxNeurons = %d\n nChunks = %d\n", maxNeurons, nChunks);
-  curandState *devStates;
+  curandState *devStates, *fixedStates;
   fullConVec = (float *)malloc((unsigned long long)N_NEURONS * N_NEURONS * sizeof(float));
   conProbMat = (float *)malloc((unsigned long long)N_NEURONS * N_NEURONS * sizeof(float));
   if(fullConVec == NULL) {
     printf("fullconvec not assigned\n"); 
     exit(-1);
   }
-
   /* choose 256 threads per block for high occupancy */
   int ThreadsPerBlock = 512;
   int BlocksPerGrid = (N_NEURONS + ThreadsPerBlock - 1) / ThreadsPerBlock;
@@ -341,8 +372,15 @@ int main(int argc, char *argv[]) {
       break;
     case biDir:
       printf("\nBi-dir\n");
-      ConMatBiDir(fullConVec, bidirType);
+      ConMatBiDir(fullConVec, bidirType); // defined in file : tinyRNG.cu 
       break;
+    case fixedEII:
+      cudaCheck(cudaMalloc((void **)&fixedStates,  N_NEURONS * sizeof(curandState)));
+      setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(fixedStates, 1326783ULL);
+      printf("fixed EI, IE, II\n");
+      ConMatFixedEII(fullConVec);
+    
+      /*      kernelFixedEII<<<BlocksPerGrid, ThreadsPerBlock>>>(fixedStates, devStates, dev_conVecPtr, i, maxNeurons);*/
     default:
       kernelGenConMat<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, dev_conVecPtr, i, maxNeurons);
     }
@@ -398,15 +436,20 @@ int main(int argc, char *argv[]) {
   fclose(fpSparseConVec);
   fclose(fpIdxVec);
   fclose(fpNpostNeurons);*/
-  if(N_NEURONS < 20) {
+    
+
+if(N_NEURONS < 2) {
     for(i = 0; i < N_NEURONS; ++i) {
       printf("neuron %d projects to : ", i);
       for(int j = 0; j < nPostNeurons[i]; ++j) {
-	printf("%d ", sparseConVec[idxVec[i] + j]);
+        printf("%d ", sparseConVec[idxVec[i] + j]);
       }
       printf("\n");
     }
   }
+
+
+
   /*
   int buffer[N_NEURONS * N_NEURONS], j;
   fp = fopen("conVec.dat", "rb");
@@ -427,7 +470,8 @@ int main(int argc, char *argv[]) {
     for(int j = 0; j < N_NEURONS; ++j) {
       /*      fprintf(fpConMat, "%1.1f ", fullConVec[i + j * N_NEURONS]);*/
       /*      fprintf(fpConMat, "%1.1f ", conProbMat[i + j * N_NEURONS]);*/
-      /*	fprintf(stdout, "%d ", fullConVec[i + j * N_NEURONS]);*/
+      //      printf("\n %d \n", (int)(i * N_NEURONS + j));
+      //      fprintf(stdout, "%d ", (int)fullConVec[i + j * N_NEURONS]);
       if(j < NE) {
         countE += fullConVec[i * N_NEURONS + j];   
       }
@@ -437,6 +481,7 @@ int main(int argc, char *argv[]) {
     }
     fprintf(fp, "%d\n", countE); 
     fprintf(fp01, "%d\n", countI);
+    //    fprintf(stdout, "\n");
     /*    fprintf(fpConMat, "\n");*/
   }
   fprintf(stdout, " done\n");

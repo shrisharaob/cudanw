@@ -31,9 +31,9 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
   if(mNeuron < N_NEURONS) {
     if(k == 0) {
       dev_v[mNeuron] = (-1 * 70) +  (40 * randkernel(dev_state)); /* Vm(0) ~ U(-70, -30)*/
-      dev_n[mNeuron] = 0.3176;
-      dev_z[mNeuron] = 0.1;
-      dev_h[mNeuron] = 0.5961;
+      dev_n[mNeuron] = randkernel(dev_state); //0.3176;
+      dev_z[mNeuron] = randkernel(dev_state); //0.1;
+      dev_h[mNeuron] = randkernel(dev_state); //0.5961;
       dev_isynap[mNeuron] = 0;
       dev_gE[mNeuron] = 0.0;
       dev_gI[mNeuron] = 0.0;
@@ -68,13 +68,23 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
     dev_n[mNeuron] = vout[1];
     dev_z[mNeuron] = vout[2];
     dev_h[mNeuron] = vout[3];
-    if(k >= localLastNSteps & mNeuron < N_NEURONS_TO_STORE) {
-      y[mNeuron + N_NEURONS_TO_STORE * (k - localLastNSteps)] = vout[0];
+    if(k >= localLastNSteps & (mNeuron >= N_NEURONS_TO_STORE_START &  mNeuron < N_NEURONS_TO_STORE_END)) {
+      y[(mNeuron - N_NEURONS_TO_STORE_START) + N_NEURONS_TO_STORE * (k - localLastNSteps)] = vout[0];
       /*      synapticCurrent[mNeuron + N_NEURONS *  (k - localLastNSteps)] = isynapNew;*/
+
       if(mNeuron == 0) {
         dev_time[k - localLastNSteps] = x;
       }
     }
+    
+    /*    if(mNeuron = 0 & mNeuron <= N_E_2BLOCK_NA_CURRENT ) {
+      synapticCurrent[mNeuron] = isynap + ibg + iff;
+      }*/
+
+    if(k > 4000 &  mNeuron >= NE & mNeuron <= NE + N_I_SAVE_CUR) {
+      synapticCurrent[mNeuron - NE] = isynapNew + ibg + 0.0 * iff;
+    }
+
     if(k > 2) {
       if(vout[0] > SPK_THRESH) { 
 	if(vmOld <= SPK_THRESH) {

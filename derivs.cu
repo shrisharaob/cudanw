@@ -103,27 +103,43 @@ __device__ void derivs(double t, double stateVar[], double dydx[], double isynap
     /*    if(kNeuron >= 13520) {
       cur = 3.0;
       }*/
-    if (kNeuron < NE) {
-      dydx[0] =  1/Cm * (cur 
-                                 - G_Na * pow(m_inf(stateVar[0]), 3) * stateVar[3] * (stateVar[0] - E_Na) 
-                                 - G_K * pow(stateVar[1], 4) * (stateVar[0] - E_K) 
-                                 - G_L_E * (stateVar[0] - E_L)
-			 - G_adapt * stateVar[2] * (stateVar[0] - E_K) + isynap + bgPrefactor * ibg + iffPrefactor * iff);
-      }
-    else {
-      dydx[0] =  1/Cm * (cur  
-                                   - G_Na * pow(m_inf(stateVar[0]), 3) * stateVar[3] * (stateVar[0] - E_Na) 
-                                   - G_K * pow(stateVar[1], 4) * (stateVar[0] - E_K) 
-                                   - G_L_I * (stateVar[0] - E_L)
-		       - 0.0 * G_adapt * stateVar[2] * (stateVar[0] - E_K) + isynap + bgPrefactor * ibg + iffPrefactor * iff);
-      }
-     
-  dydx[1] = alpha_n(stateVar[0]) * (1 - stateVar[1]) - beta_n(stateVar[0]) * stateVar[1];
-  
-  dydx[2] = 1 / Tau_adapt * (z_inf(stateVar[0]) - stateVar[2]);
     
-  dydx[3] = alpha_h(stateVar[0]) * (1 - stateVar[3]) - beta_h(stateVar[0]) * stateVar[3];
- 
+    if (kNeuron < NE) {
+      if(kNeuron >= 0 & kNeuron < N_E_2BLOCK_NA_CURRENT) { /* BLOCK Na2+ CHANNEL FOR THESE NEURONS */
+        dydx[0] =  1/Cm * (cur 
+                           - G_K * pow(stateVar[1], 4) * (stateVar[0] - E_K) 
+                           - G_L_E * (stateVar[0] - E_L)
+                           - G_adapt * stateVar[2] * (stateVar[0] - E_K) + isynap + bgPrefactor * ibg + iffPrefactor * iff);
+      }
+      else {
+        dydx[0] =  1/Cm * (cur 
+                           - G_Na * pow(m_inf(stateVar[0]), 3) * stateVar[3] * (stateVar[0] - E_Na) 
+                           - G_K * pow(stateVar[1], 4) * (stateVar[0] - E_K) 
+                           - G_L_E * (stateVar[0] - E_L)
+                           - G_adapt * stateVar[2] * (stateVar[0] - E_K) + isynap + bgPrefactor * ibg + iffPrefactor * iff);
+      }
+    }
+    else {
+      if(kNeuron >= NE & kNeuron < NE + N_I_2BLOCK_NA_CURRENT) { /* BLOCK Na2+ CHANNEL FOR THESE NEURONS */
+        dydx[0] =  1/Cm * (cur  
+                           - G_K * pow(stateVar[1], 4) * (stateVar[0] - E_K) 
+                           - G_L_I * (stateVar[0] - E_L)
+                           - 0.0 * G_adapt * stateVar[2] * (stateVar[0] - E_K) + isynap + bgPrefactor * ibg + iffPrefactor * iff);
+      }
+      else {
+        dydx[0] =  1/Cm * (cur  
+                           - G_Na * pow(m_inf(stateVar[0]), 3) * stateVar[3] * (stateVar[0] - E_Na) 
+                           - G_K * pow(stateVar[1], 4) * (stateVar[0] - E_K) 
+                           - G_L_I * (stateVar[0] - E_L)
+                           - 0.0 * G_adapt * stateVar[2] * (stateVar[0] - E_K) + isynap + bgPrefactor * ibg + iffPrefactor * iff);
+      }
+    }
+     
+    dydx[1] = alpha_n(stateVar[0]) * (1 - stateVar[1]) - beta_n(stateVar[0]) * stateVar[1];
+  
+    dydx[2] = 1 / Tau_adapt * (z_inf(stateVar[0]) - stateVar[2]);
+    
+    dydx[3] = alpha_h(stateVar[0]) * (1 - stateVar[3]) - beta_h(stateVar[0]) * stateVar[3];
   }
 }
 

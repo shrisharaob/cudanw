@@ -23,21 +23,30 @@ __global__ void AuxRffTotal(curandState *devNormRandState, curandState *devState
 
 __device__ void RffTotal(double t) {
   unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
+  float varContrast;
   if(mNeuron < N_Neurons) {
+    /*
+    if(t < 5000) { // SWITCH ON STIMULUS AT 5000ms 
+      varContrast = 0.0;
+    }
+    else {
+      varContrast = 100.0;
+    }
+*/
     if(mNeuron < NE) {
       /**  !!!!! COS IN RADIANS ?????? */
 
-      rTotal[mNeuron] = CFF * K * (R0 +  R1 * log10(1.000 + CONTRAST))
+      rTotal[mNeuron] = CFF * K * (R0 +  R1 * log10(1.000 + varContrast))
 	+ sqrt(CFF * K) * R0 * randnXiA[mNeuron]
-	+ sqrt(CFF * K) * R1 * log10(1 + CONTRAST) * (randnXiA[mNeuron] 
-		      + ETA_E * randwZiA[mNeuron * 4] * cos(2 * (theta - randuDelta[mNeuron])) 
+	+ sqrt(CFF * K) * R1 * log10(1.0 + varContrast) * (randnXiA[mNeuron] 
+		      + ETA_E * randwZiA[mNeuron * 4] * cos(2.0 * (theta - randuDelta[mNeuron])) 
 		      + MU_E * randwZiA[mNeuron *4 + 1] * cos(INP_FREQ * t - randuPhi[mNeuron * 3])
-		      + ETA_E * MU_E * 0.5 * (randwZiA[mNeuron * 4 + 2] * cos(2 * theta + INP_FREQ * t - randuPhi[mNeuron * 3 + 1]) + randwZiA[mNeuron * 4 + 3] * cos(2 * theta - INP_FREQ * t + randuPhi[mNeuron * 3 + 2])));
+		      + ETA_E * MU_E * 0.5 * (randwZiA[mNeuron * 4 + 2] * cos(2.0 * theta + INP_FREQ * t - randuPhi[mNeuron * 3 + 1]) + randwZiA[mNeuron * 4 + 3] * cos(2.0 * theta - INP_FREQ * t + randuPhi[mNeuron * 3 + 2])));
     }
     if(mNeuron >= NE) {
       /*      rTotalPrev[mNeuron] = rTotal[mNeuron]; */
 
-      rTotal[mNeuron] = CFF * K * (R0 + R1 * log10(1.000 + CONTRAST)) + sqrt(CFF * K) * R0 * randnXiA[mNeuron] + sqrt(CFF * K) * R1 * log10(1 + CONTRAST) * (randnXiA[mNeuron] + ETA_I * randwZiA[mNeuron * 4] * cos(2 * (theta - randuDelta[mNeuron])) + MU_I * randwZiA[mNeuron * 4 + 1] * cos(INP_FREQ * t - randuPhi[mNeuron * 3]) + ETA_I * MU_I * 0.5 * (randwZiA[mNeuron * 4 + 2] * cos(2 * theta + INP_FREQ * t - randuPhi[mNeuron * 3 + 1]) + randwZiA[mNeuron * 4 + 3] * cos(2 * theta - INP_FREQ * t + randuPhi[mNeuron * 3 + 2])));
+      rTotal[mNeuron] = CFF * K * (R0 + R1 * log10(1.000 + varContrast)) + sqrt(CFF * K) * R0 * randnXiA[mNeuron] + sqrt(CFF * K) * R1 * log10(1.0 + varContrast) * (randnXiA[mNeuron] + ETA_I * randwZiA[mNeuron * 4] * cos(2.0 * (theta - randuDelta[mNeuron])) + MU_I * randwZiA[mNeuron * 4 + 1] * cos(INP_FREQ * t - randuPhi[mNeuron * 3]) + ETA_I * MU_I * 0.5 * (randwZiA[mNeuron * 4 + 2] * cos(2.0 * theta + INP_FREQ * t - randuPhi[mNeuron * 3 + 1]) + randwZiA[mNeuron * 4 + 3] * cos(2.0 * theta - INP_FREQ * t + randuPhi[mNeuron * 3 + 2])));
     }
     /*
       rTotal[mNeuron] = (R0 + R1 * log10(1 + CONTRAST)) * (CFF * K + sqrt(CFF *K) * randnXiA[mNeuron]);*/
@@ -54,10 +63,10 @@ __device__ void Gff(double t) {
       tmp = gffItgrl[mNeuron];
       tmp = tmp * (1 - DT / TAU_SYNAP) + (SQRT_DT * INV_TAU_SYNAP) * normRndKernel(iffNormRandState);
       if(mNeuron < NE) {
-	gFF[mNeuron] =   GFF_E * (rTotal[mNeuron] + sqrt(rTotal[mNeuron]) * tmp);
+        gFF[mNeuron] =   GFF_E * (rTotal[mNeuron] + sqrt(rTotal[mNeuron]) * tmp);
       }
       if(mNeuron >= NE) {
-	gFF[mNeuron] =  GFF_I * (rTotal[mNeuron] + sqrt(rTotal[mNeuron]) * tmp);
+        gFF[mNeuron] =  GFF_I * (rTotal[mNeuron] + sqrt(rTotal[mNeuron]) * tmp);
       }
       gffItgrl[mNeuron] = tmp;
     }
