@@ -165,9 +165,15 @@ __global__ void computeIsynap(double t) {
     	/* bg current */
 	/*	ibg = bgCur(vmOld); /* make sure AuxRffTotal<<<  >>> is run begore calling bgCur */
 	/* FF input current*/
-    RffTotal(t);
-    Gff(t);
-    dev_iffCurrent[mNeuron] = IFF(vm);
+
+    //    RffTotal(t);
+    //    Gff(t);
+    //    dev_iffCurrent[mNeuron] = IFF(vm);
+
+    dev_iffCurrent[mNeuron] = IFF_CorrelatedNoise();
+
+
+
   }
 }
 #endif

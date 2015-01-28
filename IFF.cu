@@ -24,6 +24,7 @@ __global__ void AuxRffTotal(curandState *devNormRandState, curandState *devState
 __device__ void RffTotal(double t) {
   unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   float varContrast;
+  varContrast = HOST_CONTRAST;
   if(mNeuron < N_Neurons) {
     /*
     if(t < 5000) { // SWITCH ON STIMULUS AT 5000ms 
@@ -87,4 +88,20 @@ __device__ double IFF(double vm) {
   }
   return iff;
 }
+
+
+__device__ double IFF_CorrelatedNoise() {
+  unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
+  double iff = 0.0, tmp = 0.0;
+  if(mNeuron < N_Neurons) {
+    tmp = gffItgrl[mNeuron];
+    iff = tmp * EXP_NOISE_TIME + sqrt(EXP_NOISE_PREFACTOR) * normRndKernel(iffNormRandState) + 0.0;
+    gffItgrl[mNeuron] = iff;
+    //    iff = normRndKernel(iffNormRandState);
+    if(mNeuron == SAVE_CURRENT_FOR_NEURON) { dev_iff[curConter - 1] = iff;}
+  }
+  return iff;
+}
+
+
 #endif

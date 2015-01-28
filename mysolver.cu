@@ -72,7 +72,14 @@ int main(int argc, char *argv[]) {
       //      tStop = tStop + atof(argv[4]);
       strcpy(filetag, argv[4]);
     }
+    // else {
+    //   strcpy(filetag, 'notag');
+    // }
   }
+
+  printf("\nexp_noise = %f, exp_noise_pre = %f, sqrt = %f\n", EXP_NOISE_TIME, EXP_NOISE_PREFACTOR, sqrt(EXP_NOISE_PREFACTOR));
+
+
   printf("\n Computing on GPU%d \n", deviceId);
   cudaCheck(cudaSetDevice(deviceId));
   theta_degrees = host_theta;
