@@ -24,6 +24,7 @@ __global__ void AuxRffTotal(curandState *devNormRandState, curandState *devState
 __device__ void RffTotal(double t) {
   unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   float varContrast;
+  varContrast = CONTRAST;
   if(mNeuron < N_Neurons) {
     /*
     if(t < 5000) { // SWITCH ON STIMULUS AT 5000ms 

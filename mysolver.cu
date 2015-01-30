@@ -38,7 +38,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  double tStart = 0.0, tStop =  6000.0;
+  double tStart = 0.0, tStop =  4000.0;
   double *spkTimes, *vm = NULL, host_theta = 0.0, theta_degrees; /* *vstart; 500 time steps */
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   double *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
@@ -99,7 +99,7 @@ int main(int argc, char *argv[]) {
   unsigned long long tttt = 45687ULL;
   cudaCheck(cudaMalloc((void **)&devNormRandState, N_NEURONS * sizeof(curandState)));
   setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, tttt);
-  tttt = 12463ULL;
+  tttt = 12463ULL; //this has to be fixed so that the input structure is kept the same when running multiple simulations, or else each realization will give different tuning curvs 
   setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devNormRandState, tttt);
   AuxRffTotal<<<BlocksPerGrid, ThreadsPerBlock>>>(devNormRandState, devStates);
   cudaCheck(cudaFree(devNormRandState));
