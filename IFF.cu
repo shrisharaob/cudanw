@@ -26,14 +26,14 @@ __device__ void RffTotal(double t) {
   float varContrast;
   varContrast = CONTRAST;
   if(mNeuron < N_Neurons) {
-    /*
+    
     if(t < 5000) { // SWITCH ON STIMULUS AT 5000ms 
       varContrast = 0.0;
     }
     else {
       varContrast = 100.0;
     }
-*/
+
     if(mNeuron < NE) {
       /**  !!!!! COS IN RADIANS ?????? */
 
