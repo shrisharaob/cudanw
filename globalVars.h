@@ -32,18 +32,18 @@
 #define INV_TAU_SYNAP (1 / TAU_SYNAP)
 #define V_E 0.0
 #define V_I -80.0
-#define G_EE (0.15 * 2.0)
-#define G_EI (2.00 * 2.0)
-#define G_IE (0.45 * 2.0)
-#define G_II (3.00 * 2.0)
+#define G_EE (0.15 * 4.0)
+#define G_EI (2.00 * 4.0)
+#define G_IE (0.45 * 4.0)
+#define G_II (3.00 * 4.0)
 
 /* backgrund input */
 #define RB_E 0.002
 #define RB_I 0.002
 #define TAU_BG 3.0
 #define INV_TAU_BG (1.0 / TAU_BG)
-#define G_EB (2.0 * 0.3 /sqrt(K))
-#define G_IB (2.0 * 0.4 /sqrt(K))
+#define G_EB (4.0 * 0.3 /sqrt(K))
+#define G_IB (4.0 * 0.4 /sqrt(K))
 
 /* ff input */
 #define CFF 0.1000000000
@@ -57,8 +57,8 @@
 #define ETA_I 1.2
 #define MU_E 0.0
 #define MU_I 0.0
-#define GFF_E (2.0 * 0.95 / sqrt(10 * K))
-#define GFF_I (2.0 * 1.26 / sqrt(10 * K))
+#define GFF_E (4.0 * 0.95 / sqrt(10 * K))
+#define GFF_I (4.0 * 1.26 / sqrt(10 * K))
 
 __device__ float randnXiA[N_Neurons], 
                  randuDelta[N_Neurons], 
@@ -106,7 +106,7 @@ __device__ int dev_prevStepSpkIdx[N_NEURONS], /*this will hold the row id in the
 /*   *Itgrl, *ItgrlOld; */
 
 
-#define RHO 0.1 /* ratio - smatic / dendritic synapses*/
+#define RHO 0.5 /* ratio - smatic / dendritic synapses*/
 #define SPK_THRESH 0.0
 
 typedef struct 
