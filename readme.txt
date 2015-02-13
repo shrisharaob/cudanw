@@ -1,2 +1,2 @@
-BRANCH WHITH WORKING CODE
-this branch is a sub-branch of doublePrecision, which tries to rectify the cloak level sync problem that the latter has due to inability of __synchthreads() to synh globally
+THIS BRANCH IS FOR DEVELOPING ORIENTATION SELETIVTY MAPS IN LAYER 4 
+this is a branch off from opt_dev 

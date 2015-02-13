@@ -109,6 +109,8 @@ __device__ int dev_prevStepSpkIdx[N_NEURONS], /*this will hold the row id in the
 #define RHO 0.5 /* ratio - smatic / dendritic synapses*/
 #define SPK_THRESH 0.0
 
+#define IF_ORI_MAP 1
+
 typedef struct 
 {
   int neuronId, nPostNeurons, *postNeuronIds;

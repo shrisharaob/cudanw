@@ -24,6 +24,11 @@ __device__ double randkernel(curandState *state);
 
 __device__ double atomicAdd(double* address, double val);
 
+__device__ double OrientationAngleForGivenNeuron(unsigned int neuronId);
+__device__ int OrientationForGivenNeuron(unsigned int neuronId);
+__device__ double MyDivide(double x, double y);
+__device__ double XCordinate(unsigned long int neuronIdx);
+__device__ double YCordinate(unsigned long int neuronIdx);
 /* ======================= GLOBAL KERNELS ============================================== */
 
 __global__ void rkdumbPretty(kernelParams_t, devPtr_t);
