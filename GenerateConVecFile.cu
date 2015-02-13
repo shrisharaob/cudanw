@@ -263,6 +263,23 @@ __global__ void KernelGenConmatBiDir(curandState *state, float *dev_conVec, int 
   }
 }
 
+__global__ void KernelGenFeedForwardDistDepConMat(curandState *state, float *dev_conVecFF, int lChunck, int maxNeurons){
+  /* GENERATE FEED FORWARD CONNECTION MATRIX WITH ANOTOMIC CONNECTIVITY PROFILE */
+  /* indexing of matrix row + clm x N_NEURONS*/
+  unsigned long id =  (unsigned long int)threadIdx.x + blockIdx.x * blockDim.x;
+  unsigned long int kNeuron = id + lChunck * maxNeurons;
+  unsigned long int i;
+  if(id < maxNeurons & kNeuron < N_NEURONS) {
+    for(i = 0; i < (CFF * K); ++i) {
+        if(dev_conVecFF[id + i * maxNeurons] >= randkernel(state, kNeuron)) { /* neuron[id] receives input from i ? */
+          dev_conVecFF[id + i * maxNeurons] = 1;
+        }
+        else{
+          dev_conVecFF[id + i * maxNeurons] = 0;
+        }
+    }
+  }
+}
 
 void IsSquare(unsigned long long x, unsigned long long y) {
   double z, IF_EXIT = 0;
@@ -292,6 +309,7 @@ int main(int argc, char *argv[]) {
   FILE *fpConVec;
   cudaDeviceProp prop;
   unsigned long maxMem = 12079136768;
+  int IF_FF_ORI_MAP = 1;
   enum ConMat_type {
     random, sparseE2E, distDependent, biDir, fixedEII
   };
@@ -426,6 +444,10 @@ int main(int argc, char *argv[]) {
   fwrite(nPostNeurons, sizeof(*nPostNeurons), N_NEURONS, fpNpostNeurons);
   fclose(fpNpostNeurons);
   printf("done\n");
+  // GENERATE FEED FORWARD ORIENTATION MAP
+  if(IF_FF_ORI_MAP) {
+    
+  }
   /*
   fpSparseConVec = fopen("sparseConVec.dat", "rb");
   fpIdxVec = fopen("idxVec.dat", "rb");

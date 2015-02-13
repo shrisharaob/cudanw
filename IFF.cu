@@ -66,18 +66,24 @@ __device__ double OrientationAngleForGivenNeuron(unsigned int neuronId){
   unsigned long mNeuron;
   double xCordinate = 0.0, yCordinate = 0.0;
   double out  = 0;
+  int IF_CIRCLE = 0;
   mNeuron = (unsigned long) neuronId;
   xCordinate = XCordinate(mNeuron);
   yCordinate = YCordinate(mNeuron);
   //pinwheel center coincides with the center of patch, so shift origin to center of patch
   xCordinate = xCordinate - (L * 0.5);
   yCordinate = yCordinate - (L * 0.5);
-  if((xCordinate*xCordinate) + (yCordinate * yCordinate) <= (L * 0.5) * (L * 0.5)) {
+  if(IF_CIRCLE) {
+    if((xCordinate*xCordinate) + (yCordinate * yCordinate) <= (L * 0.5) * (L * 0.5)) {
     // if neuron lies inside the circle of radius 
     out = fmod(atan(MyDivide(yCordinate, xCordinate)) + PI, PI); 
+    }
+    else {
+      out = 720.0;
+    }
   }
-  else {
-    out = 720.0;
+  else  {
+    out = fmod(atan(MyDivide(yCordinate, xCordinate)) + PI, PI); 
   }
   return out;
 }

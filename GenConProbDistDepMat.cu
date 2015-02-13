@@ -24,22 +24,22 @@ __device__ double YCordinate(unsigned long  neuronIdx) {
   return floor((double)neuronIdx / sqrt(nA)) * (L / (sqrt(nA) - 1));   
 }
 
-__device__ double Gaussian2D(double x, double y) {
-  double z1 (1 / sqrt(2 * PI * CON_SIGMA)); // make global var
-  double denom = (2 * CON_SIGMA * CON_SIGMA); // global var
+__device__ double Gaussian2D(double x, double y, double varianceOfGaussian) {
+  double z1 (1 / sqrt(2 * PI * varianceOfGaussian)); // make global var
+  double denom = (2 * varianceOfGaussian * varianceOfGaussian); // global var
   return  z1 * z1 * exp(-1 * pow(x, 2) / (denom)) * z1 * z1 * exp(-1 * pow(y, 2) / (denom));
 }
 
-__device__ double conProb(double xa, double ya, double xb, double yb) {
+__device__ double conProb(double xa, double ya, double xb, double yb, double patchSize, double varianceOfGaussian) {
   /* returns connection probablity given cordinates (xa, ya) and (xb, yb) */
   /*  double z1 (1 / sqrt(2 * PI * CON_SIGMA)); // make global var
   double denom = (2 * CON_SIGMA * CON_SIGMA); // global var*/
   double x0, x1, y0, y1, result; 
-  x0 = fmod(abs(xa-xb), L);
-  x1 = fmod(abs(xa-xb), -1 * L);
-  y0 = fmod(abs(ya-yb), L);
-  y1 = fmod(abs(ya-yb), -1 * L);
-  result = Gaussian2D(x0, y0) + Gaussian2D(x1, y1);
+  x0 = fmod(abs(xa-xb), patchSize);
+  x1 = fmod(abs(xa-xb), -1 * patchSize);
+  y0 = fmod(abs(ya-yb), patchSize);
+  y1 = fmod(abs(ya-yb), -1 * patchSize);
+  result = Gaussian2D(x0, y0, varianceOfGaussian) + Gaussian2D(x1, y1, varianceOfGaussian);
   if(x0 == 0 && x1 == 0) {
     result *= sqrt(0.5);
   }
@@ -59,7 +59,7 @@ __global__ void KernelGenConProbMat(float *dev_conVec) {
     xa = XCordinate(mNeuron);
     ya = YCordinate(mNeuron);
     for(i = 0; i < N_NEURONS; ++i) {
-      dev_conVec[mNeuron + i * N_NEURONS] = (float)conProb(xa, ya, XCordinate(i), YCordinate(i)); 
+      dev_conVec[mNeuron + i * N_NEURONS] = (float)conProb(xa, ya, XCordinate(i), YCordinate(i), L, CON_SIGMA); 
     }
     mNeuron += stride;
   }
@@ -98,4 +98,39 @@ __global__ void KernelConProbPreFactor(float *dev_conVec) {
 }
 
 
+__global__ void KernelGenFeedForwardConProbMat(float *dev_conVecFF) {
+  // FEED FORWARD CONNECTION PROB
+  unsigned long mNeuron = (unsigned long)(threadIdx.x + blockIdx.x * blockDim.x);
+  unsigned long int i;
+  double xa, ya;
+  int stride = gridDim.x * blockDim.x;
+  while(mNeuron < N_NEURONS) {
+    xa = XCordinate(mNeuron);
+    ya = YCordinate(mNeuron);
+    for(i = 0; i < CFF * K; ++i) {
+      dev_conVecFF[mNeuron + i * CFF * K] = (float)conProb(xa, ya, XCordinate(i), YCordinate(i), L_FF, FF_CON_SIGMA); 
+    }
+    mNeuron += stride;
+  }
+}
+
+__global__ void KernelFeedForwardConProbPreFactor(float *dev_conVecFF) {
+  /*  COMPUTE PRE-FACTOR AND MULTIPLY zB[clm] = Kff / sum(conProd(:, clm)) */
+  unsigned long mNeuron = (unsigned long)(threadIdx.x + blockIdx.x * blockDim.x); // each column is a thread
+  unsigned long int i;
+  double preFactorFF2All;
+  int stride = gridDim.x * blockDim.x;
+  while(mNeuron < N_NEURONS) {
+    preFactorFF2All = 0.0;
+    for(i = 0; i < (CFF * K); ++i) { // sum over rows
+        preFactorFF2All += (double)dev_conVecFF[i + mNeuron * N_NEURONS];
+    }     
+    preFactorFF2All = (CFF * K) / preFactorFF2All;
+    /* now multiply the prefactor */
+    for(i = 0; i < N_NEURONS; ++i) { 
+      dev_conVecFF[i + (mNeuron * CFF * K)] *= (float)preFactorFF2All;
+    }     
+    mNeuron += stride;
+  }
+}
 #endif

@@ -30,4 +30,8 @@ __constant__ double theta;
 #define L 1.0
 #define CON_SIGMA (L / 5.0)
 #define PI 3.14159265359
+
+/* feed forward patch parameters */
+#define L_FF 1.0
+#define FF_CON_SIGMA (L_FF / 10.0)
 #endif
