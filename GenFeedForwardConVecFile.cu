@@ -176,30 +176,62 @@ int main(int argc, char *argv[]) {
       cudaCheck(cudaMemcpy(conProbMatFF, dev_conVecPtrFF, (unsigned long long)NFF * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
       KernelGenFeedForwardDistDepConMat<<<BlocksPerGrid, ThreadsPerBlock>>>(devStatesFF, dev_conVecPtrFF, i, maxNeurons);
       cudaCheck(cudaMemcpy(conVecFF, dev_conVecPtrFF, (unsigned long long)NFF * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
-      printf("\n11th element %f \n", conVecFF[11]);
       free(conProbMatFF);
+      printf("\n");
+      for(i = 0; i < N_NEURONS; ++i) {
+        for(int j = 0; j < NFF; ++j) {
+          printf("%d ", (int)conVecFF[j + i * NFF]);
+        }
+        printf("\n");
+      }
+
+
+
       /* GENERATE SPARSE REPRESENTATIONS */
       int idxVecFF[NFF], nPostNeuronsFF[NFF];
-      // int *sparseConVec;
-      /* REUSING sparseConVec AFTER FREEING THE ALLOCATED MEMORY EARLIER FOR THE RECURRENT CONNECTIVITY */
-      // sparseConVec = (int *)malloc((unsigned long long)N_NEURONS * (2ULL + (unsigned long long)kff) * sizeof(int)); 
-      // printf("generating sparse representation ..."); fflush(stdout);
-      // GenSparseMat(conVecFF, NFF, N_NEURONS, sparseConVec, idxVecFF, nPostNeuronsFF);
-      // printf("done\n writing to file ... "); fflush(stdout);
-      // FILE *fpSparseConVecFF, *fpIdxVecFF, *fpNpostNeuronsFF;
-      // fpSparseConVecFF = fopen("sparseConVecFF.dat", "wb");
-      // fwrite(sparseConVec, sizeof(*sparseConVec), N_NEURONS * (2 * (int)kff), fpSparseConVecFF);
-      // fclose(fpSparseConVecFF);
-      // fpIdxVecFF = fopen("idxVecFF.dat", "wb");
-      // fwrite(idxVecFF, sizeof(*idxVecFF), N_NEURONS,  fpIdxVecFF);
-      // fclose(fpIdxVecFF);
-      // fpNpostNeuronsFF = fopen("nPostNeuronsFF.dat", "wb");
-      // fwrite(nPostNeuronsFF, sizeof(*nPostNeuronsFF), N_NEURONS, fpNpostNeuronsFF);
-      // fclose(fpNpostNeuronsFF);
+      int *sparseConVec;
+      sparseConVec = (int *)malloc((unsigned long long)N_NEURONS * (2ULL + (unsigned long long)kff + NFF) * sizeof(int)); 
+      printf("generating sparse representation ..."); fflush(stdout);
+      GenSparseFeedForwardMat(conVecFF, NFF, N_NEURONS, sparseConVec, idxVecFF, nPostNeuronsFF);
+      printf("done\n writing to file ... "); fflush(stdout);
+      FILE *fpSparseConVecFF, *fpIdxVecFF, *fpNpostNeuronsFF;
+      fpSparseConVecFF = fopen("sparseConVecFF.dat", "wb");
+      fwrite(sparseConVec, sizeof(*sparseConVec), N_NEURONS * (2 * (int)kff), fpSparseConVecFF);
+      fclose(fpSparseConVecFF);
+      fpIdxVecFF = fopen("idxVecFF.dat", "wb");
+      fwrite(idxVecFF, sizeof(*idxVecFF), N_NEURONS,  fpIdxVecFF);
+      fclose(fpIdxVecFF);
+      fpNpostNeuronsFF = fopen("nPostNeuronsFF.dat", "wb");
+      fwrite(nPostNeuronsFF, sizeof(*nPostNeuronsFF), N_NEURONS, fpNpostNeuronsFF);
+      fclose(fpNpostNeuronsFF);
       printf("done\n");
       int countFF= 0;
       FILE *FFfp0;
       FFfp0 = fopen("ffcount.csv", "w");
+
+
+
+      // for(int j = 0; j < NFF; ++j) {
+      //   for(i = 0; i < N_NEURONS; ++i) {
+      //     printf("%d ", (int)conVecFF[i + j * NFF]);
+      //   }
+      //   printf("\n");
+      // }
+
+
+      if(N_NEURONS < 20) {
+        for(i = 0; i < NFF; ++i) {
+          printf("neuron %d projects to : ", i);
+          //          printf("%d", nPostNeuronsFF[i]);
+          for(int j = 0; j < nPostNeuronsFF[i]; ++j) {
+            printf("%d ", sparseConVec[idxVecFF[i] + j]);
+          }
+          printf("\n");
+        }
+      }
+
+
+
       for(i = 0; i < N_NEURONS; ++i) {
         countFF = 0;
         for(int j = 0; j < NFF; ++j) {

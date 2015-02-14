@@ -445,69 +445,69 @@ int main(int argc, char *argv[]) {
   printf("done\n");
   free(sparseConVec);
   // GENERATE FEED FORWARD ORIENTATION MAP
-  if(IF_FF_ORI_MAP) {
-      printf("\n generating feed forward conmat \n");
-      printf(" # Feed forward neurons = %f", CFF*K);
-      /* ARRANGE NEURONS ON A SQUARE GRID, REQUIRES THAT SQRT(CFF * K) IS AN INTEGER */
-      unsigned int kff, sqrtNff;
-      kff = (unsigned int)CFF * K;
-      //      sqrtKff = (unsigned int)sqrt(kff);
-      sqrtNff = (unsigned int)sqrt(NFF);
-      if(sqrtNff * sqrtNff != NFF) {
-        printf("the number of feede forward neurons (KFF) cannot be placed on square !!!");
-        exit(-1);
-      }
-      /* !! VARIABLES devStates, conVec, dev_conVecPtr, conProbMat ARE REUSED BELOW FOR GENERATION OF FEED FORWARD CONNECTIVITY */
-      curandState *devStatesFF;
-      float *dev_conVecPtrFF, *conVecFF, *conProbMatFF;
-      conProbMatFF = (float *)malloc((unsigned long long)NFF * N_NEURONS * sizeof(float));
-      cudaCheck(cudaMalloc((void **)&devStatesFF,  N_NEURONS * sizeof(curandState)));
-      cudaCheck(cudaMallocHost((void **)&conVecFF, (unsigned long long)NFF * N_NEURONS * sizeof(float)));
-      cudaCheck(cudaMalloc((void **)&dev_conVecPtrFF, (unsigned long long)NFF * N_NEURONS * sizeof(float)));
-      setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devStatesFF, time(NULL));
-      KernelGenFeedForwardConProbMat<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_conVecPtrFF);
-      KernelFeedForwardConProbPreFactor<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_conVecPtrFF);
-      cudaCheck(cudaMemcpy(conProbMatFF, dev_conVecPtrFF, (unsigned long long)NFF * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
-      KernelGenFeedForwardDistDepConMat<<<BlocksPerGrid, ThreadsPerBlock>>>(devStatesFF, dev_conVecPtrFF, i, maxNeurons);
-      cudaCheck(cudaMemcpy(conVecFF, dev_conVecPtrFF, (unsigned long long)NFF * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
-      printf("\n11th element %f \n", conVecFF[11]);
-      free(conProbMatFF);
-      /* GENERATE SPARSE REPRESENTATIONS */
-      int idxVecFF[NFF], nPostNeuronsFF[NFF];
-      // int *sparseConVec;
-      /* REUSING sparseConVec AFTER FREEING THE ALLOCATED MEMORY EARLIER FOR THE RECURRENT CONNECTIVITY */
-      // sparseConVec = (int *)malloc((unsigned long long)N_NEURONS * (2ULL + (unsigned long long)kff) * sizeof(int)); 
-      // printf("generating sparse representation ..."); fflush(stdout);
-      // GenSparseMat(conVecFF, NFF, N_NEURONS, sparseConVec, idxVecFF, nPostNeuronsFF);
-      // printf("done\n writing to file ... "); fflush(stdout);
-      // FILE *fpSparseConVecFF, *fpIdxVecFF, *fpNpostNeuronsFF;
-      // fpSparseConVecFF = fopen("sparseConVecFF.dat", "wb");
-      // fwrite(sparseConVec, sizeof(*sparseConVec), N_NEURONS * (2 * (int)kff), fpSparseConVecFF);
-      // fclose(fpSparseConVecFF);
-      // fpIdxVecFF = fopen("idxVecFF.dat", "wb");
-      // fwrite(idxVecFF, sizeof(*idxVecFF), N_NEURONS,  fpIdxVecFF);
-      // fclose(fpIdxVecFF);
-      // fpNpostNeuronsFF = fopen("nPostNeuronsFF.dat", "wb");
-      // fwrite(nPostNeuronsFF, sizeof(*nPostNeuronsFF), N_NEURONS, fpNpostNeuronsFF);
-      // fclose(fpNpostNeuronsFF);
-      printf("done\n");
-      int countFF= 0;
-      FILE *FFfp0;
-      FFfp0 = fopen("ffcount.csv", "w");
-      for(i = 0; i < N_NEURONS; ++i) {
-        countFF = 0;
-        for(int j = 0; j < NFF; ++j) {
-      //printf("%d ", (int)conVecFF[i + j * N_NEURONS]);
-          countFF += (int)conVecFF[i + NFF * j];   
-      // }
-      // else {
-      //   countI += fullConVec[i * N_NEURONS + j];   
-      // 
-        }
-        fprintf(FFfp0, "%d\n", countFF); 
-      }
-      fclose(FFfp0);
-  }
+  // if(IF_FF_ORI_MAP) {
+  //     printf("\n generating feed forward conmat \n");
+  //     printf(" # Feed forward neurons = %f", CFF*K);
+  //     /* ARRANGE NEURONS ON A SQUARE GRID, REQUIRES THAT SQRT(CFF * K) IS AN INTEGER */
+  //     unsigned int kff, sqrtNff;
+  //     kff = (unsigned int)CFF * K;
+  //     //      sqrtKff = (unsigned int)sqrt(kff);
+  //     sqrtNff = (unsigned int)sqrt(NFF);
+  //     if(sqrtNff * sqrtNff != NFF) {
+  //       printf("the number of feede forward neurons (KFF) cannot be placed on square !!!");
+  //       exit(-1);
+  //     }
+  //     /* !! VARIABLES devStates, conVec, dev_conVecPtr, conProbMat ARE REUSED BELOW FOR GENERATION OF FEED FORWARD CONNECTIVITY */
+  //     curandState *devStatesFF;
+  //     float *dev_conVecPtrFF, *conVecFF, *conProbMatFF;
+  //     conProbMatFF = (float *)malloc((unsigned long long)NFF * N_NEURONS * sizeof(float));
+  //     cudaCheck(cudaMalloc((void **)&devStatesFF,  N_NEURONS * sizeof(curandState)));
+  //     cudaCheck(cudaMallocHost((void **)&conVecFF, (unsigned long long)NFF * N_NEURONS * sizeof(float)));
+  //     cudaCheck(cudaMalloc((void **)&dev_conVecPtrFF, (unsigned long long)NFF * N_NEURONS * sizeof(float)));
+  //     setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devStatesFF, time(NULL));
+  //     KernelGenFeedForwardConProbMat<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_conVecPtrFF);
+  //     KernelFeedForwardConProbPreFactor<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_conVecPtrFF);
+  //     cudaCheck(cudaMemcpy(conProbMatFF, dev_conVecPtrFF, (unsigned long long)NFF * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
+  //     KernelGenFeedForwardDistDepConMat<<<BlocksPerGrid, ThreadsPerBlock>>>(devStatesFF, dev_conVecPtrFF, i, maxNeurons);
+  //     cudaCheck(cudaMemcpy(conVecFF, dev_conVecPtrFF, (unsigned long long)NFF * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
+  //     printf("\n11th element %f \n", conVecFF[11]);
+  //     free(conProbMatFF);
+  //     /* GENERATE SPARSE REPRESENTATIONS */
+  //     int idxVecFF[NFF], nPostNeuronsFF[NFF];
+  //     // int *sparseConVec;
+  //     /* REUSING sparseConVec AFTER FREEING THE ALLOCATED MEMORY EARLIER FOR THE RECURRENT CONNECTIVITY */
+  //     // sparseConVec = (int *)malloc((unsigned long long)N_NEURONS * (2ULL + (unsigned long long)kff) * sizeof(int)); 
+  //     // printf("generating sparse representation ..."); fflush(stdout);
+  //     // GenSparseMat(conVecFF, NFF, N_NEURONS, sparseConVec, idxVecFF, nPostNeuronsFF);
+  //     // printf("done\n writing to file ... "); fflush(stdout);
+  //     // FILE *fpSparseConVecFF, *fpIdxVecFF, *fpNpostNeuronsFF;
+  //     // fpSparseConVecFF = fopen("sparseConVecFF.dat", "wb");
+  //     // fwrite(sparseConVec, sizeof(*sparseConVec), N_NEURONS * (2 * (int)kff), fpSparseConVecFF);
+  //     // fclose(fpSparseConVecFF);
+  //     // fpIdxVecFF = fopen("idxVecFF.dat", "wb");
+  //     // fwrite(idxVecFF, sizeof(*idxVecFF), N_NEURONS,  fpIdxVecFF);
+  //     // fclose(fpIdxVecFF);
+  //     // fpNpostNeuronsFF = fopen("nPostNeuronsFF.dat", "wb");
+  //     // fwrite(nPostNeuronsFF, sizeof(*nPostNeuronsFF), N_NEURONS, fpNpostNeuronsFF);
+  //     // fclose(fpNpostNeuronsFF);
+  //     printf("done\n");
+  //     int countFF= 0;
+  //     FILE *FFfp0;
+  //     FFfp0 = fopen("ffcount.csv", "w");
+  //     for(i = 0; i < N_NEURONS; ++i) {
+  //       countFF = 0;
+  //       for(int j = 0; j < NFF; ++j) {
+  //     //printf("%d ", (int)conVecFF[i + j * N_NEURONS]);
+  //         countFF += (int)conVecFF[i + NFF * j];   
+  //     // }
+  //     // else {
+  //     //   countI += fullConVec[i * N_NEURONS + j];   
+  //     // 
+  //       }
+  //       fprintf(FFfp0, "%d\n", countFF); 
+  //     }
+  //     fclose(FFfp0);
+  // }
 
 
 
