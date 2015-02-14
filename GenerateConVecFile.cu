@@ -458,33 +458,37 @@ int main(int argc, char *argv[]) {
         exit(-1);
       }
       /* !! VARIABLES devStates, conVec, dev_conVecPtr, conProbMat ARE REUSED BELOW FOR GENERATION OF FEED FORWARD CONNECTIVITY */
-      cudaCheck(cudaMalloc((void **)&devStates,  N_NEURONS * sizeof(curandState)));
-      cudaCheck(cudaMallocHost((void **)&conVec, NFF * N_NEURONS * sizeof(float)));
-      cudaCheck(cudaMalloc((void **)&dev_conVecPtr, NFF * N_NEURONS * sizeof(float)));
-      setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, time(NULL));
-      KernelGenFeedForwardConProbMat<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_conVecPtr);
-      KernelFeedForwardConProbPreFactor<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_conVecPtr);
-      cudaCheck(cudaMemcpy(conProbMat, dev_conVecPtr, (unsigned long long)NFF * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
-      KernelGenFeedForwardDistDepConMat<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, dev_conVecPtr, i, maxNeurons);
-      cudaCheck(cudaMemcpy(conVec, dev_conVecPtr, (unsigned long long)NFF * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
+      curandState *devStatesFF;
+      float *dev_conVecPtrFF, *conVecFF, *conProbMatFF;
+      conProbMatFF = (float *)malloc((unsigned long long)NFF * N_NEURONS * sizeof(float));
+      cudaCheck(cudaMalloc((void **)&devStatesFF,  N_NEURONS * sizeof(curandState)));
+      cudaCheck(cudaMallocHost((void **)&conVecFF, NFF * N_NEURONS * sizeof(float)));
+      cudaCheck(cudaMalloc((void **)&dev_conVecPtrFF, NFF * N_NEURONS * sizeof(float)));
+      setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devStatesFF, time(NULL));
+      KernelGenFeedForwardConProbMat<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_conVecPtrFF);
+      KernelFeedForwardConProbPreFactor<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_conVecPtrFF);
+      cudaCheck(cudaMemcpy(conProbMat, dev_conVecPtrFF, (unsigned long long)NFF * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
+      KernelGenFeedForwardDistDepConMat<<<BlocksPerGrid, ThreadsPerBlock>>>(devStatesFF, dev_conVecPtrFF, i, maxNeurons);
+      cudaCheck(cudaMemcpy(conVecFF, dev_conVecPtrFF, (unsigned long long)NFF * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
+      free(conProbMatFF);
       /* GENERATE SPARSE REPRESENTATIONS */
       int idxVecFF[NFF], nPostNeuronsFF[NFF];
       // int *sparseConVec;
       /* REUSING sparseConVec AFTER FREEING THE ALLOCATED MEMORY EARLIER FOR THE RECURRENT CONNECTIVITY */
-      sparseConVec = (int *)malloc((unsigned long long)N_NEURONS * (2ULL + (unsigned long long)kff) * sizeof(int)); 
-      printf("generating sparse representation ..."); fflush(stdout);
-      GenSparseMat(conVec, NFF, N_NEURONS, sparseConVec, idxVecFF, nPostNeuronsFF);
-      printf("done\n writing to file ... "); fflush(stdout);
-      FILE *fpSparseConVecFF, *fpIdxVecFF, *fpNpostNeuronsFF;
-      fpSparseConVecFF = fopen("sparseConVecFF.dat", "wb");
-      fwrite(sparseConVec, sizeof(*sparseConVec), N_NEURONS * (2 * (int)kff), fpSparseConVecFF);
-      fclose(fpSparseConVecFF);
-      fpIdxVecFF = fopen("idxVecFF.dat", "wb");
-      fwrite(idxVecFF, sizeof(*idxVecFF), N_NEURONS,  fpIdxVecFF);
-      fclose(fpIdxVecFF);
-      fpNpostNeuronsFF = fopen("nPostNeuronsFF.dat", "wb");
-      fwrite(nPostNeuronsFF, sizeof(*nPostNeuronsFF), N_NEURONS, fpNpostNeuronsFF);
-      fclose(fpNpostNeuronsFF);
+      // sparseConVec = (int *)malloc((unsigned long long)N_NEURONS * (2ULL + (unsigned long long)kff) * sizeof(int)); 
+      // printf("generating sparse representation ..."); fflush(stdout);
+      // GenSparseMat(conVecFF, NFF, N_NEURONS, sparseConVec, idxVecFF, nPostNeuronsFF);
+      // printf("done\n writing to file ... "); fflush(stdout);
+      // FILE *fpSparseConVecFF, *fpIdxVecFF, *fpNpostNeuronsFF;
+      // fpSparseConVecFF = fopen("sparseConVecFF.dat", "wb");
+      // fwrite(sparseConVec, sizeof(*sparseConVec), N_NEURONS * (2 * (int)kff), fpSparseConVecFF);
+      // fclose(fpSparseConVecFF);
+      // fpIdxVecFF = fopen("idxVecFF.dat", "wb");
+      // fwrite(idxVecFF, sizeof(*idxVecFF), N_NEURONS,  fpIdxVecFF);
+      // fclose(fpIdxVecFF);
+      // fpNpostNeuronsFF = fopen("nPostNeuronsFF.dat", "wb");
+      // fwrite(nPostNeuronsFF, sizeof(*nPostNeuronsFF), N_NEURONS, fpNpostNeuronsFF);
+      // fclose(fpNpostNeuronsFF);
       printf("done\n");
   }
   /*
