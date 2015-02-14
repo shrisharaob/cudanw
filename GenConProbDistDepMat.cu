@@ -124,12 +124,12 @@ __global__ void KernelFeedForwardConProbPreFactor(float *dev_conVecFF) {
   while(mNeuron < N_NEURONS) {
     preFactorFF2All = 0.0;
     for(i = 0; i < NFF; ++i) { // sum over clmns  i.e horizontally along each row
-        preFactorFF2All += (double)dev_conVecFF[mNeuron + i * NFF];
+        preFactorFF2All += (double)dev_conVecFF[i + mNeuron * NFF];
     }     
     preFactorFF2All = (CFF * K) / preFactorFF2All;
     /* now multiply the prefactor */
     for(i = 0; i < NFF; ++i) { 
-      dev_conVecFF[mNeuron + i * NFF] *= (float)preFactorFF2All;
+      dev_conVecFF[i + mNeuron * NFF] *= (float)preFactorFF2All;
     }     
     mNeuron += stride;
   }

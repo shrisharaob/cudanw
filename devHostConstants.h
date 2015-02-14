@@ -13,7 +13,7 @@
 #define STORE_LAST_T_MILLISEC 2000.0
 #define STORE_LAST_N_STEPS (STORE_LAST_T_MILLISEC / DT)
 #define HOST_CONTRAST 100.0
-#define HOST_CFF 0.2000000000 // KFF = CFF * K
+#define HOST_CFF 0.1000000000 // KFF = CFF * K
 
 
 #define N_NEURONS_TO_STORE_START 10001
@@ -36,6 +36,6 @@ __constant__ double theta;
 /* feed forward patch parameters */
 #define CFF HOST_CFF
 #define L_FF 1.0
-#define FF_CON_SIGMA (L_FF / 10.0)
-#define NFF 2500ULL
+#define FF_CON_SIGMA (L_FF / 5.0)
+#define NFF 3600ULL
 #endif

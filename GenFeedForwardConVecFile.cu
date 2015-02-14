@@ -204,7 +204,7 @@ int main(int argc, char *argv[]) {
         countFF = 0;
         for(int j = 0; j < NFF; ++j) {
       //printf("%d ", (int)conVecFF[i + j * N_NEURONS]);
-          countFF += (int)conVecFF[i + NFF * j];   
+          countFF += (int)conVecFF[i * NFF + j];   
         }
         fprintf(FFfp0, "%d\n", countFF); 
       }
