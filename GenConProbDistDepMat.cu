@@ -107,8 +107,8 @@ __global__ void KernelGenFeedForwardConProbMat(float *dev_conVecFF) {
   while(mNeuron < N_NEURONS) {
     xa = XCordinate(mNeuron);
     ya = YCordinate(mNeuron);
-    for(i = 0; i < CFF * K; ++i) {
-      dev_conVecFF[mNeuron + i * CFF * K] = (float)conProb(xa, ya, XCordinate(i), YCordinate(i), L_FF, FF_CON_SIGMA); 
+    for(i = 0; i < NFF; ++i) {
+      dev_conVecFF[mNeuron + i * NFF] = (float)conProb(xa, ya, XCordinate(i), YCordinate(i), L_FF, FF_CON_SIGMA); 
     }
     mNeuron += stride;
   }
@@ -122,13 +122,13 @@ __global__ void KernelFeedForwardConProbPreFactor(float *dev_conVecFF) {
   int stride = gridDim.x * blockDim.x;
   while(mNeuron < N_NEURONS) {
     preFactorFF2All = 0.0;
-    for(i = 0; i < (CFF * K); ++i) { // sum over rows
+    for(i = 0; i < NFF; ++i) { // sum over rows
         preFactorFF2All += (double)dev_conVecFF[i + mNeuron * N_NEURONS];
     }     
-    preFactorFF2All = (CFF * K) / preFactorFF2All;
+    preFactorFF2All = NFF / preFactorFF2All;
     /* now multiply the prefactor */
     for(i = 0; i < N_NEURONS; ++i) { 
-      dev_conVecFF[i + (mNeuron * CFF * K)] *= (float)preFactorFF2All;
+      dev_conVecFF[i + (mNeuron * NFF)] *= (float)preFactorFF2All;
     }     
     mNeuron += stride;
   }

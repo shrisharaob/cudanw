@@ -1,11 +1,11 @@
 #ifndef _NEURON_COUNTS
 #define _NEURON_COUNTS
 
-#define NE 10000ULL
-#define NI 10000ULL
+#define NE 100ULL
+#define NI 100ULL
 #define N_Neurons (NE + NI)
 #define N_NEURONS N_Neurons
-#define K 1000.0
+#define K 10.0
 #define DT 0.05 /* ms*/ /* CHANGE EXP+SUM WHEN DT CHANGES   */
 #define TAU_SYNAP 3.0
 #define EXP_SUM exp(-1 * DT /TAU_SYNAP)  /*exp(-1 * DT / TAU_SYNAP !!!!!!!!!!! GENERALIZE !!!!!!! */
@@ -13,6 +13,8 @@
 #define STORE_LAST_T_MILLISEC 2000.0
 #define STORE_LAST_N_STEPS (STORE_LAST_T_MILLISEC / DT)
 #define HOST_CONTRAST 100.0
+#define HOST_CFF 0.2000000000
+
 
 #define N_NEURONS_TO_STORE_START 10001
 #define N_NEURONS_TO_STORE_END 10010
@@ -32,6 +34,8 @@ __constant__ double theta;
 #define PI 3.14159265359
 
 /* feed forward patch parameters */
+#define CFF HOST_CFF
 #define L_FF 1.0
 #define FF_CON_SIGMA (L_FF / 10.0)
+#define NFF 100UL
 #endif

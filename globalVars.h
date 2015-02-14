@@ -46,8 +46,8 @@
 #define G_IB (4.0 * 0.4 /sqrt(K))
 
 /* ff input */
-#define CFF 0.1000000000
-#define KFF 200.0
+//#define CFF 0.1000000000
+//#define KFF 200.0
 //#define GE_FF (0.95 * 4.0)
 //#define GI_FF (1.26 * 4.0)
 #define R0 0.002
@@ -135,7 +135,7 @@ struct test_xform {
     *res_idx++ = input[i];
     *res++ = 1;
   }
-};
+ };
 
 // Sum-functor to be used for reduction - just a normal sum of two integers
 struct test_sumfun {

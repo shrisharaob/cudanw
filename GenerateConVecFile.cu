@@ -270,7 +270,7 @@ __global__ void KernelGenFeedForwardDistDepConMat(curandState *state, float *dev
   unsigned long int kNeuron = id + lChunck * maxNeurons;
   unsigned long int i;
   if(id < maxNeurons & kNeuron < N_NEURONS) {
-    for(i = 0; i < (CFF * K); ++i) {
+    for(i = 0; i < NFF; ++i) {
         if(dev_conVecFF[id + i * maxNeurons] >= randkernel(state, kNeuron)) { /* neuron[id] receives input from i ? */
           dev_conVecFF[id + i * maxNeurons] = 1;
         }
@@ -431,7 +431,6 @@ int main(int argc, char *argv[]) {
   sparseConVec = (int *)malloc((unsigned long long)N_NEURONS * (2ULL + (unsigned long long)K + N_NEURONS) * sizeof(int));
   printf("generating sparse representation ..."); fflush(stdout);
   GenSparseMat(fullConVec, N_NEURONS, N_NEURONS, sparseConVec, idxVec, nPostNeurons);
-
   printf("done\n writing to file ... "); fflush(stdout);
   FILE *fpSparseConVec, *fpIdxVec, *fpNpostNeurons;
   fpSparseConVec = fopen("sparseConVec.dat", "wb");
@@ -444,9 +443,49 @@ int main(int argc, char *argv[]) {
   fwrite(nPostNeurons, sizeof(*nPostNeurons), N_NEURONS, fpNpostNeurons);
   fclose(fpNpostNeurons);
   printf("done\n");
+  free(sparseConVec);
   // GENERATE FEED FORWARD ORIENTATION MAP
   if(IF_FF_ORI_MAP) {
-    
+      printf("\n generating feed forward conmat \n");
+      printf(" # Feed forward neurons = %f", CFF*K);
+      /* ARRANGE NEURONS ON A SQUARE GRID, REQUIRES THAT SQRT(CFF * K) IS AN INTEGER */
+      unsigned int kff, sqrtNff;
+      kff = (unsigned int)CFF * K;
+      //      sqrtKff = (unsigned int)sqrt(kff);
+      sqrtNff = (unsigned int)sqrt(NFF);
+      if(sqrtNff * sqrtNff != NFF) {
+        printf("the number of feede forward neurons (KFF) cannot be placed on square !!!");
+        exit(-1);
+      }
+      /* !! VARIABLES devStates, conVec, dev_conVecPtr, conProbMat ARE REUSED BELOW FOR GENERATION OF FEED FORWARD CONNECTIVITY */
+      cudaCheck(cudaMalloc((void **)&devStates,  N_NEURONS * sizeof(curandState)));
+      cudaCheck(cudaMallocHost((void **)&conVec, NFF * N_NEURONS * sizeof(float)));
+      cudaCheck(cudaMalloc((void **)&dev_conVecPtr, NFF * N_NEURONS * sizeof(float)));
+      setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, time(NULL));
+      KernelGenFeedForwardConProbMat<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_conVecPtr);
+      KernelFeedForwardConProbPreFactor<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_conVecPtr);
+      cudaCheck(cudaMemcpy(conProbMat, dev_conVecPtr, (unsigned long long)NFF * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
+      KernelGenFeedForwardDistDepConMat<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, dev_conVecPtr, i, maxNeurons);
+      cudaCheck(cudaMemcpy(conVec, dev_conVecPtr, (unsigned long long)NFF * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
+      /* GENERATE SPARSE REPRESENTATIONS */
+      int idxVecFF[NFF], nPostNeuronsFF[NFF];
+      // int *sparseConVec;
+      /* REUSING sparseConVec AFTER FREEING THE ALLOCATED MEMORY EARLIER FOR THE RECURRENT CONNECTIVITY */
+      sparseConVec = (int *)malloc((unsigned long long)N_NEURONS * (2ULL + (unsigned long long)kff) * sizeof(int)); 
+      printf("generating sparse representation ..."); fflush(stdout);
+      GenSparseMat(conVec, NFF, N_NEURONS, sparseConVec, idxVecFF, nPostNeuronsFF);
+      printf("done\n writing to file ... "); fflush(stdout);
+      FILE *fpSparseConVecFF, *fpIdxVecFF, *fpNpostNeuronsFF;
+      fpSparseConVecFF = fopen("sparseConVecFF.dat", "wb");
+      fwrite(sparseConVec, sizeof(*sparseConVec), N_NEURONS * (2 * (int)kff), fpSparseConVecFF);
+      fclose(fpSparseConVecFF);
+      fpIdxVecFF = fopen("idxVecFF.dat", "wb");
+      fwrite(idxVecFF, sizeof(*idxVecFF), N_NEURONS,  fpIdxVecFF);
+      fclose(fpIdxVecFF);
+      fpNpostNeuronsFF = fopen("nPostNeuronsFF.dat", "wb");
+      fwrite(nPostNeuronsFF, sizeof(*nPostNeuronsFF), N_NEURONS, fpNpostNeuronsFF);
+      fclose(fpNpostNeuronsFF);
+      printf("done\n");
   }
   /*
   fpSparseConVec = fopen("sparseConVec.dat", "rb");
@@ -512,7 +551,7 @@ if(N_NEURONS < 2) {
   fclose(fp01);
   fclose(fpConMat);
   free(fullConVec);
-  free(sparseConVec);
+  //  free(sparseConVec);
   return 0;
 }
 
