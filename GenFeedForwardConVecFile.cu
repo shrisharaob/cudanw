@@ -177,16 +177,13 @@ int main(int argc, char *argv[]) {
       KernelGenFeedForwardDistDepConMat<<<BlocksPerGrid, ThreadsPerBlock>>>(devStatesFF, dev_conVecPtrFF, i, maxNeurons);
       cudaCheck(cudaMemcpy(conVecFF, dev_conVecPtrFF, (unsigned long long)NFF * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
       free(conProbMatFF);
-      printf("\n");
-      for(i = 0; i < N_NEURONS; ++i) {
-        for(int j = 0; j < NFF; ++j) {
-          printf("%d ", (int)conVecFF[j + i * NFF]);
-        }
-        printf("\n");
-      }
-
-
-
+      // printf("\n");
+      // for(i = 0; i < N_NEURONS; ++i) {
+      //   for(int j = 0; j < NFF; ++j) {
+      //     printf("%d ", (int)conVecFF[j + i * NFF]);
+      //   }
+      //   printf("\n");
+      // }
       /* GENERATE SPARSE REPRESENTATIONS */
       int idxVecFF[NFF], nPostNeuronsFF[NFF];
       int *sparseConVec;
@@ -219,7 +216,7 @@ int main(int argc, char *argv[]) {
       // }
 
 
-      if(N_NEURONS < 20) {
+      if(N_NEURONS < 2) {
         for(i = 0; i < NFF; ++i) {
           printf("neuron %d projects to : ", i);
           //          printf("%d", nPostNeuronsFF[i]);
