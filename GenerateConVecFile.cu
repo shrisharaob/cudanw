@@ -462,14 +462,15 @@ int main(int argc, char *argv[]) {
       float *dev_conVecPtrFF, *conVecFF, *conProbMatFF;
       conProbMatFF = (float *)malloc((unsigned long long)NFF * N_NEURONS * sizeof(float));
       cudaCheck(cudaMalloc((void **)&devStatesFF,  N_NEURONS * sizeof(curandState)));
-      cudaCheck(cudaMallocHost((void **)&conVecFF, NFF * N_NEURONS * sizeof(float)));
-      cudaCheck(cudaMalloc((void **)&dev_conVecPtrFF, NFF * N_NEURONS * sizeof(float)));
+      cudaCheck(cudaMallocHost((void **)&conVecFF, (unsigned long long)NFF * N_NEURONS * sizeof(float)));
+      cudaCheck(cudaMalloc((void **)&dev_conVecPtrFF, (unsigned long long)NFF * N_NEURONS * sizeof(float)));
       setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devStatesFF, time(NULL));
       KernelGenFeedForwardConProbMat<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_conVecPtrFF);
       KernelFeedForwardConProbPreFactor<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_conVecPtrFF);
-      cudaCheck(cudaMemcpy(conProbMat, dev_conVecPtrFF, (unsigned long long)NFF * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
+      cudaCheck(cudaMemcpy(conProbMatFF, dev_conVecPtrFF, (unsigned long long)NFF * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
       KernelGenFeedForwardDistDepConMat<<<BlocksPerGrid, ThreadsPerBlock>>>(devStatesFF, dev_conVecPtrFF, i, maxNeurons);
       cudaCheck(cudaMemcpy(conVecFF, dev_conVecPtrFF, (unsigned long long)NFF * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
+      printf("\n11th element %f \n", conVecFF[11]);
       free(conProbMatFF);
       /* GENERATE SPARSE REPRESENTATIONS */
       int idxVecFF[NFF], nPostNeuronsFF[NFF];
@@ -490,7 +491,28 @@ int main(int argc, char *argv[]) {
       // fwrite(nPostNeuronsFF, sizeof(*nPostNeuronsFF), N_NEURONS, fpNpostNeuronsFF);
       // fclose(fpNpostNeuronsFF);
       printf("done\n");
+      int countFF= 0;
+      FILE *FFfp0;
+      FFfp0 = fopen("ffcount.csv", "w");
+      for(i = 0; i < N_NEURONS; ++i) {
+        countFF = 0;
+        for(int j = 0; j < NFF; ++j) {
+      //printf("%d ", (int)conVecFF[i + j * N_NEURONS]);
+          countFF += (int)conVecFF[i + NFF * j];   
+      // }
+      // else {
+      //   countI += fullConVec[i * N_NEURONS + j];   
+      // 
+        }
+        fprintf(FFfp0, "%d\n", countFF); 
+      }
+      fclose(FFfp0);
   }
+
+
+
+
+
   /*
   fpSparseConVec = fopen("sparseConVec.dat", "rb");
   fpIdxVec = fopen("idxVec.dat", "rb");
