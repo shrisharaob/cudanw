@@ -67,7 +67,7 @@ __device__ float randnXiA[N_Neurons],
 
 /* VARIABLES FOR THE FEED FORWARD POISSION ELEMENTS FOR THE CASE OF ORI MAP */
 __device__ float POInOriMap[NFF]; // preferred orientation assigned to the layer four neurons
-__device__ int IF_SPIKE_POISSION_SPK[NFF]
+__device__ int IF_SPIKE_POISSION_SPK[NFF];
 
 __device__ double dev_v[N_NEURONS], dev_n[N_NEURONS], dev_z[N_NEURONS], dev_h[N_NEURONS]; 
 __device__ double gffItgrl[N_NEURONS];

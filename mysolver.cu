@@ -118,8 +118,8 @@ int main(int argc, char *argv[]) {
 
   cudaCheck(cudaGetSymbolAddress((void **)&dev_sparseVecFF, dev_sparseConVecFF));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_idxVecFF, dev_sparseIdxFF));
-  cudaCheck(cudaGetSymbolAddress((void **)&dev_nPostneuronsPtr, dev_nPostNeuronsFF));
-  cudaCheck(cudaMallocHost((void **)&sparseConVecFF, N_NEURONS * (2ULL + (unsigned long long)(CFF * K) + NFF) * sizeof(int)));
+  cudaCheck(cudaGetSymbolAddress((void **)&dev_nPostneuronsPtrFF, dev_nPostNeuronsFF));
+  cudaCheck(cudaMallocHost((void **)&sparseConVecFF, N_NEURONS * (2ULL * (unsigned long long)(CFF * K) + 1) * sizeof(int)));
 
   FILE *fpSparseConVec, *fpIdxVec, *fpNpostNeurons;
   fpSparseConVec = fopen("sparseConVec.dat", "rb");
@@ -140,10 +140,9 @@ int main(int argc, char *argv[]) {
   fpSparseConVecFF = fopen("sparseConVecFF.dat", "rb");
   fpIdxVecFF = fopen("idxVecFF.dat", "rb");
   fpNpostNeuronsFF = fopen("nPostNeuronsFF.dat", "rb");
-  int dummy;
-  dummy = fread(sparseConVecFF, sizeof(*sparseConVecFF), N_NEURONS * (2ULL + (unsigned long long)(CFF * K) + NFF), fpSparseConVecFF);
-  if(dummy != N_NEURONS * (2ULL + (unsigned long long)(CFF * K) + NFF)) {
-    printf("sparseConvecFF read error ? \n");
+  dummy = fread(sparseConVecFF, sizeof(*sparseConVecFF), N_NEURONS * (2ULL * (unsigned long long)(CFF * K) + 1), fpSparseConVecFF);
+  if(dummy != N_NEURONS * (2 * (int)(CFF * K) + 1)) {
+    printf("%d, sparseConvecFF read error ? \n", dummy);
   }
   dummy = fread(idxVecFF, sizeof(*idxVecFF), NFF, fpIdxVecFF);
   dummy = fread(nPostNeuronsFF, sizeof(*nPostNeuronsFF), NFF, fpNpostNeuronsFF);
@@ -163,8 +162,8 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaMemcpy(dev_sparseVec, sparseConVec, N_NEURONS * (2 * K + 1) * sizeof(int), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_idxVec, idxVec, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_nPostneuronsPtr, nPostNeurons, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
-
-  cudaCheck(cudaMemcpy(dev_sparseVecFF, sparseConVecFF, N_NEURONS * (2ULL + (unsigned long long)(CFF * K) + NFF)* sizeof(int), cudaMemcpyHostToDevice));
+  printf("tst point, %p ----- %p \n", dev_sparseVec, dev_sparseVecFF);
+  cudaCheck(cudaMemcpy(dev_sparseVecFF, sparseConVecFF, N_NEURONS * (2ULL * (unsigned long long)(CFF * K) + 1)* sizeof(int), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_idxVecFF, idxVecFF, NFF * sizeof(int), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_nPostneuronsPtrFF, nPostNeuronsFF, NFF * sizeof(int), cudaMemcpyHostToDevice));
  /* ================= ALLOCATE PAGELOCKED MEMORY ON HOST =========================*/
@@ -200,6 +199,9 @@ int main(int argc, char *argv[]) {
   *nSpks = 0;
   cudaCheck(cudaMemcpy(dev_nSpks, nSpks, sizeof(int), cudaMemcpyHostToDevice));
 
+
+
+
   /*  printf("devspk ptrs: %p %p \n", dev_spkTimes, dev_spkNeuronIds);*/
   /*===================== GENERATE CONNECTION MATRIX ====================================*/
   /*cudaCheck(cudaMemset(dev_conVec, 0, N_NEURONS * N_NEURONS * sizeof(int)));
@@ -225,7 +227,7 @@ int main(int argc, char *argv[]) {
   
   
   
-  int *dev_IF_SPK_Ptr = NULL, *dev_prevStepSpkIdxPtr = NULL, *host_IF_SPK = NULL, *host_prevStepSpkIdx = NULL,  *dev_nEPtr = NULL, *dev_nIPtr = NULL;
+  int *dev_IF_SPK_Ptr = NULL, *dev_prevStepSpkIdxPtr = NULL, *host_IF_SPK = NULL, *host_prevStepSpkIdx = NULL,  *dev_nEPtr = NULL, *dev_nIPtr = NULL, *dev_IF_SPK_POISSION_Ptr = NULL;
   int *host_FF_IF_SPK, nFFSpksInPrevStep;
   int nSpksInPrevStep;
   cudaCheck(cudaMallocHost((void **)&host_IF_SPK, N_NEURONS * sizeof(int)));
@@ -238,8 +240,10 @@ int main(int argc, char *argv[]) {
     host_IF_SPK[i] = 0;
   }
 
+  cudaCheck(cudaGetSymbolAddress((void **)&dev_IF_SPK_POISSION_Ptr, IF_SPIKE_POISSION_SPK));
   cudaCheck(cudaMallocHost((void **)&host_FF_IF_SPK, NFF * sizeof(int)));
-
+  printf("\n %p \n", host_FF_IF_SPK);
+  cudaCheck(cudaMemcpy(host_FF_IF_SPK, dev_IF_SPK_POISSION_Ptr, NFF * sizeof(int), cudaMemcpyDeviceToHost));
   /* TIME LOOP */
   size_t sizeOfInt = sizeof(int);
   size_t sizeOfDbl = sizeof(double);
@@ -281,6 +285,8 @@ int main(int argc, char *argv[]) {
   FILE *fpCur = NULL;
   fpCur = fopen(strcat(filename, ".csv"), "w");
   /*printf("\n\n\n\n %d\n\n\n\n", sparseConVec[835584ULL]);*/
+
+
   for(k = 0; k < nSteps; ++k) { 
     /*    cudaCheck(cudaMemsetAsync(dev_nEPtr, 0, N_NEURONS * N_SPKS_IN_PREV_STEP * sizeOfInt, stream1));
 	  cudaCheck(cudaMemsetAsync(dev_nIPtr, 0, N_NEURONS * N_SPKS_IN_PREV_STEP * sizeOfInt, stream1));*/
@@ -294,14 +300,14 @@ int main(int argc, char *argv[]) {
       histCountE[i] = 0;
     }
 
-    GenPoissionSpikeInFFLayer<<<(NFF + ThreadsPerBlock - 1) / ThreadsPerBlock, ThreadsPerbBlock>>>(poisRandState); // GENERATE SPIKES IN LAYER 4 
+    GenPoissionSpikeInFFLayer<<<(NFF + ThreadsPerBlock - 1) / ThreadsPerBlock, ThreadsPerBlock>>>(poisRandState); // GENERATE SPIKES IN LAYER 4 
     rkdumbPretty<<<BlocksPerGrid, ThreadsPerBlock>>> (kernelParams, devPtrs);
     cudaCheckLastError("rk");
     if(k > 0) {
       /*      cudaCheck(cudaMemcpy(host_IF_SPK, dev_IF_SPK_Ptr, N_NEURONS * sizeOfInt, cudaMemcpyDeviceToHost));*/
       cudaCheck(cudaMemcpyAsync(host_IF_SPK, dev_IF_SPK_Ptr, N_NEURONS * sizeOfInt, cudaMemcpyDeviceToHost, stream1));
       cudaCheck(cudaMemcpyAsync(host_isynap, synapticCurrent, N_I_SAVE_CUR * sizeOfDbl, cudaMemcpyDeviceToHost, stream1));
-      cudaCheck(cudaMemcpyAsync(host_FF_IF_SPK, IF_SPIKE_POISSION_SPK, NFF * sizeOfInt, cudaMemcpyDeviceToHost, stream1));
+      cudaCheck(cudaMemcpyAsync(host_FF_IF_SPK, dev_IF_SPK_POISSION_Ptr, NFF * sizeOfInt, cudaMemcpyDeviceToHost, stream1));
     }
     cudaCheck(cudaStreamSynchronize(stream1));
     /*instantaneous firing rate, rect non-overlapping window */
@@ -325,7 +331,7 @@ int main(int argc, char *argv[]) {
     }
     /*-----------------------------------------------------------------------*/
     expDecay<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_histCountE, dev_histCountI);
-    expDecayGFF<<<(NFF + ThreadsPerBlock - 1) / ThreadsPerBlock, ThreadsPerbBlock>>>(dev_histCountE, dev_histCountI);
+    expDecayGFF<<<(NFF + ThreadsPerBlock - 1) / ThreadsPerBlock, ThreadsPerBlock>>>();
     cudaCheckLastError("exp");
     for(i = 0; i < NE; ++i) {
       if(host_IF_SPK[i]){
