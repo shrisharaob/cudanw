@@ -8,28 +8,49 @@
 __global__ void AuxRffTotal(curandState *devNormRandState, curandState *devStates) {
   unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x ;
   int i; 
-  double out = 0.0;
-  //int angleId;
+  //  double out = 0.0;
+  //  int angleId;
   //  double minAngle, maxAngle;
   if(mNeuron < N_Neurons) {
     randnXiA[mNeuron] =  normRndKernel(devNormRandState);
-    if(IF_ORI_MAP) {
-      out = OrientationAngleForGivenNeuron(mNeuron);
-      if(out == 720.0){randuDelta[mNeuron] = PI * randkernel(devStates);} // this is to ensure that the POs have a uniform distr
-      else {randuDelta[mNeuron] = out;}
-      // angleId = OrientationForGivenNeuron(mNeuron);
-      // minAngle = angleId * (PI / 8.0);
-      // maxAngle = (angleId+1) * (PI / 8.0);
-      // randuDelta[mNeuron] = (maxAngle - minAngle) * randkernel(devStates) + minAngle;
-    }
-    else {
-      randuDelta[mNeuron] = PI * randkernel(devStates);
-    }
+    // if(IF_ORI_MAP) {
+    //   out = OrientationAngleForGivenNeuron(mNeuron);
+    //   if(out == 720.0){randuDelta[mNeuron] = PI * randkernel(devStates);} // this is to ensure that the POs have a uniform distr
+    //   else {randuDelta[mNeuron] = out;}
+    //   // angleId = OrientationForGivenNeuron(mNeuron);
+    //   // minAngle = angleId * (PI / 8.0);
+    //   // maxAngle = (angleId+1) * (PI / 8.0);
+    //   // randuDelta[mNeuron] = (maxAngle - minAngle) * randkernel(devStates) + minAngle;
+    // }
+    // else {
+    randuDelta[mNeuron] = PI * randkernel(devStates);
+      //    }
     for(i = 0; i < 4; ++i) {
       randwZiA[mNeuron * 4 + i] = 1.4142135 * sqrt(-1 * log(randkernel(devStates)));
     }
     for(i = 0; i < 3; ++i) {
       randuPhi[mNeuron * 3 + i] = 2 * PI * randkernel(devStates);
+    }
+  }
+}
+
+
+/* ff input with ORI MAP */
+__global__ void AuxRffTotalWithOriMap() {
+  unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x ;
+  if(mNeuron < NFF) {
+    POInOriMap[mNeuron] = OrientationAngleForGivenNeuron(mNeuron);
+  }
+}
+
+__global__ void GenPoissionSpikeInFFLayer(curandState *poisRandState) {
+  unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x ;
+  double instRate = 0.0; // instanteneous rate
+  if(mNeuron < NFF) {
+    instRate = R0 +  R1 * log10(1.000 + CONTRAST) * (cos(2.0* (theta - POInOriMap[mNeuron])));
+    IF_SPIKE_POISSION_SPK[mNeuron] = 0;
+    if((instRate * DT) > randkernel(poisRandState)) {
+      IF_SPIKE_POISSION_SPK[mNeuron] = 1;
     }
   }
 }
@@ -71,10 +92,10 @@ __device__ double OrientationAngleForGivenNeuron(unsigned int neuronId){
   xCordinate = XCordinate(mNeuron);
   yCordinate = YCordinate(mNeuron);
   //pinwheel center coincides with the center of patch, so shift origin to center of patch
-  xCordinate = xCordinate - (L * 0.5);
-  yCordinate = yCordinate - (L * 0.5);
+  xCordinate = xCordinate - (L_FF * 0.5);
+  yCordinate = yCordinate - (L_FF * 0.5);
   if(IF_CIRCLE) {
-    if((xCordinate*xCordinate) + (yCordinate * yCordinate) <= (L * 0.5) * (L * 0.5)) {
+    if((xCordinate*xCordinate) + (yCordinate * yCordinate) <= (L_FF * 0.5) * (L_FF * 0.5)) {
     // if neuron lies inside the circle of radius 
     out = fmod(atan(MyDivide(yCordinate, xCordinate)) + PI, PI); 
     }
@@ -201,5 +222,13 @@ __device__ double IFF(double vm) {
     if(mNeuron == SAVE_CURRENT_FOR_NEURON) { dev_iff[curConter - 1] = iff;}
   }
   return iff;
+}
+
+
+__global__ void expDecayGFF() {
+  unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
+  if(mNeuron < N_NEURONS) {
+    gFF[mNeuron] *= EXP_SUM;
+  }
 }
 #endif

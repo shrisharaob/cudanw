@@ -24,7 +24,7 @@
 #define N_I_SAVE_CUR 1
 
 __constant__ double CONTRAST = HOST_CONTRAST;
-__constant__ double theta;
+__constant__ double theta; // the value of input theta is copied to this symbol, in radians
 
 #define ALPHA 0.0
 

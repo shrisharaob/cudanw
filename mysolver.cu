@@ -46,11 +46,13 @@ int main(int argc, char *argv[]) {
   FILE *fp, *fpConMat, *fpSpkTimes, *fpElapsedTime;
   double *host_isynap, *synapticCurrent = NULL;
   /*  int *conVec;*/
-  curandState *devStates, *devNormRandState;
+  curandState *devStates, *devNormRandState, *poisRandState;;
   cudaEvent_t start0, stop0;
   float elapsedTime;
   int *dev_sparseVec = NULL, *sparseConVec = NULL;
+  int *dev_sparseVecFF = NULL, *sparseConVecFF = NULL;
   int idxVec[N_NEURONS], nPostNeurons[N_NEURONS], *dev_idxVec = NULL, *dev_nPostneuronsPtr = NULL;
+  int idxVecFF[NFF], nPostNeuronsFF[NFF], *dev_idxVecFF = NULL, *dev_nPostneuronsPtrFF = NULL;
   int deviceId = 0;
   devPtr_t devPtrs;
   kernelParams_t kernelParams;
@@ -96,6 +98,7 @@ int main(int argc, char *argv[]) {
   setupIFFRndGenerator<<<BlocksPerGrid, ThreadsPerBlock>>>(time(NULL));
   /*Generate frozen FF input approximat*/
   cudaCheck(cudaMalloc((void **)&devStates,  N_NEURONS * sizeof(curandState)));
+
   unsigned long long tttt = 45687ULL;
   cudaCheck(cudaMalloc((void **)&devNormRandState, N_NEURONS * sizeof(curandState)));
   setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, tttt);
@@ -103,37 +106,21 @@ int main(int argc, char *argv[]) {
   setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devNormRandState, tttt);
   AuxRffTotal<<<BlocksPerGrid, ThreadsPerBlock>>>(devNormRandState, devStates);
   cudaCheck(cudaFree(devNormRandState));
-  /* gENERATE CONNECTION MATRIX */
-  /*  cudaCheck(cudaMalloc((void **)&dev_conVec, N_NEURONS * N_NEURONS * sizeof(int)));*/
-  /*  cudaCheck(cudaMallocHost((void **)&conVec, N_NEURONS * N_NEURONS * sizeof(int)));  */
-  /*  cudaCheck(cudaMemset(dev_conVec, 0, N_NEURONS * N_NEURONS * sizeof(int)));
-  printf("\n launching rand generator setup kernel\n");
-  setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, time(NULL));
-  printf("\n launching connection matrix geneting kernel with seed %ld ...", time(NULL));
-  fflush(stdout);
-  kernelGenConMat<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, dev_conVec);
-  printf(" Done! \n");
-  cudaCheck(cudaMemcpy(conVec, dev_conVec, N_NEURONS * N_NEURONS * sizeof(int), cudaMemcpyDeviceToHost));
-  cudaCheck(cudaFree(dev_conVec));*/
-  /*  printf("reading convec.dat..."); fflush(stdout);
-  FILE *fpConVecFile = fopen("conVec.dat", "rb");
-  fread(conVec, sizeof(*conVec), N_NEURONS * N_NEURONS, fpConVecFile);
-  fclose(fpConVecFile);
-  printf("done ...\n");*/
-  /* SPARSIFY */
-  /*  conVec[0] = 0; conVec[1] = 0; conVec[2] = 1;conVec[3] = 0;*/
-  /*conVec[4] = 0;conVec[5] = 1;conVec[6] = 1;conVec[7] = 1;
-  conVec[8] = 1;*/ /*conVec[9] = 0;*/
-  /*conVec[10] = 0;conVec[11] = 1;
-    conVec[12]= 0;conVec[13] = 0;conVec[14] = 0;conVec[15] = 0;*/
+  /* SETUP POISSION RAND GENERATOR */
+  cudaCheck(cudaMalloc((void **)&poisRandState,  NFF * sizeof(curandState)));
+  setup_pois_kernel<<<(NFF + ThreadsPerBlock - 1) / ThreadsPerBlock, ThreadsPerBlock>>>(poisRandState, time(NULL));
+  AuxRffTotalWithOriMap<<<(NFF + ThreadsPerBlock - 1) / ThreadsPerBlock, ThreadsPerBlock>>>(); // assign POs in the ori map for the poiss generators 
+
   cudaCheck(cudaGetSymbolAddress((void **)&dev_sparseVec, dev_sparseConVec));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_idxVec, dev_sparseIdx));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_nPostneuronsPtr, dev_nPostNeurons));
   cudaCheck(cudaMallocHost((void **)&sparseConVec, N_NEURONS * (2 * K + 1) * sizeof(int)));
-  /*  cudaCheck(cudaMalloc((void **)&dev_sparseVec, N_NEURONS * ((int)2 * K + 1)* sizeof(int)));
-  cudaCheck(cudaMalloc((void **)&dev_idxVec, N_NEURONS * sizeof(int)));
-  cudaCheck(cudaMalloc((void **)&dev_nPostneuronsPtr, N_NEURONS * sizeof(int)));*/
-  /*  GenSparseMat(conVec, N_NEURONS, N_NEURONS, sparseConVec, idxVec, nPostNeurons);*/
+
+  cudaCheck(cudaGetSymbolAddress((void **)&dev_sparseVecFF, dev_sparseConVecFF));
+  cudaCheck(cudaGetSymbolAddress((void **)&dev_idxVecFF, dev_sparseIdxFF));
+  cudaCheck(cudaGetSymbolAddress((void **)&dev_nPostneuronsPtr, dev_nPostNeuronsFF));
+  cudaCheck(cudaMallocHost((void **)&sparseConVecFF, N_NEURONS * (2ULL + (unsigned long long)(CFF * K) + NFF) * sizeof(int)));
+
   FILE *fpSparseConVec, *fpIdxVec, *fpNpostNeurons;
   fpSparseConVec = fopen("sparseConVec.dat", "rb");
   fpIdxVec = fopen("idxVec.dat", "rb");
@@ -148,6 +135,21 @@ int main(int argc, char *argv[]) {
   fclose(fpSparseConVec);
   fclose(fpIdxVec);
   fclose(fpNpostNeurons);
+  /* READ FF SPARSE CONNECTION MAT */
+  FILE *fpSparseConVecFF, *fpIdxVecFF, *fpNpostNeuronsFF;
+  fpSparseConVecFF = fopen("sparseConVecFF.dat", "rb");
+  fpIdxVecFF = fopen("idxVecFF.dat", "rb");
+  fpNpostNeuronsFF = fopen("nPostNeuronsFF.dat", "rb");
+  int dummy;
+  dummy = fread(sparseConVecFF, sizeof(*sparseConVecFF), N_NEURONS * (2ULL + (unsigned long long)(CFF * K) + NFF), fpSparseConVecFF);
+  if(dummy != N_NEURONS * (2ULL + (unsigned long long)(CFF * K) + NFF)) {
+    printf("sparseConvecFF read error ? \n");
+  }
+  dummy = fread(idxVecFF, sizeof(*idxVecFF), NFF, fpIdxVecFF);
+  dummy = fread(nPostNeuronsFF, sizeof(*nPostNeuronsFF), NFF, fpNpostNeuronsFF);
+  fclose(fpSparseConVecFF);
+  fclose(fpIdxVecFF);
+  fclose(fpNpostNeuronsFF);
   /*
     for(i = 0; i < N_NEURONS; ++i) {
       printf("neuron %d projects to : ", i);
@@ -161,6 +163,10 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaMemcpy(dev_sparseVec, sparseConVec, N_NEURONS * (2 * K + 1) * sizeof(int), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_idxVec, idxVec, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_nPostneuronsPtr, nPostNeurons, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
+
+  cudaCheck(cudaMemcpy(dev_sparseVecFF, sparseConVecFF, N_NEURONS * (2ULL + (unsigned long long)(CFF * K) + NFF)* sizeof(int), cudaMemcpyHostToDevice));
+  cudaCheck(cudaMemcpy(dev_idxVecFF, idxVecFF, NFF * sizeof(int), cudaMemcpyHostToDevice));
+  cudaCheck(cudaMemcpy(dev_nPostneuronsPtrFF, nPostNeuronsFF, NFF * sizeof(int), cudaMemcpyHostToDevice));
  /* ================= ALLOCATE PAGELOCKED MEMORY ON HOST =========================*/
   cudaCheck(cudaMallocHost((void **)&spkTimes, MAX_SPKS  * sizeof(*spkTimes)));
   cudaCheck(cudaMallocHost((void **)&host_isynap, N_I_SAVE_CUR * sizeof(*host_isynap)));
@@ -220,6 +226,7 @@ int main(int argc, char *argv[]) {
   
   
   int *dev_IF_SPK_Ptr = NULL, *dev_prevStepSpkIdxPtr = NULL, *host_IF_SPK = NULL, *host_prevStepSpkIdx = NULL,  *dev_nEPtr = NULL, *dev_nIPtr = NULL;
+  int *host_FF_IF_SPK, nFFSpksInPrevStep;
   int nSpksInPrevStep;
   cudaCheck(cudaMallocHost((void **)&host_IF_SPK, N_NEURONS * sizeof(int)));
   cudaCheck(cudaMallocHost((void **)&host_prevStepSpkIdx, N_NEURONS * sizeof(int)));
@@ -230,6 +237,9 @@ int main(int argc, char *argv[]) {
   for(i = 0; i < N_NEURONS; ++i) {
     host_IF_SPK[i] = 0;
   }
+
+  cudaCheck(cudaMallocHost((void **)&host_FF_IF_SPK, NFF * sizeof(int)));
+
   /* TIME LOOP */
   size_t sizeOfInt = sizeof(int);
   size_t sizeOfDbl = sizeof(double);
@@ -238,21 +248,31 @@ int main(int argc, char *argv[]) {
   cudaEventRecord(start0, 0);
   unsigned int spksE = 0, spksI = 0;
   FILE *fpIFR = fopen("instant_fr.csv", "w");
-  int *histVec = NULL, *dev_histVec = NULL; /* for storing the post-synaptic neurons to be updated */
-  int histVecIndx = 0;
+  int *histVec = NULL, *dev_histVec = NULL, *histVecFF = NULL, *dev_histVecFF = NULL; /* for storing the post-synaptic neurons to be updated */
+  int histVecIndx = 0, histVecIndxFF = 0;
   unsigned int histVecLength = N_NEURONS * (int)K;
+  unsigned int histVecLengthFF = N_NEURONS * (int)(CFF * K);
   if((unsigned long long)K >= NE | (unsigned long long)K >= NI) {
     histVecLength = (unsigned int)(N_NEURONS * N_NEURONS);
   }
   cudaCheck(cudaMallocHost((void **)&histVec, histVecLength * sizeof(*histVec)));
   cudaCheck(cudaMalloc((void **)&dev_histVec, histVecLength * sizeof(*dev_histVec)));
+
+  cudaCheck(cudaMallocHost((void **)&histVecFF, histVecLengthFF * sizeof(*histVecFF)));
+  cudaCheck(cudaMalloc((void **)&dev_histVecFF, histVecLengthFF * sizeof(*dev_histVecFF)));
+
   test_xform xform; // defined in cuda_histogram.h
   test_sumfun sum;  // defined in cuda_histogram.h
-  int *dev_histCountE = NULL, *histCountE = NULL, *dev_histCountI = NULL, *histCountI = NULL;;
+  int *dev_histCountE = NULL, *histCountE = NULL, *dev_histCountI = NULL, *histCountI = NULL;
+  int *dev_histCountFF = NULL, *histCountFF = NULL;
   cudaCheck(cudaMalloc((void **)&dev_histCountE, sizeof(int) * N_NEURONS));
   cudaCheck(cudaMallocHost((void **)&histCountE, sizeof(int) * N_NEURONS));
   cudaCheck(cudaMalloc((void **)&dev_histCountI, sizeof(int) * N_NEURONS));
   cudaCheck(cudaMallocHost((void **)&histCountI, sizeof(int) * N_NEURONS));
+
+  cudaCheck(cudaMalloc((void **)&dev_histCountFF, sizeof(int) * N_NEURONS));
+  cudaCheck(cudaMallocHost((void **)&histCountFF, sizeof(int) * N_NEURONS));
+
   int tmp;
   char fileSuffix[128], filename[128];
   strcpy(filename, "currents");
@@ -268,17 +288,20 @@ int main(int argc, char *argv[]) {
     devPtrs.k = k;
     nSpksInPrevStep = 0;
     histVecIndx = 0;
+    histVecIndxFF = 0;
     for(i = 0; i < N_NEURONS; ++i) {
       histCountI[i] = 0;
       histCountE[i] = 0;
     }
 
+    GenPoissionSpikeInFFLayer<<<(NFF + ThreadsPerBlock - 1) / ThreadsPerBlock, ThreadsPerbBlock>>>(poisRandState); // GENERATE SPIKES IN LAYER 4 
     rkdumbPretty<<<BlocksPerGrid, ThreadsPerBlock>>> (kernelParams, devPtrs);
     cudaCheckLastError("rk");
     if(k > 0) {
       /*      cudaCheck(cudaMemcpy(host_IF_SPK, dev_IF_SPK_Ptr, N_NEURONS * sizeOfInt, cudaMemcpyDeviceToHost));*/
       cudaCheck(cudaMemcpyAsync(host_IF_SPK, dev_IF_SPK_Ptr, N_NEURONS * sizeOfInt, cudaMemcpyDeviceToHost, stream1));
       cudaCheck(cudaMemcpyAsync(host_isynap, synapticCurrent, N_I_SAVE_CUR * sizeOfDbl, cudaMemcpyDeviceToHost, stream1));
+      cudaCheck(cudaMemcpyAsync(host_FF_IF_SPK, IF_SPIKE_POISSION_SPK, NFF * sizeOfInt, cudaMemcpyDeviceToHost, stream1));
     }
     cudaCheck(cudaStreamSynchronize(stream1));
     /*instantaneous firing rate, rect non-overlapping window */
@@ -302,6 +325,7 @@ int main(int argc, char *argv[]) {
     }
     /*-----------------------------------------------------------------------*/
     expDecay<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_histCountE, dev_histCountI);
+    expDecayGFF<<<(NFF + ThreadsPerBlock - 1) / ThreadsPerBlock, ThreadsPerbBlock>>>(dev_histCountE, dev_histCountI);
     cudaCheckLastError("exp");
     for(i = 0; i < NE; ++i) {
       if(host_IF_SPK[i]){
@@ -340,6 +364,21 @@ int main(int argc, char *argv[]) {
     }
 
 
+    for(i = 0; i < NFF; ++i) {
+      if(host_FF_IF_SPK[i]){
+        nFFSpksInPrevStep += 1;
+        for(int jj = 0; jj < nPostNeuronsFF[i]; ++jj) {
+          histVec[histVecIndxFF++] = sparseConVecFF[idxVecFF[i] + jj];
+        }
+      }
+    }
+    if(nFFSpksInPrevStep) {
+      cudaCheck(cudaMemcpy(dev_histVecFF, histVecFF, histVecIndxFF * sizeof(int), cudaMemcpyHostToDevice));
+      callHistogramKernel<histogram_atomic_inc, 1>(dev_histVecFF, xform, sum, 0, histVecIndxFF, 0, &histCountFF[0], (int)N_NEURONS);
+      cudaCheckLastError("HIST_FF");
+      cudaCheck(cudaMemcpyAsync(dev_histCountFF, histCountFF, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice, stream1));
+    }
+
     /*    expDecay<<<BlocksPerGrid, ThreadsPerBlock>>>();*/
 
     /*computeConductance<<<BlocksPerGrid, ThreadsPerBlock>>>();*/
@@ -351,6 +390,7 @@ int main(int argc, char *argv[]) {
     }
     fprintf(fpCur, "\n");
     computeConductanceHist<<<(N_NEURONS + 512 - 1) / 512, 512>>>(dev_histCountE, dev_histCountI);
+    computeConductanceHistFF<<<(NFF + 512 - 1) / 512, 512>>>(dev_histCountFF);
     cudaCheckLastError("g");
     computeIsynap<<<BlocksPerGrid, ThreadsPerBlock>>>(k*DT);
     cudaCheckLastError("isyp");

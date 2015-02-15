@@ -64,6 +64,11 @@ __device__ float randnXiA[N_Neurons],
                  randuDelta[N_Neurons], 
                  randwZiA[N_Neurons * 4], 
                  randuPhi[N_Neurons * 3]; 
+
+/* VARIABLES FOR THE FEED FORWARD POISSION ELEMENTS FOR THE CASE OF ORI MAP */
+__device__ float POInOriMap[NFF]; // preferred orientation assigned to the layer four neurons
+__device__ int IF_SPIKE_POISSION_SPK[NFF]
+
 __device__ double dev_v[N_NEURONS], dev_n[N_NEURONS], dev_z[N_NEURONS], dev_h[N_NEURONS]; 
 __device__ double gffItgrl[N_NEURONS];
 __device__ double dt, *thetaVec;
@@ -80,6 +85,9 @@ __device__ curandState bgCurNoiseGenState[N_NEURONS], iffNormRandState[N_NEURONS
 __device__ double dev_bgCur[N_CURRENT_STEPS_TO_STORE], dev_iff[N_CURRENT_STEPS_TO_STORE];
 __device__ int dev_nPostNeurons[N_NEURONS], dev_sparseIdx[N_NEURONS]; 
 __device__ int dev_sparseConVec[N_NEURONS * 2 * (int)K + N_NEURONS];
+
+__device__ int dev_nPostNeuronsFF[NFF], dev_sparseIdxFF[NFF]; 
+__device__ int dev_sparseConVecFF[N_NEURONS * (2ULL + (unsigned long long)(CFF * K) + NFF)];
 
 #define N_SPKS_IN_PREV_STEP 3000
 __device__ int dev_prevStepSpkIdx[N_NEURONS], /*this will hold the row id in the matrix dev_spksCountMat*/

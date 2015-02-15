@@ -16,6 +16,15 @@ __global__ void setup_kernel(curandState *state, unsigned long long seed ) {
     }
 }
 
+__global__ void setup_pois_kernel(curandState *state, unsigned long long seed ) {
+    unsigned int id = threadIdx.x + blockIdx.x * blockDim.x;
+    /* Each thread gets different seed, a different sequence
+       number, no offset */
+    if(id < NFF) { // <==== the only difference as compared to the previos set uo func
+      curand_init(seed * (id + 7), id, 0, &state[id]);
+    }
+}
+
 __device__ double randkernel(curandState *state) {
   /*RETURNS ONE SAMPLE FROM UNIFORM DISTRIBUTION*/
   unsigned int id = threadIdx.x + blockIdx.x * blockDim.x;

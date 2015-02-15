@@ -43,9 +43,9 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
       else {
         gaussNoiseI[mNeuron - NE] = 0.0;
       }
-      gFF[mNeuron] = 0.0;
+      gFF[mNeuron] = 0.0; 
       rTotal[mNeuron] = 0.0;
-      gffItgrl[mNeuron] = 0.0;
+      gffItgrl[mNeuron] = 0.0; // holds the old value of gff 
     }
     localLastNSteps = nstep - STORE_LAST_N_STEPS;
     /* TIMELOOP */

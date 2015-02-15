@@ -86,6 +86,16 @@ __global__ void computeConductanceHist(int *dev_histCountE, int *dev_histCountI)
 }     
 
 
+__global__ void computeConductanceHistFF(int *dev_histCountFF) {
+  unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
+  int stride = gridDim.x * blockDim.x;
+  while(mNeuron < NFF) {
+    gFF[mNeuron] += (double)dev_histCountFF[mNeuron];
+    mNeuron += stride;
+  }
+}     
+
+
 
 __global__ void computeConductance() {
   unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
@@ -165,8 +175,13 @@ __global__ void computeIsynap(double t) {
     	/* bg current */
 	/*	ibg = bgCur(vmOld); /* make sure AuxRffTotal<<<  >>> is run begore calling bgCur */
 	/* FF input current*/
+    /*
     RffTotal(t);
     Gff(t);
+    */
+    /* FF current computed from the spikes of the layer 4 Poission generators  */
+    
+    
     dev_iffCurrent[mNeuron] = IFF(vm);
   }
 }
