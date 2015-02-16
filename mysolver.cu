@@ -38,7 +38,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  double tStart = 0.0, tStop =  5000.0;
+  double tStart = 0.0, tStop =  500.0;
   double *spkTimes, *vm = NULL, host_theta = 0.0, theta_degrees; /* *vstart; 500 time steps */
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   double *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
@@ -236,21 +236,25 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaGetSymbolAddress((void **)&dev_prevStepSpkIdxPtr, dev_prevStepSpkIdx));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_nEPtr, dev_ESpkCountMat));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_nIPtr, dev_ISpkCountMat));
-  for(i = 0; i < N_NEURONS; ++i) {
-    host_IF_SPK[i] = 0;
-  }
-
   cudaCheck(cudaGetSymbolAddress((void **)&dev_IF_SPK_POISSION_Ptr, IF_SPIKE_POISSION_SPK));
   cudaCheck(cudaMallocHost((void **)&host_FF_IF_SPK, NFF * sizeof(int)));
   printf("\n %p \n", host_FF_IF_SPK);
   cudaCheck(cudaMemcpy(host_FF_IF_SPK, dev_IF_SPK_POISSION_Ptr, NFF * sizeof(int), cudaMemcpyDeviceToHost));
+  for(i = 0; i < N_NEURONS; ++i) {
+    host_IF_SPK[i] = 0;
+    if(i < NFF) {
+      host_FF_IF_SPK[i] = 0;
+    }
+  }
+
+
   /* TIME LOOP */
   size_t sizeOfInt = sizeof(int);
   size_t sizeOfDbl = sizeof(double);
   /* SETUP TIMER EVENTS ON DEVICE */
   cudaEventCreate(&stop0); cudaEventCreate(&start0);
   cudaEventRecord(start0, 0);
-  unsigned int spksE = 0, spksI = 0;
+  unsigned int spksE = 0, spksI = 0, spksFF = 0;
   FILE *fpIFR = fopen("instant_fr.csv", "w");
   int *histVec = NULL, *dev_histVec = NULL, *histVecFF = NULL, *dev_histVecFF = NULL; /* for storing the post-synaptic neurons to be updated */
   int histVecIndx = 0, histVecIndxFF = 0;
@@ -298,6 +302,7 @@ int main(int argc, char *argv[]) {
     for(i = 0; i < N_NEURONS; ++i) {
       histCountI[i] = 0;
       histCountE[i] = 0;
+      histCountFF[i] = 0;
     }
 
     GenPoissionSpikeInFFLayer<<<(NFF + ThreadsPerBlock - 1) / ThreadsPerBlock, ThreadsPerBlock>>>(poisRandState); // GENERATE SPIKES IN LAYER 4 
@@ -313,25 +318,30 @@ int main(int argc, char *argv[]) {
     /*instantaneous firing rate, rect non-overlapping window */
     for(i = 0; i < N_NEURONS; ++i) {
       if(host_IF_SPK[i]) {
-	if(i < NE) {
-	  spksE += 1;
-	}
-	else{
-	  spksI += 1;
-	}
+        if(i < NE) {
+          spksE += 1;
+        }
+        else{
+          spksI += 1;
+        }
+        if(i < NFF) {
+          spksFF += 1;
+        }
 	/*	    host_prevStepSpkIdx[i] = nSpksInPrevStep;
 		    nSpksInPrevStep += 1;*/
       }
     }
     if(!(k%(int)(50.0/DT))) {
       fprintf(fpIFR, "%f %f \n", ((double)spksE) / (0.05 * (double)NE), ((double)spksI) / (0.05 * (double)NI));fflush(fpIFR);
-      fprintf(stdout, "%f %f \n", ((double)spksE) / (0.05 * (double)NE), ((double)spksI) / (0.05 * (double)NI));
+      fprintf(stdout, "%f %f ", ((double)spksE) / (0.05 * (double)NE), ((double)spksI) / (0.05 * (double)NI));
       spksE = 0; 
       spksI = 0;
+      fprintf(stdout, "%f \n", ((double)spksFF) / (0.05 * (double)NFF));
+      spksFF= 0;
     }
     /*-----------------------------------------------------------------------*/
     expDecay<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_histCountE, dev_histCountI);
-    expDecayGFF<<<(NFF + ThreadsPerBlock - 1) / ThreadsPerBlock, ThreadsPerBlock>>>();
+    expDecayGFF<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_histCountFF);
     cudaCheckLastError("exp");
     for(i = 0; i < NE; ++i) {
       if(host_IF_SPK[i]){
@@ -369,7 +379,8 @@ int main(int argc, char *argv[]) {
       /*      cudaCheck(cudaMemcpyAsync(dev_histCountI, histCountI, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice, stream1));*/
     }
 
-
+    histVecIndxFF = 0;
+    nFFSpksInPrevStep = 0;
     for(i = 0; i < NFF; ++i) {
       if(host_FF_IF_SPK[i]){
         nFFSpksInPrevStep += 1;
@@ -379,12 +390,19 @@ int main(int argc, char *argv[]) {
       }
     }
     if(nFFSpksInPrevStep) {
-      cudaCheck(cudaMemcpy(dev_histVecFF, histVecFF, histVecIndxFF * sizeof(int), cudaMemcpyHostToDevice));
+      cudaCheck(cudaMemcpy(dev_histVecFF, histVec, histVecIndxFF * sizeof(int), cudaMemcpyHostToDevice));
       callHistogramKernel<histogram_atomic_inc, 1>(dev_histVecFF, xform, sum, 0, histVecIndxFF, 0, &histCountFF[0], (int)N_NEURONS);
       cudaCheckLastError("HIST_FF");
-      cudaCheck(cudaMemcpyAsync(dev_histCountFF, histCountFF, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice, stream1));
+      cudaCheck(cudaMemcpy(dev_histCountFF, histCountFF, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
     }
 
+    // int tmpCnt = 0;
+    // for(i = 0; i < N_NEURONS; ++i) {
+    //   if(histCountFF[i]) {
+    //     tmpCnt += histCountFF[i];
+    //   }
+    // }
+    //    printf("histcount = %d\n", tmpCnt);
     /*    expDecay<<<BlocksPerGrid, ThreadsPerBlock>>>();*/
 
     /*computeConductance<<<BlocksPerGrid, ThreadsPerBlock>>>();*/
@@ -485,11 +503,11 @@ int main(int argc, char *argv[]) {
     }
     printf("\n%d %d\n", i, k);
     fclose(fp);
-    /*    FILE* fpCur = fopen("currents.csv", "w");
+    FILE* fpCur = fopen("currents.csv", "w");
     for(i = 0; i < N_CURRENT_STEPS_TO_STORE; ++i) {
-    fprintf(fpCur, "%f;%f;%f;%f\n", curE[i], curI[i], ibgCur[i], curIff[i]);*/
-      /*      fprintf(fpCur, "%f\n", curIff[i]);*/
-    //}
+    fprintf(fpCur, "%f;%f;%f;%f\n", curE[i], curI[i], ibgCur[i], curIff[i]);
+    //      fprintf(fpCur, "%f\n", curIff[i]);
+    }
     fclose(fpCur);
     fpConMat = fopen("conMat.csv", "w");
     fpConMat = fopen("conVec.csv", "w");

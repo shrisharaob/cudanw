@@ -89,7 +89,7 @@ __global__ void computeConductanceHist(int *dev_histCountE, int *dev_histCountI)
 __global__ void computeConductanceHistFF(int *dev_histCountFF) {
   unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   int stride = gridDim.x * blockDim.x;
-  while(mNeuron < NFF) {
+  while(mNeuron < N_NEURONS) {
     gFF[mNeuron] += (double)dev_histCountFF[mNeuron];
     mNeuron += stride;
   }
@@ -167,9 +167,10 @@ __global__ void computeIsynap(double t) {
     if(mNeuron == SAVE_CURRENT_FOR_NEURON) {
       localCurConter = curConter;
       if(localCurConter < N_CURRENT_STEPS_TO_STORE) {
-	glbCurE[localCurConter] = tempCurE;
-	glbCurI[localCurConter] = tempCurI;
-	curConter += 1;
+        glbCurE[localCurConter] = tempCurE;
+        glbCurI[localCurConter] = tempCurI;
+        dev_iff[localCurConter] = gFF[0];
+        curConter += 1;
       }
     }
     	/* bg current */
@@ -182,7 +183,7 @@ __global__ void computeIsynap(double t) {
     /* FF current computed from the spikes of the layer 4 Poission generators  */
     
     
-    dev_iffCurrent[mNeuron] = IFF(vm);
+    dev_iffCurrent[mNeuron] = IFF_orimap(vm);
   }
 }
 #endif

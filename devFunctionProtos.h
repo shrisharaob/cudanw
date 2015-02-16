@@ -18,6 +18,8 @@ __device__ void RffTotal(double t);
 
 __device__ double IFF(double vm);
 
+__device__ double IFF_orimap(double vm);
+
 __device__ double normRndKernel(curandState *state);
 
 __device__ double randkernel(curandState *state);

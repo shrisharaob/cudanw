@@ -47,7 +47,7 @@ __global__ void GenPoissionSpikeInFFLayer(curandState *poisRandState) {
   unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x ;
   double instRate = 0.0; // instanteneous rate
   if(mNeuron < NFF) {
-    instRate = R0 +  R1 * log10(1.000 + CONTRAST) * (cos(2.0* (theta - POInOriMap[mNeuron])));
+    instRate = R0 +  R1 * log10(1.000 + CONTRAST) * (cos(2.0* (theta - POInOriMap[mNeuron])) + 2.0);
     IF_SPIKE_POISSION_SPK[mNeuron] = 0;
     if((instRate * DT) > randkernel(poisRandState)) {
       IF_SPIKE_POISSION_SPK[mNeuron] = 1;
@@ -225,10 +225,29 @@ __device__ double IFF(double vm) {
 }
 
 
-__global__ void expDecayGFF() {
+__device__ double IFF_orimap(double vm) {
   unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
-  if(mNeuron < N_NEURONS) {
+  double iff = 0.0;
+  if(mNeuron < N_Neurons) {
+    if(mNeuron < NE) {
+      iff = -1.0 * GFF_E * INV_TAU_SYNAP * gFF[mNeuron] * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
+    }
+    else {
+      iff = -1.0 * GFF_I * INV_TAU_SYNAP * gFF[mNeuron] * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
+    }
+
+    if(mNeuron == SAVE_CURRENT_FOR_NEURON) { dev_iffCurrent[curConter - 1] = 3.0;}
+  }
+  return iff;
+}
+
+__global__ void expDecayGFF(int *dev_histCountFF) {
+  unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
+  int stride = gridDim.x * blockDim.x;
+  while(mNeuron < N_NEURONS) {
     gFF[mNeuron] *= EXP_SUM;
+    dev_histCountFF[mNeuron] = 0;
+    mNeuron += stride;
   }
 }
 #endif

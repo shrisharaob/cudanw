@@ -21,7 +21,7 @@
 #define N_NEURONS_TO_STORE (N_NEURONS_TO_STORE_END - N_NEURONS_TO_STORE_START)
 #define N_E_2BLOCK_NA_CURRENT 1 // number of first n neurons to have their Na2+ currents blocked
 #define N_I_2BLOCK_NA_CURRENT 1
-#define N_I_SAVE_CUR 1
+#define N_I_SAVE_CUR 4
 
 __constant__ double CONTRAST = HOST_CONTRAST;
 __constant__ double theta; // the value of input theta is copied to this symbol, in radians
@@ -36,6 +36,6 @@ __constant__ double theta; // the value of input theta is copied to this symbol,
 /* feed forward patch parameters */
 #define CFF HOST_CFF
 #define L_FF 1.0
-#define FF_CON_SIGMA (L_FF / 5.0)
+#define FF_CON_SIGMA (L_FF / 10.0)
 #define NFF 10000ULL
 #endif
