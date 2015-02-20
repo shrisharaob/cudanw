@@ -35,10 +35,10 @@ __device__ double conProb(double xa, double ya, double xb, double yb, double pat
   /*  double z1 (1 / sqrt(2 * PI * CON_SIGMA)); // make global var
   double denom = (2 * CON_SIGMA * CON_SIGMA); // global var*/
   double x0, x1, y0, y1, result; 
-  x0 = fmod(abs(xa-xb), patchSize);
-  x1 = fmod(abs(xa-xb), -1 * patchSize);
-  y0 = fmod(abs(ya-yb), patchSize);
-  y1 = fmod(abs(ya-yb), -1 * patchSize);
+  x0 = fmod(abs(xa-xb), patchSize * 0.5); //PERODIC CONDITION
+  x1 = fmod(abs(xa-xb), -1 * patchSize * 0.5);
+  y0 = fmod(abs(ya-yb), patchSize * 0.5);
+  y1 = fmod(abs(ya-yb), -1 * patchSize * 0.5);
   result = Gaussian2D(x0, y0, varianceOfGaussian) + Gaussian2D(x1, y1, varianceOfGaussian);
   if(x0 == 0 && x1 == 0) {
     result *= sqrt(0.5);

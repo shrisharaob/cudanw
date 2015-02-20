@@ -169,7 +169,7 @@ __global__ void computeIsynap(double t) {
       if(localCurConter < N_CURRENT_STEPS_TO_STORE) {
         glbCurE[localCurConter] = tempCurE;
         glbCurI[localCurConter] = tempCurI;
-        dev_iff[localCurConter] = gFF[0];
+        dev_iff[localCurConter] = dev_iffCurrent[mNeuron];
         curConter += 1;
       }
     }

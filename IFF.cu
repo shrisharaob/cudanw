@@ -47,7 +47,8 @@ __global__ void GenPoissionSpikeInFFLayer(curandState *poisRandState) {
   unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x ;
   double instRate = 0.0; // instanteneous rate
   if(mNeuron < NFF) {
-    instRate = R0 +  R1 * log10(1.000 + CONTRAST) * (cos(2.0* (theta - POInOriMap[mNeuron])) + 2.0);
+    //instRate = R0 +  R1 * log10(1.000 + CONTRAST) * (cos(2.0* (theta - POInOriMap[mNeuron])) + 2.0);
+    instRate = R0 + 0.5 * R0 * cos(2.0* (theta - POInOriMap[mNeuron]));
     IF_SPIKE_POISSION_SPK[mNeuron] = 0;
     if((instRate * DT) > randkernel(poisRandState)) {
       IF_SPIKE_POISSION_SPK[mNeuron] = 1;
@@ -97,14 +98,15 @@ __device__ double OrientationAngleForGivenNeuron(unsigned int neuronId){
   if(IF_CIRCLE) {
     if((xCordinate*xCordinate) + (yCordinate * yCordinate) <= (L_FF * 0.5) * (L_FF * 0.5)) {
     // if neuron lies inside the circle of radius 
-    out = fmod(atan(MyDivide(yCordinate, xCordinate)) + PI, PI); 
+      //    out = fmod(atan(MyDivide(yCordinate, xCordinate)) + PI, PI); 
+      out = atan(MyDivide(yCordinate, xCordinate)) + (PI / 2.0);
     }
     else {
       out = 720.0;
     }
   }
   else  {
-    out = fmod(atan(MyDivide(yCordinate, xCordinate)) + PI, PI); 
+    out = atan(MyDivide(yCordinate, xCordinate)) + (PI / 2.0);
   }
   return out;
 }

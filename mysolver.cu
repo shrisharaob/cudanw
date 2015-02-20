@@ -38,7 +38,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  double tStart = 0.0, tStop =  500.0;
+  double tStart = 0.0, tStop =  3000.0;
   double *spkTimes, *vm = NULL, host_theta = 0.0, theta_degrees; /* *vstart; 500 time steps */
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   double *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
   int *dev_sparseVec = NULL, *sparseConVec = NULL;
   int *dev_sparseVecFF = NULL, *sparseConVecFF = NULL;
   int idxVec[N_NEURONS], nPostNeurons[N_NEURONS], *dev_idxVec = NULL, *dev_nPostneuronsPtr = NULL;
-  int idxVecFF[NFF], nPostNeuronsFF[NFF], *dev_idxVecFF = NULL, *dev_nPostneuronsPtrFF = NULL;
+  int *idxVecFF = NULL, *nPostNeuronsFF = NULL, *dev_idxVecFF = NULL, *dev_nPostneuronsPtrFF = NULL;
   int deviceId = 0;
   devPtr_t devPtrs;
   kernelParams_t kernelParams;
@@ -61,6 +61,8 @@ int main(int argc, char *argv[]) {
   char filetag[16];
   cudaCheck(cudaStreamCreate(&stream1));
   printf("old tstop = %f\n", tStop);
+  cudaCheck(cudaMalloc((void **)&idxVecFF,  NFF * sizeof(*idxVecFF)));
+  cudaCheck(cudaMalloc((void **)&nPostNeuronsFF,  NFF * sizeof(*nPostNeuronsFF)));
   /*PARSE INPUTS*/
   if(argc > 1) {
     deviceId = atoi(argv[1]);
@@ -324,11 +326,15 @@ int main(int argc, char *argv[]) {
         else{
           spksI += 1;
         }
-        if(i < NFF) {
-          spksFF += 1;
-        }
+       
 	/*	    host_prevStepSpkIdx[i] = nSpksInPrevStep;
 		    nSpksInPrevStep += 1;*/
+      }
+
+      if(i < NFF) {
+        if(host_FF_IF_SPK[i]) {
+            spksFF += 1;
+        }
       }
     }
     if(!(k%(int)(50.0/DT))) {
@@ -419,6 +425,7 @@ int main(int argc, char *argv[]) {
     computeIsynap<<<BlocksPerGrid, ThreadsPerBlock>>>(k*DT);
     cudaCheckLastError("isyp");
   }
+  fclose(fpCur);
   cudaCheck(cudaFreeHost(histVec));
   cudaCheck(cudaFree(dev_histVec));
   cudaCheck(cudaFree(dev_histCountE));
@@ -503,12 +510,12 @@ int main(int argc, char *argv[]) {
     }
     printf("\n%d %d\n", i, k);
     fclose(fp);
-    FILE* fpCur = fopen("currents.csv", "w");
-    for(i = 0; i < N_CURRENT_STEPS_TO_STORE; ++i) {
-    fprintf(fpCur, "%f;%f;%f;%f\n", curE[i], curI[i], ibgCur[i], curIff[i]);
-    //      fprintf(fpCur, "%f\n", curIff[i]);
-    }
-    fclose(fpCur);
+    // FILE* fpCur = fopen("currents.csv", "w");
+    // for(i = 0; i < N_CURRENT_STEPS_TO_STORE; ++i) {
+    // fprintf(fpCur, "%f;%f;%f;%f\n", curE[i], curI[i], ibgCur[i], curIff[i]);
+    // //      fprintf(fpCur, "%f\n", curIff[i]);
+    // }
+    // fclose(fpCur);
     fpConMat = fopen("conMat.csv", "w");
     fpConMat = fopen("conVec.csv", "w");
 
@@ -541,6 +548,9 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaFree(dev_nPostneuronsPtr));*/
   cudaCheck(cudaFreeHost(host_IF_SPK));
   cudaCheck(cudaFreeHost(host_prevStepSpkIdx));
+
+  cudaCheck(cudaFreeHost(idxVecFF));
+  cudaCheck(cudaFreeHost(nPostNeuronsFF));
   /*  cudaDeviceReset()*/
   return EXIT_SUCCESS;
 }

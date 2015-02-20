@@ -81,9 +81,8 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
       synapticCurrent[mNeuron] = isynap + ibg + iff;
       }*/
 
-    if(k > 4000 &  mNeuron >= NE & mNeuron <= NE + N_I_SAVE_CUR) {
-      //      synapticCurrent[mNeuron - NE] = isynapNew + ibg + 0.0 * iff;
-      synapticCurrent[mNeuron - NE] = iff;
+    if(k > 500 &  mNeuron >= NE & mNeuron <= NE + N_I_SAVE_CUR) {
+      synapticCurrent[mNeuron - NE] = isynapNew + ibg + iff;
     }
 
     if(k > 2) {

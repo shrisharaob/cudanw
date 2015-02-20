@@ -42,16 +42,16 @@
 #define RB_I 0.002
 #define TAU_BG 3.0
 #define INV_TAU_BG (1.0 / TAU_BG)
-#define G_EB (1.0 * 0.3 /sqrt(K))
-#define G_IB (1.0 * 0.4 /sqrt(K))
+#define G_EB (4.0 * 0.3 /sqrt(K))
+#define G_IB (4.0 * 0.4 /sqrt(K))
 
 /* ff input */
 //#define CFF 0.1000000000
 //#define KFF 200.0
-//#define GE_FF (0.95 * 4.0)
-//#define GI_FF (1.26 * 4.0)
-#define R0 0.002
-#define R1 0.02
+//#define GE_FF (0.95 * 1.0)
+//#define GI_FF (1.26 * 1.0)
+#define R0 0.04 //0.002
+#define R1 0.04 //0.02
 #define INP_FREQ (0.004 * PI)
 #define ETA_E 1.2
 #define ETA_I 1.2
