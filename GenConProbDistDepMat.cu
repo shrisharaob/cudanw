@@ -30,6 +30,23 @@ __device__ double Gaussian2D(double x, double y, double varianceOfGaussian) {
   return  z1 * z1 * exp(-1 * pow(x, 2) / (denom)) * z1 * z1 * exp(-1 * pow(y, 2) / (denom));
 }
 
+
+__device__ double ShortestDistOnCirc(double point0, double point1, double perimeter) {
+  double dist = 0.0;
+  dist = abs(point0 - point1);
+  dist = fmod(dist, perimeter);
+  if(dist > 0.5){
+    dist = 1.0 - dist;
+  }
+  return dist;
+}
+
+__device__ double ConProb_new(double xa, double ya, double xb, double yb, double patchSize, double varianceOfGaussian) {
+  double distX = ShortestDistOnCirc(xa, xb, patchSize);
+  double distY = ShortestDistOnCirc(ya, yb, patchSize);
+  return Gaussian2D(distX, distY, varianceOfGaussian);
+}
+
 __device__ double conProb(double xa, double ya, double xb, double yb, double patchSize, double varianceOfGaussian) {
   /* returns connection probablity given cordinates (xa, ya) and (xb, yb) */
   /*  double z1 (1 / sqrt(2 * PI * CON_SIGMA)); // make global var
@@ -59,7 +76,8 @@ __global__ void KernelGenConProbMat(float *dev_conVec) {
     xa = XCordinate(mNeuron);
     ya = YCordinate(mNeuron);
     for(i = 0; i < N_NEURONS; ++i) {
-      dev_conVec[mNeuron + i * N_NEURONS] = (float)conProb(xa, ya, XCordinate(i), YCordinate(i), L, CON_SIGMA); 
+      //      dev_conVec[mNeuron + i * N_NEURONS] = (float)conProb(xa, ya, XCordinate(i), YCordinate(i), L, CON_SIGMA); 
+      dev_conVec[mNeuron + i * N_NEURONS] = (float)ConProb_new(xa, ya, XCordinate(i), YCordinate(i), L, CON_SIGMA); 
     }
     mNeuron += stride;
   }
@@ -109,7 +127,8 @@ __global__ void KernelGenFeedForwardConProbMat(float *dev_conVecFF) {
     ya = YCordinate(mNeuron);
     for(i = 0; i < NFF; ++i) {
       // m'th neruon recieves input from i'th ff neuron ?
-      dev_conVecFF[mNeuron + i * N_NEURONS] = (float)conProb(xa, ya, XCordinate(i), YCordinate(i), L_FF, FF_CON_SIGMA);  
+      //      dev_conVecFF[mNeuron + i * N_NEURONS] = (float)conProb(xa, ya, XCordinate(i), YCordinate(i), L_FF, FF_CON_SIGMA);  
+      dev_conVecFF[mNeuron + i * N_NEURONS] = (float)ConProb_new(xa, ya, XCordinate(i), YCordinate(i), L_FF, FF_CON_SIGMA);  
     }
     mNeuron += stride;
   }
