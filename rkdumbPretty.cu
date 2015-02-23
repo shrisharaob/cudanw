@@ -77,6 +77,18 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
       }
     }
     
+    if(mNeuron == SAVE_CURRENT_FOR_NEURON) {
+      int localCurConter = curConter;
+      if(localCurConter < N_CURRENT_STEPS_TO_STORE) {
+        glbCurE[localCurConter] = iff + ibg;
+        glbCurI[localCurConter] = isynapNew;
+        dev_iff[localCurConter] = iff + ibg + isynapNew; //dev_iffCurrent[mNeuron];
+        curConter += 1;
+      }
+    }
+
+
+    
     /*    if(mNeuron = 0 & mNeuron <= N_E_2BLOCK_NA_CURRENT ) {
       synapticCurrent[mNeuron] = isynap + ibg + iff;
       }*/

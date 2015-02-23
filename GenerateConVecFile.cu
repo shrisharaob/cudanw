@@ -380,7 +380,7 @@ int main(int argc, char *argv[]) {
       printf("\n anatomic conmat \n");
       /* ARRANGE NEURONS ON A SQUARE GRID, REQUIRES THAT SQRT(NA) IS AN INTEGER */
       IsSquare(NE, NI);
-      KernelGenConProbMat<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_conVecPtr);
+      KernelGenConProbMat<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_conVecPtr, 1); // second arg is IF_PERIODIC
       KernelConProbPreFactor<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_conVecPtr);
       cudaCheck(cudaMemcpy(conProbMat, dev_conVecPtr, (unsigned long long)N_NEURONS * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
       KernelGenDistDepConMat<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, dev_conVecPtr, i, maxNeurons);

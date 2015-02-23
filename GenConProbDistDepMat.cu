@@ -41,9 +41,19 @@ __device__ double ShortestDistOnCirc(double point0, double point1, double perime
   return dist;
 }
 
-__device__ double ConProb_new(double xa, double ya, double xb, double yb, double patchSize, double varianceOfGaussian) {
-  double distX = ShortestDistOnCirc(xa, xb, patchSize);
-  double distY = ShortestDistOnCirc(ya, yb, patchSize);
+
+__device__ double ConProb_new(double xa, double ya, double xb, double yb, double patchSize, double varianceOfGaussian, int IF_PERIODIC) {
+  double distX = 0.0; //ShortestDistOnCirc(xa, xb, patchSize);
+  double distY = 0.0; //ShortestDistOnCirc(ya, yb, patchSize);
+  double out = 0.0;
+  if(IF_PERIODIC) {
+    distX = ShortestDistOnCirc(xa, xb, patchSize);
+    distY = ShortestDistOnCirc(ya, yb, patchSize);
+  }
+  else {
+    distX = abs(xa - xb);
+    distY = abs(ya - yb);
+  }
   return Gaussian2D(distX, distY, varianceOfGaussian);
 }
 
@@ -67,7 +77,7 @@ __device__ double conProb(double xa, double ya, double xb, double yb, double pat
   return result;
 }
 
-__global__ void KernelGenConProbMat(float *dev_conVec) {
+__global__ void KernelGenConProbMat(float *dev_conVec, int IF_PERIODIC) {
   unsigned long mNeuron = (unsigned long)(threadIdx.x + blockIdx.x * blockDim.x);
   unsigned long int i;
   double xa, ya;
@@ -76,8 +86,8 @@ __global__ void KernelGenConProbMat(float *dev_conVec) {
     xa = XCordinate(mNeuron);
     ya = YCordinate(mNeuron);
     for(i = 0; i < N_NEURONS; ++i) {
-      //      dev_conVec[mNeuron + i * N_NEURONS] = (float)conProb(xa, ya, XCordinate(i), YCordinate(i), L, CON_SIGMA); 
-      dev_conVec[mNeuron + i * N_NEURONS] = (float)ConProb_new(xa, ya, XCordinate(i), YCordinate(i), L, CON_SIGMA); 
+      dev_conVec[mNeuron + i * N_NEURONS] = (float)conProb(xa, ya, XCordinate(i), YCordinate(i), L, CON_SIGMA); 
+      //dev_conVec[mNeuron + i * N_NEURONS] = (float)ConProb_new(xa, ya, XCordinate(i), YCordinate(i), L, CON_SIGMA, IF_PERIODIC); 
     }
     mNeuron += stride;
   }
@@ -116,7 +126,7 @@ __global__ void KernelConProbPreFactor(float *dev_conVec) {
 }
 
 
-__global__ void KernelGenFeedForwardConProbMat(float *dev_conVecFF) {
+__global__ void KernelGenFeedForwardConProbMat(float *dev_conVecFF, int IF_PERIODIC) {
   // FEED FORWARD CONNECTION PROB
   unsigned long mNeuron = (unsigned long)(threadIdx.x + blockIdx.x * blockDim.x);
   unsigned long int i;
@@ -128,7 +138,7 @@ __global__ void KernelGenFeedForwardConProbMat(float *dev_conVecFF) {
     for(i = 0; i < NFF; ++i) {
       // m'th neruon recieves input from i'th ff neuron ?
       //      dev_conVecFF[mNeuron + i * N_NEURONS] = (float)conProb(xa, ya, XCordinate(i), YCordinate(i), L_FF, FF_CON_SIGMA);  
-      dev_conVecFF[mNeuron + i * N_NEURONS] = (float)ConProb_new(xa, ya, XCordinate(i), YCordinate(i), L_FF, FF_CON_SIGMA);  
+      dev_conVecFF[mNeuron + i * N_NEURONS] = (float)ConProb_new(xa, ya, XCordinate(i), YCordinate(i), L_FF, FF_CON_SIGMA, IF_PERIODIC);  
     }
     mNeuron += stride;
   }

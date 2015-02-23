@@ -1,7 +1,7 @@
 #ifndef _NEURON_COUNTS
 #define _NEURON_COUNTS
 
-#define NE 10000ULL
+#define NE 1ULL
 #define NI 10000ULL
 #define N_Neurons (NE + NI)
 #define N_NEURONS N_Neurons
@@ -16,8 +16,8 @@
 #define HOST_CFF 0.100000000 // KFF = CFF * K
 
 
-#define N_NEURONS_TO_STORE_START 10001
-#define N_NEURONS_TO_STORE_END 10010
+#define N_NEURONS_TO_STORE_START 9000
+#define N_NEURONS_TO_STORE_END 9001
 #define N_NEURONS_TO_STORE (N_NEURONS_TO_STORE_END - N_NEURONS_TO_STORE_START)
 #define N_E_2BLOCK_NA_CURRENT 1 // number of first n neurons to have their Na2+ currents blocked
 #define N_I_2BLOCK_NA_CURRENT 1
@@ -30,12 +30,12 @@ __constant__ double theta; // the value of input theta is copied to this symbol,
 
 /* params patch */
 #define L 1.0
-#define CON_SIGMA (L / 5.0)
+#define CON_SIGMA (L / 1.0)
 #define PI 3.14159265359
 
 /* feed forward patch parameters */
 #define CFF HOST_CFF
 #define L_FF 1.0
 #define FF_CON_SIGMA (L_FF / 5.0)
-#define NFF 19600ULL
+#define NFF 10000ULL
 #endif

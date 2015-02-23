@@ -38,7 +38,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  double tStart = 0.0, tStop =  3000.0;
+  double tStart = 0.0, tStop =  250.0;
   double *spkTimes, *vm = NULL, host_theta = 0.0, theta_degrees; /* *vstart; 500 time steps */
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   double *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
@@ -61,8 +61,10 @@ int main(int argc, char *argv[]) {
   char filetag[16];
   cudaCheck(cudaStreamCreate(&stream1));
   printf("old tstop = %f\n", tStop);
-  cudaCheck(cudaMalloc((void **)&idxVecFF,  NFF * sizeof(*idxVecFF)));
-  cudaCheck(cudaMalloc((void **)&nPostNeuronsFF,  NFF * sizeof(*nPostNeuronsFF)));
+  idxVecFF = (int *)malloc((unsigned long long)NFF * sizeof(int));
+  nPostNeuronsFF = (int *)malloc((unsigned long long)NFF * sizeof(int));
+  //  cudaCheck(cudaMalloc((void **)&idxVecFF,  NFF * sizeof(*idxVecFF)));
+  //  cudaCheck(cudaMalloc((void **)&nPostNeuronsFF,  NFF * sizeof(*nPostNeuronsFF)));
   /*PARSE INPUTS*/
   if(argc > 1) {
     deviceId = atoi(argv[1]);
@@ -415,10 +417,10 @@ int main(int argc, char *argv[]) {
     cudaCheck(cudaStreamSynchronize(stream1));
 
     /* SAVE CURRENT VALUES TO DISK  */
-    for(int jj = 0; jj < N_I_SAVE_CUR; ++jj) {
-      fprintf(fpCur, "%f ", host_isynap[jj]);
-    }
-    fprintf(fpCur, "\n");
+    // for(int jj = 0; jj < N_I_SAVE_CUR; ++jj) {
+    //   fprintf(fpCur, "%f ", host_isynap[jj]);
+    // }
+    // fprintf(fpCur, "\n";)
     computeConductanceHist<<<(N_NEURONS + 512 - 1) / 512, 512>>>(dev_histCountE, dev_histCountI);
     computeConductanceHistFF<<<(NFF + 512 - 1) / 512, 512>>>(dev_histCountFF);
     cudaCheckLastError("g");
@@ -467,7 +469,6 @@ int main(int argc, char *argv[]) {
   fprintf(fpElapsedTime, "%llu %f %d\n", N_NEURONS, elapsedTime, *nSpks);
   fclose(fpElapsedTime);
   /* ================= SAVE TO DISK =============================================================*/
-
   printf(" saving results to disk ... "); 
   fflush(stdout);
   //  char fileSuffix[128], filename[128];
@@ -498,7 +499,6 @@ int main(int argc, char *argv[]) {
     //sprintf(fileSuffix, "_%1.1f_%1.1f", ALPHA, TAU_SYNAP);
     strcat(filename, fileSuffix);
     fp = fopen(strcat(filename, ".csv"),"w");
-    
     //    fp = fopen("vm.csv", "w");
     for(i = 0; i < lastNStepsToStore; ++i) {
       fprintf(fp, "%f ", host_time[i]);
@@ -510,12 +510,12 @@ int main(int argc, char *argv[]) {
     }
     printf("\n%d %d\n", i, k);
     fclose(fp);
-    // FILE* fpCur = fopen("currents.csv", "w");
-    // for(i = 0; i < N_CURRENT_STEPS_TO_STORE; ++i) {
-    // fprintf(fpCur, "%f;%f;%f;%f\n", curE[i], curI[i], ibgCur[i], curIff[i]);
-    // //      fprintf(fpCur, "%f\n", curIff[i]);
-    // }
-    // fclose(fpCur);
+    FILE* fpCur = fopen("currents.csv", "w");
+    for(i = 0; i < N_CURRENT_STEPS_TO_STORE; ++i) {
+      fprintf(fpCur, "%f;%f;%f;%f\n", curE[i], curI[i], ibgCur[i], curIff[i]);
+    //      fprintf(fpCur, "%f\n", curIff[i]);
+    }
+    fclose(fpCur);
     fpConMat = fopen("conMat.csv", "w");
     fpConMat = fopen("conVec.csv", "w");
 
@@ -549,8 +549,11 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaFreeHost(host_IF_SPK));
   cudaCheck(cudaFreeHost(host_prevStepSpkIdx));
 
-  cudaCheck(cudaFreeHost(idxVecFF));
-  cudaCheck(cudaFreeHost(nPostNeuronsFF));
+
+  free(idxVecFF);
+  free(nPostNeuronsFF);
+  // cudaCheck(cudaFreeHost(idxVecFF));
+  // cudaCheck(cudaFreeHost(nPostNeuronsFF));
   /*  cudaDeviceReset()*/
   return EXIT_SUCCESS;
 }

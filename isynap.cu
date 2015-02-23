@@ -164,15 +164,15 @@ __global__ void computeIsynap(double t) {
       tempCurI = -1 * dev_gI[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP * G_II * (RHO * (vm - V_I) + (1 - RHO) * (E_L - V_I));
     }
     dev_isynap[mNeuron] = tempCurE + tempCurI; 
-    if(mNeuron == SAVE_CURRENT_FOR_NEURON) {
-      localCurConter = curConter;
-      if(localCurConter < N_CURRENT_STEPS_TO_STORE) {
-        glbCurE[localCurConter] = tempCurE;
-        glbCurI[localCurConter] = tempCurI;
-        dev_iff[localCurConter] = dev_iffCurrent[mNeuron];
-        curConter += 1;
-      }
-    }
+    // if(mNeuron == SAVE_CURRENT_FOR_NEURON) {
+    //   localCurConter = curConter;
+    //   if(localCurConter < N_CURRENT_STEPS_TO_STORE) {
+    //     //glbCurE[localCurConter]   = tempCurE;
+    //     //glbCurI[localCurConter] = tempCurI;
+    //     dev_iff[localCurConter] = dev_iffCurrent[mNeuron];
+    //     curConter += 1;
+    //   }
+    // }
     	/* bg current */
 	/*	ibg = bgCur(vmOld); /* make sure AuxRffTotal<<<  >>> is run begore calling bgCur */
 	/* FF input current*/
