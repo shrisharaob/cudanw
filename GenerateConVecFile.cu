@@ -456,7 +456,7 @@ if(N_NEURONS < 2) {
   fread(buffer, sizeof(int), N_NEURONS * N_NEURONS, fp);
   fclose(fp);*/
   
-  printf("convec.csv ..."); fflush(stdout);
+  printf("\n !!!!! convec.csv ..."); fflush(stdout);
   FILE *fp, *fp01, *fpConMat;
   /*  int nEE[NE], nEI[NE], nIE[NI], nII[NI];*/
   /*  int ncounts[N_NEURONS];*/
@@ -469,7 +469,8 @@ if(N_NEURONS < 2) {
     countE = 0;
     for(int j = 0; j < N_NEURONS; ++j) {
       /*      fprintf(fpConMat, "%1.1f ", fullConVec[i + j * N_NEURONS]);*/
-      /*      fprintf(fpConMat, "%1.1f ", conProbMat[i + j * N_NEURONS]);*/
+      fprintf(fpConMat, "%1.1f ", conProbMat[i + j * N_NEURONS]);
+      //      printf("%1.1f ", conProbMat[i + j * N_NEURONS]);
       //      printf("\n %d \n", (int)(i * N_NEURONS + j));
       //      fprintf(stdout, "%d ", (int)fullConVec[i + j * N_NEURONS]);
       if(j < NE) {
@@ -482,7 +483,7 @@ if(N_NEURONS < 2) {
     fprintf(fp, "%d\n", countE); 
     fprintf(fp01, "%d\n", countI);
     //    fprintf(stdout, "\n");
-    /*    fprintf(fpConMat, "\n");*/
+    fprintf(fpConMat, "\n");
   }
   fprintf(stdout, " done\n");
   free(conProbMat);

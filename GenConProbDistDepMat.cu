@@ -30,6 +30,41 @@ __device__ double Gaussian2D(double x, double y) {
   return  z1 * z1 * exp(-1 * pow(x, 2) / (denom)) * z1 * z1 * exp(-1 * pow(y, 2) / (denom));
 }
 
+
+__device__ double Gaussian2D(double x, double y, double varianceOfGaussian) {
+  double z1 (1 / sqrt(2 * PI * varianceOfGaussian)); // make global var
+  double denom = (2 * varianceOfGaussian * varianceOfGaussian); // global var
+  return  z1 * z1 * exp(-1 * pow(x, 2) / (denom)) * z1 * z1 * exp(-1 * pow(y, 2) / (denom));
+}
+
+__device__ double ShortestDistOnCirc(double point0, double point1, double perimeter) {
+  double dist = 0.0;
+  dist = abs(point0 - point1);
+  dist = fmod(dist, perimeter);
+  if(dist > 0.5){
+    dist = 1.0 - dist;
+  }
+  return dist;
+}
+
+
+__device__ double ConProb_new(double xa, double ya, double xb, double yb, double patchSize, double varianceOfGaussian) {
+  double distX = 0.0; //ShortestDistOnCirc(xa, xb, patchSize);
+  double distY = 0.0; //ShortestDistOnCirc(ya, yb, patchSize);
+  double out = 0.0;
+  int IF_PERIODIC = 1;
+  if(IF_PERIODIC) {
+    distX = ShortestDistOnCirc(xa, xb, patchSize);
+    distY = ShortestDistOnCirc(ya, yb, patchSize);
+  }
+  else {
+    distX = abs(xa - xb);
+    distY = abs(ya - yb);
+  }
+  return Gaussian2D(distX, distY, varianceOfGaussian);
+}
+
+
 __device__ double conProb(double xa, double ya, double xb, double yb) {
   /* returns connection probablity given cordinates (xa, ya) and (xb, yb) */
   /*  double z1 (1 / sqrt(2 * PI * CON_SIGMA)); // make global var
@@ -59,7 +94,8 @@ __global__ void KernelGenConProbMat(float *dev_conVec) {
     xa = XCordinate(mNeuron);
     ya = YCordinate(mNeuron);
     for(i = 0; i < N_NEURONS; ++i) {
-      dev_conVec[mNeuron + i * N_NEURONS] = (float)conProb(xa, ya, XCordinate(i), YCordinate(i)); 
+      //dev_conVec[mNeuron + i * N_NEURONS] = (float)conProb(xa, ya, XCordinate(i), YCordinate(i)); 
+      dev_conVec[mNeuron + i * N_NEURONS] = (float)ConProb_new(xa, ya, XCordinate(i), YCordinate(i), L, CON_SIGMA); 
     }
     mNeuron += stride;
   }
