@@ -1,5 +1,5 @@
 #!/bin/bash
 
 ./genconvec.out;
-./genffconvec.out
+./genffmat.out
 ./nw.out

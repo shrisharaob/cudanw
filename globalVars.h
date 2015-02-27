@@ -80,6 +80,12 @@ __device__ int dev_IF_SPK[N_NEURONS], curConter = 0;
 #define SAVE_CURRENT_FOR_NEURON 2563
 #define N_CURRENT_STEPS_TO_STORE 5000
 
+
+__device__ double dev_GFFmean[N_NEURONS];
+__device__ unsigned long long devGFFCounter;
+
+
+
 __device__ double glbCurE[N_CURRENT_STEPS_TO_STORE], glbCurI[N_CURRENT_STEPS_TO_STORE]; /* !!!!!! GENERALIZE */
 __device__ double rTotal[N_Neurons], gFF[N_Neurons]; /* rTotalPrev[N_Neurons];*/
 __device__ double gaussNoiseE[NE], gaussNoiseI[NI];

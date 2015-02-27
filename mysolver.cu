@@ -38,7 +38,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  double tStart = 0.0, tStop =  250.0;
+  double tStart = 0.0, tStop =  3000.0;
   double *spkTimes, *vm = NULL, host_theta = 0.0, theta_degrees; /* *vstart; 500 time steps */
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   double *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
@@ -93,6 +93,17 @@ int main(int argc, char *argv[]) {
   printf(" theta = %2.3f \n contrast = %2.1f\n ksi = %f\n dt = %f \n tau = %f \n EXP_SUM = %.16f\n", host_theta, HOST_CONTRAST, ETA_E, DT, TAU_SYNAP, EXP_SUM);
   printf("alpha = %f, RHO = %f\n", ALPHA, RHO);
   
+  // STORE MEAN G_FF
+  double *dev_GFFmeanPtr = NULL, *host_GFFmean = NULL; 
+  unsigned long long *devGFFCounterPtr = NULL, *hostGFFCounter = NULL;
+  //  cudaCheck(cudaMalloc((void **)&dev_GFFmean,  N_NEURONS * sizeof(*dev_GFFmean)));
+  cudaCheck(cudaGetSymbolAddress((void **)&dev_GFFmeanPtr, dev_GFFmean));
+  cudaCheck(cudaGetSymbolAddress((void **)&devGFFCounterPtr, devGFFCounter));
+  cudaCheck(cudaMallocHost((void **)&host_GFFmean,  N_NEURONS * sizeof(*host_GFFmean)));
+  cudaCheck(cudaMallocHost((void **)&hostGFFCounter, sizeof(*hostGFFCounter)));
+  *hostGFFCounter = 0;
+
+
   /* choose 256 threads per block for high occupancy */
   int ThreadsPerBlock = 128;
   int BlocksPerGrid = (N_NEURONS + ThreadsPerBlock - 1) / ThreadsPerBlock;
@@ -422,7 +433,7 @@ int main(int argc, char *argv[]) {
     // }
     // fprintf(fpCur, "\n";)
     computeConductanceHist<<<(N_NEURONS + 512 - 1) / 512, 512>>>(dev_histCountE, dev_histCountI);
-    computeConductanceHistFF<<<(NFF + 512 - 1) / 512, 512>>>(dev_histCountFF);
+    computeConductanceHistFF<<<(N_NEURONS + 512 - 1) / 512, 512>>>(dev_histCountFF);
     cudaCheckLastError("g");
     computeIsynap<<<BlocksPerGrid, ThreadsPerBlock>>>(k*DT);
     cudaCheckLastError("isyp");
@@ -490,6 +501,24 @@ int main(int argc, char *argv[]) {
   }
   fclose(fpSpkTimes);
   printf("done\n");
+
+  cudaCheck(cudaMemcpy(host_GFFmean, dev_GFFmeanPtr, N_NEURONS * sizeof(double), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(hostGFFCounter, devGFFCounterPtr, sizeof(unsigned long long), cudaMemcpyDeviceToHost));
+  /*  SAVE CONDUCTANCES */
+  if(nSteps > 20000) {
+    strcpy(filename, "gffmean");
+    sprintf(fileSuffix, "_R0%1.1f_theta%d_%.2f_%1.1f_%d_tr%s", R0, (int)theta_degrees, ALPHA, TAU_SYNAP, (int)(tStop), filetag);
+    strcat(filename, fileSuffix);
+    FILE* fpGFFmean;
+    fpGFFmean = fopen(strcat(filename, ".csv"),"w");
+    double denom = 0.0;
+    denom = (double)hostGFFCounter[0];
+    for(k = 0; k < N_NEURONS; ++k) {
+      fprintf(fpGFFmean, "%f\n", (double)host_GFFmean[k] / denom);
+    }
+    fclose(fpGFFmean);
+  }
+
   printf("saving vm to disk ....");
   fflush(stdout);
   if(IF_SAVE) {
@@ -549,6 +578,8 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaFreeHost(host_IF_SPK));
   cudaCheck(cudaFreeHost(host_prevStepSpkIdx));
 
+  cudaCheck(cudaFreeHost(host_GFFmean));
+  cudaCheck(cudaFreeHost(hostGFFCounter));
 
   free(idxVecFF);
   free(nPostNeuronsFF);

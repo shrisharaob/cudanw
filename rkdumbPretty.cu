@@ -46,6 +46,8 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
       gFF[mNeuron] = 0.0; 
       rTotal[mNeuron] = 0.0;
       gffItgrl[mNeuron] = 0.0; // holds the old value of gff 
+      dev_GFFmean[mNeuron] = 0.0;
+      devGFFCounter = 0;
     }
     localLastNSteps = nstep - STORE_LAST_N_STEPS;
     /* TIMELOOP */
@@ -76,7 +78,12 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
         dev_time[k - localLastNSteps] = x;
       }
     }
-    
+    if(k > 20000) { // which is 1 sec for dt = 0.05
+      dev_GFFmean[mNeuron] += gFF[mNeuron];
+      if(mNeuron == 0) {
+        devGFFCounter += 1;
+      }
+    }     
     if(mNeuron == SAVE_CURRENT_FOR_NEURON) {
       int localCurConter = curConter;
       if(localCurConter < N_CURRENT_STEPS_TO_STORE) {

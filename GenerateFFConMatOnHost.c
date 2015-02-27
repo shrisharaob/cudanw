@@ -157,19 +157,6 @@ int main (void)
   //  double u = gsl_rng_uniform (r);
   
   conMat = (double *)malloc((unsigned long long)NFF * N_NEURONS * sizeof(double));
-
-
-  /*  for(j = 0; j < NFF; j++) {
-    printf("(%d)(%llu)(%f, %f)\n", j, j + j * N_NEURONS, FF_XCordinate(j), FF_YCordinate(j));
-  }*/
-
-  /* FILE *fp = fopen("g1d.csv", "w"); */
-  /* for(j = 0; j < 100; j++) { */
-  /*   fprintf(fp, "%f\n", Gaussian1D(0.0 - (double)j / 100, 0.2)); */
-  /* } */
-  /* fclose(fp); */
-
-
   for(i = 0; i < N_NEURONS; i++) {
     xa = XCordinate(i);
     ya = YCordinate(i);
@@ -180,8 +167,8 @@ int main (void)
       conMat[i + j * N_NEURONS] = ConProb(xa, ya, FF_XCordinate(j), FF_YCordinate(j), L_FF, FF_CON_SIGMA, 0);
     }
   }
-
-
+  
+  /* TRANSPOSE TO ACUTALLY MAKE IT PROJECTIONS FROM NFF TO L 2/3 */
   MatTranspose(conMat, N_NEURONS, NFF);
   /* MUTIPLY WITH PREFACTOR */
   ConProbPreFactor(conMat);
@@ -196,8 +183,6 @@ int main (void)
       }
     }
   }
-
-  
   /* GENERATE SPARSE REPRESENTATIONS */
   int idxVecFF[NFF], nPostNeuronsFF[NFF];
   int *sparseConVec;
@@ -207,8 +192,7 @@ int main (void)
   printf("generating sparse representation ..."); fflush(stdout);
   GenSparseMat(conMat, NFF, N_NEURONS, sparseConVec, idxVecFF, nPostNeuronsFF);
   printf("done\n writing to file ... "); fflush(stdout);
-
-
+  /* WRITE SPARSEVEC TO BINARY FILE */
   FILE *fpSparseConVecFF = NULL, *fpIdxVecFF = NULL, *fpNpostNeuronsFF = NULL;
   fpSparseConVecFF = fopen("sparseConVecFF.dat", "wb");
   unsigned int nElementsWritten;
@@ -259,6 +243,7 @@ int main (void)
   }
   fclose(fpFFCount);
 
+  /*
   FILE *fpconmat = fopen("ffcm.csv", "w");
   for(i = 0; i < NFF; ++i) {
     for(j = 0; j < N_NEURONS; ++j) {
@@ -267,7 +252,7 @@ int main (void)
     fprintf(fpconmat, "\n");
   }
   fclose(fpconmat);
-
+  */
 
   free(conMat);
   free(sparseConVec);
