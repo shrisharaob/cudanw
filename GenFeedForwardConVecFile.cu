@@ -64,7 +64,28 @@ __device__ float randkernel(curandState *state, unsigned long int kNeuron) {
   return randNumber;
 }
 
-/*__global__ kernelGenConMat0();*/
+void MatTranspose(float *m, int w, int h) {
+    // transpose of flattened matrix 
+      // m : flattened matrix  -  row + clm * linearId
+      // w : # of columns
+      // h : # of rows
+      int start, next, i;
+    double tmp;
+    for (start = 0; start <= w * h - 1; start++) {
+        next = start;
+        i = 0;
+        do {i++;
+            next = (next % h) * w + next / h;
+          } while (next > start);
+        if (next < start || i == 1) continue;
+        tmp = m[next = start];
+        do {
+            i = (next % h) * w + next / h;
+            m[next] = (i == start) ? tmp : m[i];
+            next = i;
+          } while (next > start);
+      }
+  }
 
 __global__ void KernelGenFeedForwardDistDepConMat(curandState *state, float *dev_conVecFF, int lChunck, int maxNeurons){
   /* GENERATE FEED FORWARD CONNECTION MATRIX WITH ANOTOMIC CONNECTIVITY PROFILE */
@@ -172,11 +193,22 @@ int main(int argc, char *argv[]) {
       cudaCheck(cudaMalloc((void **)&dev_conVecPtrFF, (unsigned long long)NFF * N_NEURONS * sizeof(float)));
       setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devStatesFF, time(NULL));
       KernelGenFeedForwardConProbMat<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_conVecPtrFF, 0); // second arg is IF_PERIODIC
-      KernelFeedForwardConProbPreFactor<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_conVecPtrFF);
+
       cudaCheck(cudaMemcpy(conProbMatFF, dev_conVecPtrFF, (unsigned long long)NFF * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
+
+
+      MatTranspose(conProbMatFF, NFF, N_NEURONS);
+      cudaCheck(cudaMemcpy(dev_conVecPtrFF, conProbMatFF, (unsigned long long)NFF * N_NEURONS * sizeof(float), cudaMemcpyHostToDevice));
+
+
+      KernelFeedForwardConProbPreFactor<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_conVecPtrFF);
+
+
+      //      cudaCheck(cudaMemcpy(conProbMatFF, dev_conVecPtrFF, (unsigned long long)NFF * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
+      
       KernelGenFeedForwardDistDepConMat<<<BlocksPerGrid, ThreadsPerBlock>>>(devStatesFF, dev_conVecPtrFF, i, maxNeurons);
       cudaCheck(cudaMemcpy(conVecFF, dev_conVecPtrFF, (unsigned long long)NFF * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
-      free(conProbMatFF);
+
       // printf("\n");
       // for(i = 0; i < N_NEURONS; ++i) {
       //   for(int j = 0; j < NFF; ++j) {
@@ -209,14 +241,16 @@ int main(int argc, char *argv[]) {
       FILE *FFfp0;
       FFfp0 = fopen("ffcount.csv", "w");
 
+      FILE *fpconmat = fopen("ffcm.csv", "w");
+      for(i = 0; i < N_NEURONS; ++i) {
+        for(int j = 0; j < NFF; ++j) {
+          fprintf(fpconmat, "%f ", conProbMatFF[i * NFF + j  ]); 
+        }
+        fprintf(fpconmat, "\n");
+      }
+      fclose(fpconmat);
 
-
-      // for(int j = 0; j < NFF; ++j) {
-      //   for(i = 0; i < N_NEURONS; ++i) {
-      //     printf("%d ", (int)conVecFF[i + j * NFF]);
-      //   }
-      //   printf("\n");
-      // }
+      free(conProbMatFF);
 
 
       if(N_NEURONS < 2) {

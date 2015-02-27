@@ -138,7 +138,11 @@ __global__ void KernelGenFeedForwardConProbMat(float *dev_conVecFF, int IF_PERIO
     for(i = 0; i < NFF; ++i) {
       // m'th neruon recieves input from i'th ff neuron ?
       //      dev_conVecFF[mNeuron + i * N_NEURONS] = (float)conProb(xa, ya, XCordinate(i), YCordinate(i), L_FF, FF_CON_SIGMA);  
-      dev_conVecFF[mNeuron + i * N_NEURONS] = (float)ConProb_new(xa, ya, XCordinate(i), YCordinate(i), L_FF, FF_CON_SIGMA, IF_PERIODIC);  
+      //      dev_conVecFF[mNeuron + i * N_NEURONS] = (float)ConProb_new(xa, ya, XCordinate(i), YCordinate(i), L_FF, FF_CON_SIGMA, IF_PERIODIC);  
+
+      dev_conVecFF[i + mNeuron * N_NEURONS] = (float)ConProb_new(xa, ya, XCordinate(i), YCordinate(i), L_FF, FF_CON_SIGMA, 0);
+      //      dev_conVecFF[mNeuron + i * N_NEURONS] = (float)ConProb_new(0.5, 0.5, XCordinate(i), YCordinate(i), L_FF, FF_CON_SIGMA, 0);
+
     }
     mNeuron += stride;
   }
