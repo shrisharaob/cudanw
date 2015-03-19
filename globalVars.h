@@ -28,7 +28,7 @@
 #define CON_SIGMA (L / 5.0)
 */
 
-#define CONDUCTANCE_GLOBAL_PREFACTOR 1.0
+#define CONDUCTANCE_GLOBAL_PREFACTOR 4.0
 
 /* params synapseb */
 #define INV_TAU_SYNAP (1 / TAU_SYNAP)
@@ -77,7 +77,8 @@ __device__ double dt, *thetaVec;
 __device__ double dev_gE[N_NEURONS], dev_gI[N_NEURONS], dev_isynap[N_NEURONS], dev_iffCurrent[N_Neurons];
 __device__ int dev_IF_SPK[N_NEURONS], curConter = 0;
 
-#define SAVE_CURRENT_FOR_NEURON 2563
+
+#define SAVE_CURRENT_FOR_NEURON 2
 #define N_CURRENT_STEPS_TO_STORE 5000
 
 

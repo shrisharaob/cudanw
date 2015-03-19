@@ -2,7 +2,7 @@
 #define _HOST_CONSTANTS_
 
 #define NE 4ULL
-#define NI 10000ULL
+#define NI 19600ULL
 #define N_Neurons (NE + NI)
 #define N_NEURONS N_Neurons
 #define K 1000.0
@@ -20,19 +20,19 @@
 #define N_NEURONS_TO_STORE_END 9001
 #define N_NEURONS_TO_STORE (N_NEURONS_TO_STORE_END - N_NEURONS_TO_STORE_START)
 #define N_E_2BLOCK_NA_CURRENT 1 // number of first n neurons to have their Na2+ currents blocked
-#define N_I_2BLOCK_NA_CURRENT 1
-#define N_I_SAVE_CUR 4
+#define N_I_2BLOCK_NA_CURRENT 3
+#define N_I_SAVE_CUR 1
 
 #define ALPHA 0.0 //  probability of Bi-directional connections
 
 /* params patch */
 #define L 1.0
-#define CON_SIGMA (L / 1.0)
+#define CON_SIGMA (L *.19)
 #define PI 3.14159265359
 
 /* feed forward patch parameters */
 #define CFF HOST_CFF
 #define L_FF 1.0
-#define FF_CON_SIGMA (L_FF / 5.0)
-#define NFF 10000ULL
+#define FF_CON_SIGMA (L_FF * .2)
+#define NFF 19600ULL
 #endif

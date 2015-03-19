@@ -48,7 +48,7 @@ __global__ void GenPoissionSpikeInFFLayer(curandState *poisRandState) {
   double instRate = 0.0; // instanteneous rate
   if(mNeuron < NFF) {
     //instRate = R0 +  R1 * log10(1.000 + CONTRAST) * (cos(2.0* (theta - POInOriMap[mNeuron])) + 2.0);
-    instRate = R0 + 0.5 * R0 * cos(2.0* (theta - POInOriMap[mNeuron]));
+    instRate = R0 + 1.0 * R0 * cos(2.0* (theta - POInOriMap[mNeuron]));
     IF_SPIKE_POISSION_SPK[mNeuron] = 0;
     if((instRate * DT) > randkernel(poisRandState)) {
       IF_SPIKE_POISSION_SPK[mNeuron] = 1;
@@ -56,30 +56,39 @@ __global__ void GenPoissionSpikeInFFLayer(curandState *poisRandState) {
   }
 }
 
-__device__ double XCordinate(unsigned long int neuronIdx) {
+__device__ double YCordinate(unsigned long int neuronIdx) {
   // nA - number of E or I cells
   double nA = (double)NE;
-  if(neuronIdx > NE) { // since neuronIds for inhibitopry start from NE jusqu'a N_NEURONS
+  if(neuronIdx > NE - 1) { // since neuronIds for inhibitopry start from NE jusqu'a N_NEURONS
     neuronIdx -= NE;
     nA = (double)NI;
   }
   return fmod((double)neuronIdx, sqrt(nA)) * (L / (sqrt(nA) - 1));
 }
 
-__device__ double YCordinate(unsigned long  neuronIdx) {
+__device__ double XCordinate(unsigned long  neuronIdx) {
   double nA = (double)NE;
-  if(neuronIdx > NE) {
+  if(neuronIdx > NE - 1) {
     neuronIdx -= NE;
     nA = (double)NI;
   }
   return floor((double)neuronIdx / sqrt(nA)) * (L / (sqrt(nA) - 1));   
 }
 
+
+__device__ void Dummy(double x) {
+  //  doux * 1.0;
+  return;
+}
 __device__ double MyDivide(double x, double y) {
   // RETURNS x/y CONSIDERING CASES WHEN y = 0
   double out = 0.0;
-  if(y == 0.0)  {out = 1E10;}
+  if(y == 0.0)  {
+    out = 1E10;
+    if(x < 0.0) {out *= -1.0;}
+  }
   else {out = x/y; }
+  Dummy(out);
   return out;
 }
 
@@ -92,6 +101,7 @@ __device__ double OrientationAngleForGivenNeuron(unsigned int neuronId){
   mNeuron = (unsigned long) neuronId;
   xCordinate = XCordinate(mNeuron);
   yCordinate = YCordinate(mNeuron);
+  Dummy((double)mNeuron);
   //pinwheel center coincides with the center of patch, so shift origin to center of patch
   xCordinate = xCordinate - (L_FF * 0.5);
   yCordinate = yCordinate - (L_FF * 0.5);
@@ -99,15 +109,18 @@ __device__ double OrientationAngleForGivenNeuron(unsigned int neuronId){
     if((xCordinate*xCordinate) + (yCordinate * yCordinate) <= (L_FF * 0.5) * (L_FF * 0.5)) {
     // if neuron lies inside the circle of radius 
       //    out = fmod(atan(MyDivide(yCordinate, xCordinate)) + PI, PI); 
-      out = atan(MyDivide(yCordinate, xCordinate)) + (PI / 2.0);
+      //      out = atan(MyDivide(yCordinate, xCordinate)) + (PI / 2.0);
+      out = 0.5 * (atan2(xCordinate, yCordinate)) + PI * 0.5;
     }
     else {
       out = 720.0;
     }
   }
   else  {
-    out = atan(MyDivide(yCordinate, xCordinate)) + (PI / 2.0);
+    out = 0.5 * (atan2(xCordinate, yCordinate)) + PI * 0.5;
+    //out = atan(MyDivide(yCordinate, xCordinate)) + (PI / 2.0);
   }
+  //  Dummy(out);
   return out;
 }
 

@@ -556,7 +556,7 @@ if(N_NEURONS < 2) {
     countE = 0;
     for(int j = 0; j < N_NEURONS; ++j) {
       /*      fprintf(fpConMat, "%1.1f ", fullConVec[i + j * N_NEURONS]);*/
-      /*      fprintf(fpConMat, "%1.1f ", conProbMat[i + j * N_NEURONS]);*/
+      //      fprintf(fpConMat, "%1.1f ", conProbMat[i + j * N_NEURONS]);
       //      printf("\n %d \n", (int)(i * N_NEURONS + j));
       //      fprintf(stdout, "%d ", (int)fullConVec[i + j * N_NEURONS]);
       if(j < NE) {
@@ -569,7 +569,7 @@ if(N_NEURONS < 2) {
     fprintf(fp, "%d\n", countE); 
     fprintf(fp01, "%d\n", countI);
     //    fprintf(stdout, "\n");
-    /*    fprintf(fpConMat, "\n");*/
+    //    fprintf(fpConMat, "\n");
   }
   fprintf(stdout, " done\n");
   free(conProbMat);

@@ -139,7 +139,7 @@ double ConProb(double xa, double ya, double xb, double yb, double patchSize, dou
     distY = ya - yb;
   }
   // return Gaussian2D(distX, distY, varianceOfGaussian);
-  double dummy = Gaussian1D(distX, varianceOfGaussian) * Gaussian1D(distY, varianceOfGaussian);
+  //  double dummy = Gaussian1D(distX, varianceOfGaussian) * Gaussian1D(distY, varianceOfGaussian);
   return Gaussian1D(distX, varianceOfGaussian) * Gaussian1D(distY, varianceOfGaussian);
 }
 
@@ -150,6 +150,7 @@ int main (void)
   gsl_rng *gslRGNState;
   double *conMat = NULL, xa, ya;
   int i, j, n = 10;
+  int IF_PERIODIC = 0;
   gsl_rng_env_setup();
   T = gsl_rng_default;
   gslRGNState = gsl_rng_alloc(T);
@@ -160,11 +161,12 @@ int main (void)
   for(i = 0; i < N_NEURONS; i++) {
     xa = XCordinate(i);
     ya = YCordinate(i);
+    
     for(j = 0; j < NFF; j++) {
       /* if(j == 0) { */
       /* 	printf("(%d, %d)(%llu)(%f, %f)\n", i, j, i + j * N_NEURONS, xa, ya); */
       /* } */
-      conMat[i + j * N_NEURONS] = ConProb(xa, ya, FF_XCordinate(j), FF_YCordinate(j), L_FF, FF_CON_SIGMA, 0);
+      conMat[i + j * N_NEURONS] = ConProb(xa, ya, FF_XCordinate(j), FF_YCordinate(j), L_FF, FF_CON_SIGMA, IF_PERIODIC);
     }
   }
   

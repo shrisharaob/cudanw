@@ -5,7 +5,7 @@
 #include "devHostConstants.h"
 
 /* GENERATE CONNECTION MATRIX */
-__device__ double XCordinate(unsigned long int neuronIdx) {
+__device__ double YCordinate(unsigned long int neuronIdx) {
   // nA - number of E or I cells
   double nA = (double)NE;
   if(neuronIdx > NE) { // since neuronIds for inhibitopry start from NE jusqu'a N_NEURONS
@@ -15,7 +15,7 @@ __device__ double XCordinate(unsigned long int neuronIdx) {
   return fmod((double)neuronIdx, sqrt(nA)) * (L / (sqrt(nA) - 1));
 }
 
-__device__ double YCordinate(unsigned long  neuronIdx) {
+__device__ double XCordinate(unsigned long  neuronIdx) {
   double nA = (double)NE;
   if(neuronIdx > NE) {
     neuronIdx -= NE;
@@ -86,8 +86,8 @@ __global__ void KernelGenConProbMat(float *dev_conVec, int IF_PERIODIC) {
     xa = XCordinate(mNeuron);
     ya = YCordinate(mNeuron);
     for(i = 0; i < N_NEURONS; ++i) {
-      dev_conVec[mNeuron + i * N_NEURONS] = (float)conProb(xa, ya, XCordinate(i), YCordinate(i), L, CON_SIGMA); 
-      //dev_conVec[mNeuron + i * N_NEURONS] = (float)ConProb_new(xa, ya, XCordinate(i), YCordinate(i), L, CON_SIGMA, IF_PERIODIC); 
+      //      dev_conVec[mNeuron + i * N_NEURONS] = (float)conProb(xa, ya, XCordinate(i), YCordinate(i), L, CON_SIGMA); 
+      dev_conVec[mNeuron + i * N_NEURONS] = (float)ConProb_new(xa, ya, XCordinate(i), YCordinate(i), L, CON_SIGMA, IF_PERIODIC); 
     }
     mNeuron += stride;
   }

@@ -38,7 +38,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  double tStart = 0.0, tStop =  3000.0;
+  double tStart = 0.0, tStop = 2000.0;
   double *spkTimes, *vm = NULL, host_theta = 0.0, theta_degrees; /* *vstart; 500 time steps */
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   double *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
@@ -125,7 +125,19 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaMalloc((void **)&poisRandState,  NFF * sizeof(curandState)));
   setup_pois_kernel<<<(NFF + ThreadsPerBlock - 1) / ThreadsPerBlock, ThreadsPerBlock>>>(poisRandState, time(NULL));
   AuxRffTotalWithOriMap<<<(NFF + ThreadsPerBlock - 1) / ThreadsPerBlock, ThreadsPerBlock>>>(); // assign POs in the ori map for the poiss generators 
-
+  /* ===================================================================================================================== */
+  /* SAVE ORIMAP IN LAYER 4 */
+  float *dev_L4PO_Ptr = NULL, *host_L4PO = NULL;
+  cudaCheck(cudaGetSymbolAddress((void **)&dev_L4PO_Ptr, POInOriMap));
+  cudaCheck(cudaMallocHost((void **)&host_L4PO, NFF * sizeof(float)));
+  cudaCheck(cudaMemcpy(host_L4PO, dev_L4PO_Ptr, NFF * sizeof(float), cudaMemcpyDeviceToHost));
+  FILE *fpPo = fopen("poinmap.csv", "w");
+  for(int ikl = 0; ikl < NFF; ikl++) {
+    fprintf(fpPo, "%f\n", host_L4PO[ikl]);
+  }
+  fclose(fpPo);
+  cudaCheck(cudaFreeHost(host_L4PO));
+  /* ===================================================================================================================== */
   cudaCheck(cudaGetSymbolAddress((void **)&dev_sparseVec, dev_sparseConVec));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_idxVec, dev_sparseIdx));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_nPostneuronsPtr, dev_nPostNeurons));
@@ -213,10 +225,6 @@ int main(int argc, char *argv[]) {
   devPtrs.dev_time = dev_time;
   *nSpks = 0;
   cudaCheck(cudaMemcpy(dev_nSpks, nSpks, sizeof(int), cudaMemcpyHostToDevice));
-
-
-
-
   /*  printf("devspk ptrs: %p %p \n", dev_spkTimes, dev_spkNeuronIds);*/
   /*===================== GENERATE CONNECTION MATRIX ====================================*/
   /*cudaCheck(cudaMemset(dev_conVec, 0, N_NEURONS * N_NEURONS * sizeof(int)));
@@ -239,9 +247,6 @@ int main(int argc, char *argv[]) {
   kernelParams.tStart = tStart;
   printf("\n launching Simulation kernel ...");
   fflush(stdout);
-  
-  
-  
   int *dev_IF_SPK_Ptr = NULL, *dev_prevStepSpkIdxPtr = NULL, *host_IF_SPK = NULL, *host_prevStepSpkIdx = NULL,  *dev_nEPtr = NULL, *dev_nIPtr = NULL, *dev_IF_SPK_POISSION_Ptr = NULL;
   int *host_FF_IF_SPK, nFFSpksInPrevStep;
   int nSpksInPrevStep;
@@ -261,8 +266,6 @@ int main(int argc, char *argv[]) {
       host_FF_IF_SPK[i] = 0;
     }
   }
-
-
   /* TIME LOOP */
   size_t sizeOfInt = sizeof(int);
   size_t sizeOfDbl = sizeof(double);
@@ -501,27 +504,41 @@ int main(int argc, char *argv[]) {
   }
   fclose(fpSpkTimes);
   printf("done\n");
-
   cudaCheck(cudaMemcpy(host_GFFmean, dev_GFFmeanPtr, N_NEURONS * sizeof(double), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(hostGFFCounter, devGFFCounterPtr, sizeof(unsigned long long), cudaMemcpyDeviceToHost));
-  /*  SAVE CONDUCTANCES */
-  if(nSteps > 20000) {
-    strcpy(filename, "gffmean");
-    sprintf(fileSuffix, "_R0%1.1f_theta%d_%.2f_%1.1f_%d_tr%s", R0, (int)theta_degrees, ALPHA, TAU_SYNAP, (int)(tStop), filetag);
-    strcat(filename, fileSuffix);
-    FILE* fpGFFmean;
-    fpGFFmean = fopen(strcat(filename, ".csv"),"w");
-    double denom = 0.0;
-    denom = (double)hostGFFCounter[0];
-    for(k = 0; k < N_NEURONS; ++k) {
-      fprintf(fpGFFmean, "%f\n", (double)host_GFFmean[k] / denom);
-    }
-    fclose(fpGFFmean);
-  }
-
   printf("saving vm to disk ....");
   fflush(stdout);
+  
+  // if(nSteps > 20000) {
+  //     strcpy(filename, "gffmean");
+  //     sprintf(fileSuffix, "_R0%1.1f_theta%d_%.2f_%1.1f_%d_tr%s", R0, (int)theta_degrees, ALPHA, TAU_SYNAP, (int)(tStop), filetag);
+  //     strcat(filename, fileSuffix);
+  //     FILE* fpGFFmean;
+  //     fpGFFmean = fopen(strcat(filename, ".csv"),"w");
+  //     double denom = 0.0;
+  //     denom = (double)hostGFFCounter[0];
+  //     for(k = 0; k < N_NEURONS; ++k) {
+  // 	fprintf(fpGFFmean, "%f\n", (double)host_GFFmean[k] / denom);
+  //     }
+  //     fclose(fpGFFmean);
+  //   }
+
+
   if(IF_SAVE) {
+    /*  SAVE CONDUCTANCES */
+    if(nSteps > 20000) {
+      strcpy(filename, "gffmean");
+      sprintf(fileSuffix, "_R0%1.1f_theta%d_%.2f_%1.1f_%d_tr%s", R0, (int)theta_degrees, ALPHA, TAU_SYNAP, (int)(tStop), filetag);
+      strcat(filename, fileSuffix);
+      FILE* fpGFFmean;
+      fpGFFmean = fopen(strcat(filename, ".csv"),"w");
+      double denom = 0.0;
+      denom = (double)hostGFFCounter[0];
+      for(k = 0; k < N_NEURONS; ++k) {
+	fprintf(fpGFFmean, "%f\n", (double)host_GFFmean[k] / denom);
+      }
+      fclose(fpGFFmean);
+    }
     //    char fileSuffix[128], filename[128];
     strcpy(filename, "vm");
     sprintf(fileSuffix, "_xi%1.1f_theta%d_%.2f_%1.1f_%d_tr%s", ETA_E, (int)theta_degrees, ALPHA, TAU_SYNAP, (int)(tStop), filetag);

@@ -87,8 +87,8 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
     if(mNeuron == SAVE_CURRENT_FOR_NEURON) {
       int localCurConter = curConter;
       if(localCurConter < N_CURRENT_STEPS_TO_STORE) {
-        glbCurE[localCurConter] = iff + ibg;
-        glbCurI[localCurConter] = isynapNew;
+        glbCurE[localCurConter] = iff + ibg;  // E
+        glbCurI[localCurConter] = isynapNew; // I 
         dev_iff[localCurConter] = iff + ibg + isynapNew; //dev_iffCurrent[mNeuron];
         curConter += 1;
       }
