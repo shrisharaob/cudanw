@@ -158,6 +158,7 @@ int main (void)
   //  double u = gsl_rng_uniform (r);
   
   conMat = (double *)malloc((unsigned long long)NFF * N_NEURONS * sizeof(double));
+  printf("\n Generating feed forward connection matrix ... "); fflush(stdout);
   for(i = 0; i < N_NEURONS; i++) {
     xa = XCordinate(i);
     ya = YCordinate(i);
@@ -185,6 +186,7 @@ int main (void)
       }
     }
   }
+  printf("done\n");
   /* GENERATE SPARSE REPRESENTATIONS */
   int idxVecFF[NFF], nPostNeuronsFF[NFF];
   int *sparseConVec;
@@ -193,15 +195,22 @@ int main (void)
   memset(sparseConVec, 0, (unsigned long long)N_NEURONS * (2ULL * (unsigned long long)kff + NFF));
   printf("generating sparse representation ..."); fflush(stdout);
   GenSparseMat(conMat, NFF, N_NEURONS, sparseConVec, idxVecFF, nPostNeuronsFF);
-  printf("done\n writing to file ... "); fflush(stdout);
+
   /* WRITE SPARSEVEC TO BINARY FILE */
   FILE *fpSparseConVecFF = NULL, *fpIdxVecFF = NULL, *fpNpostNeuronsFF = NULL;
   fpSparseConVecFF = fopen("sparseConVecFF.dat", "wb");
-  unsigned int nElementsWritten;
-  nElementsWritten = fwrite(sparseConVec, sizeof(int), N_NEURONS * (2 * (int)kff + NFF), fpSparseConVecFF);
-  printf("\nsparseconvec: #n= %d\n", nElementsWritten);
+  unsigned int nElementsWritten, nConnections = 0;
+  for(i = 0; i < NFF; ++i) {
+    nConnections += nPostNeuronsFF[i];
+  }
+  printf("#connections = %d", nConnections);
+
+  //  nElementsWritten = fwrite(sparseConVec, sizeof(int), N_NEURONS * (2 * (int)kff + NFF), fpSparseConVecFF);
+  printf("done\n writing to file ... "); fflush(stdout);
+  nElementsWritten = fwrite(sparseConVec, sizeof(int), nConnections, fpSparseConVecFF);
   //      fflush(fpSparseConVecFF);
   fclose(fpSparseConVecFF);
+  printf("\nsparseconvec: #n= %d\n", nElementsWritten);
   fpIdxVecFF = fopen("idxVecFF.dat", "wb");
   fwrite(idxVecFF, sizeof(int), NFF,  fpIdxVecFF);
   fclose(fpIdxVecFF);
@@ -214,6 +223,7 @@ int main (void)
   if(N_NEURONS < 20 & NFF < 10) {
     IF_PRINT = 1;
   }
+
   if(IF_PRINT) {
     printf("\nconnection matrix:\n");
     for(i = 0; i < NFF; ++i) {

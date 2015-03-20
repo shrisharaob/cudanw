@@ -45,7 +45,7 @@ __device__ double ShortestDistOnCirc(double point0, double point1, double perime
 __device__ double ConProb_new(double xa, double ya, double xb, double yb, double patchSize, double varianceOfGaussian, int IF_PERIODIC) {
   double distX = 0.0; //ShortestDistOnCirc(xa, xb, patchSize);
   double distY = 0.0; //ShortestDistOnCirc(ya, yb, patchSize);
-  double out = 0.0;
+  //  double out = 0.0;
   if(IF_PERIODIC) {
     distX = ShortestDistOnCirc(xa, xb, patchSize);
     distY = ShortestDistOnCirc(ya, yb, patchSize);

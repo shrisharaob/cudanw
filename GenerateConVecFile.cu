@@ -309,7 +309,7 @@ int main(int argc, char *argv[]) {
   FILE *fpConVec;
   cudaDeviceProp prop;
   unsigned long maxMem = 12079136768;
-  int IF_FF_ORI_MAP = 1;
+  //  int IF_FF_ORI_MAP = 1;
   enum ConMat_type {
     random, sparseE2E, distDependent, biDir, fixedEII
   };
@@ -431,11 +431,19 @@ int main(int argc, char *argv[]) {
   sparseConVec = (int *)malloc((unsigned long long)N_NEURONS * (2ULL + (unsigned long long)K + N_NEURONS) * sizeof(int));
   printf("generating sparse representation ..."); fflush(stdout);
   GenSparseMat(fullConVec, N_NEURONS, N_NEURONS, sparseConVec, idxVec, nPostNeurons);
-  printf("done\n writing to file ... "); fflush(stdout);
+
   FILE *fpSparseConVec, *fpIdxVec, *fpNpostNeurons;
   fpSparseConVec = fopen("sparseConVec.dat", "wb");
-  fwrite(sparseConVec, sizeof(*sparseConVec), N_NEURONS * (2 * (int)K + N_NEURONS), fpSparseConVec);
+  unsigned long int nElementsWritten, nConnections = 0;
+  for(i = 0; i < N_NEURONS; ++i) {
+    nConnections += nPostNeurons[i];
+  }
+  printf("done\n#connections = %lu\n", nConnections);
+  printf("writing to file ... "); fflush(stdout);
+  //  nElementsWritten = fwrite(sparseConVec, sizeof(*sparseConVec), N_NEURONS * (2 * (int)K + N_NEURONS), fpSparseConVec);
+  nElementsWritten = fwrite(sparseConVec, sizeof(*sparseConVec), nConnections, fpSparseConVec);
   fclose(fpSparseConVec);
+
   fpIdxVec = fopen("idxVec.dat", "wb");
   fwrite(idxVec, sizeof(*idxVec), N_NEURONS,  fpIdxVec);
   fclose(fpIdxVec);
@@ -444,6 +452,7 @@ int main(int argc, char *argv[]) {
   fclose(fpNpostNeurons);
   printf("done\n");
   free(sparseConVec);
+  printf("\nsparseconvec: #n= %lu\n", nElementsWritten);
   // GENERATE FEED FORWARD ORIENTATION MAP
   // if(IF_FF_ORI_MAP) {
   //     printf("\n generating feed forward conmat \n");

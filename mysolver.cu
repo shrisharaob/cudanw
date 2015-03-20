@@ -138,59 +138,69 @@ int main(int argc, char *argv[]) {
   fclose(fpPo);
   cudaCheck(cudaFreeHost(host_L4PO));
   /* ===================================================================================================================== */
-  cudaCheck(cudaGetSymbolAddress((void **)&dev_sparseVec, dev_sparseConVec));
+  //  cudaCheck(cudaGetSymbolAddress((void **)&dev_sparseVec, dev_sparseConVec));
+  int *dev_sparseConVecPtr = NULL, *dev_sparseConVecFFPtr = NULL;
   cudaCheck(cudaGetSymbolAddress((void **)&dev_idxVec, dev_sparseIdx));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_nPostneuronsPtr, dev_nPostNeurons));
-  cudaCheck(cudaMallocHost((void **)&sparseConVec, N_NEURONS * (2 * K + 1) * sizeof(int)));
-
-  cudaCheck(cudaGetSymbolAddress((void **)&dev_sparseVecFF, dev_sparseConVecFF));
+  //  cudaCheck(cudaMallocHost((void **)&sparseConVec, N_NEURONS * (2 * K + 1) * sizeof(int)));
+  //  cudaCheck(cudaGetSymbolAddress((void **)&dev_sparseVecFF, dev_sparseConVecFF));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_idxVecFF, dev_sparseIdxFF));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_nPostneuronsPtrFF, dev_nPostNeuronsFF));
-  cudaCheck(cudaMallocHost((void **)&sparseConVecFF, N_NEURONS * (2ULL * (unsigned long long)(CFF * K) + 1) * sizeof(int)));
-
+  //  cudaCheck(cudaMallocHost((void **)&sparseConVecFF, N_NEURONS * (2ULL * (unsigned long long)(CFF * K) + 1) * sizeof(int)));
   FILE *fpSparseConVec, *fpIdxVec, *fpNpostNeurons;
   fpSparseConVec = fopen("sparseConVec.dat", "rb");
   fpIdxVec = fopen("idxVec.dat", "rb");
   fpNpostNeurons = fopen("nPostNeurons.dat", "rb");
   int dummy;
-  dummy = fread(sparseConVec, sizeof(*sparseConVec), N_NEURONS * (2 * (int)K + 1), fpSparseConVec);
-  if(dummy != N_NEURONS * (2 * (int)K + 1)) {
+  dummy = fread(nPostNeurons, sizeof(*nPostNeurons), N_NEURONS, fpNpostNeurons);
+  fclose(fpNpostNeurons);
+  unsigned long int nConnections = 0;
+  for(i = 0; i < N_NEURONS; ++i) {
+    nConnections += nPostNeurons[i];
+  }
+  cudaCheck(cudaMallocHost((void **)&sparseConVec, nConnections * sizeof(int)));
+  cudaCheck(cudaMalloc((void **)&dev_sparseConVecPtr,  nConnections * sizeof(int)));
+  devPtrs.dev_sparseConVec = dev_sparseConVecPtr;
+  //  dummy = fread(sparseConVec, sizeof(*sparseConVec), N_NEURONS * (2 * (int)K + 1), fpSparseConVec);
+  dummy = fread(sparseConVec, sizeof(*sparseConVec), nConnections, fpSparseConVec);
+  fclose(fpSparseConVec);
+  if(dummy != nConnections) {
     printf("sparseConvec read error ? \n");
   }
+
   dummy = fread(idxVec, sizeof(*idxVec), N_NEURONS, fpIdxVec);
-  dummy = fread(nPostNeurons, sizeof(*nPostNeurons), N_NEURONS, fpNpostNeurons);
-  fclose(fpSparseConVec);
   fclose(fpIdxVec);
-  fclose(fpNpostNeurons);
   /* READ FF SPARSE CONNECTION MAT */
   FILE *fpSparseConVecFF, *fpIdxVecFF, *fpNpostNeuronsFF;
   fpSparseConVecFF = fopen("sparseConVecFF.dat", "rb");
   fpIdxVecFF = fopen("idxVecFF.dat", "rb");
   fpNpostNeuronsFF = fopen("nPostNeuronsFF.dat", "rb");
-  dummy = fread(sparseConVecFF, sizeof(*sparseConVecFF), N_NEURONS * (2ULL * (unsigned long long)(CFF * K) + 1), fpSparseConVecFF);
-  if(dummy != N_NEURONS * (2 * (int)(CFF * K) + 1)) {
+  dummy = fread(nPostNeuronsFF, sizeof(*nPostNeuronsFF), NFF, fpNpostNeuronsFF);
+  fclose(fpNpostNeuronsFF);
+  unsigned long int nConnectionsFF = 0;
+  for(i = 0; i < NFF; ++i) {
+    nConnectionsFF += nPostNeuronsFF[i];
+  }
+  cudaCheck(cudaMalloc((void **)&dev_sparseConVecFFPtr,  nConnectionsFF * sizeof(int)));
+  cudaCheck(cudaMallocHost((void **)&sparseConVecFF, nConnectionsFF * sizeof(int)));
+
+  devPtrs.dev_sparseConVecFF = dev_sparseConVecFFPtr;
+  //  dummy = fread(sparseConVecFF, sizeof(*sparseConVecFF), N_NEURONS * (2ULL * (unsigned long long)(CFF * K) + 1), fpSparseConVecFF);
+  dummy = fread(sparseConVecFF, sizeof(*sparseConVecFF), nConnectionsFF, fpSparseConVecFF);
+  fclose(fpSparseConVecFF);
+  if(dummy != nConnectionsFF) {
     printf("%d, sparseConvecFF read error ? \n", dummy);
   }
   dummy = fread(idxVecFF, sizeof(*idxVecFF), NFF, fpIdxVecFF);
-  dummy = fread(nPostNeuronsFF, sizeof(*nPostNeuronsFF), NFF, fpNpostNeuronsFF);
-  fclose(fpSparseConVecFF);
   fclose(fpIdxVecFF);
-  fclose(fpNpostNeuronsFF);
-  /*
-    for(i = 0; i < N_NEURONS; ++i) {
-      printf("neuron %d projects to : ", i);
-      for(int j = 0; j < nPostNeurons[i]; ++j) {
-	printf("%d ", sparseConVec[idxVec[i] + j]);
-      }
-      printf("\n");
-    }
-  */
-
-  cudaCheck(cudaMemcpy(dev_sparseVec, sparseConVec, N_NEURONS * (2 * K + 1) * sizeof(int), cudaMemcpyHostToDevice));
+  //  cudaCheck(cudaMemcpy(dev_sparseVec, sparseConVec, N_NEURONS * (2 * K + 1) * sizeof(int), cudaMemcpyHostToDevice));
+  printf("sparse convec ptr: %p\n", dev_idxVec);
+  cudaCheck(cudaMemcpy(dev_sparseConVecPtr, sparseConVec,  nConnections * sizeof(int), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_idxVec, idxVec, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_nPostneuronsPtr, nPostNeurons, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
   printf("tst point, %p ----- %p \n", dev_sparseVec, dev_sparseVecFF);
-  cudaCheck(cudaMemcpy(dev_sparseVecFF, sparseConVecFF, N_NEURONS * (2ULL * (unsigned long long)(CFF * K) + 1)* sizeof(int), cudaMemcpyHostToDevice));
+  //  cudaCheck(cudaMemcpy(dev_sparseVecFF, sparseConVecFF, N_NEURONS * (2ULL * (unsigned long long)(CFF * K) + 1)* sizeof(int), cudaMemcpyHostToDevice));
+  cudaCheck(cudaMemcpy(dev_sparseConVecFFPtr, sparseConVecFF, nConnectionsFF * sizeof(int), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_idxVecFF, idxVecFF, NFF * sizeof(int), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_nPostneuronsPtrFF, nPostNeuronsFF, NFF * sizeof(int), cudaMemcpyHostToDevice));
  /* ================= ALLOCATE PAGELOCKED MEMORY ON HOST =========================*/
