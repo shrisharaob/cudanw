@@ -28,7 +28,7 @@
 #define CON_SIGMA (L / 5.0)
 */
 
-#define CONDUCTANCE_GLOBAL_PREFACTOR 4.0
+#define CONDUCTANCE_GLOBAL_PREFACTOR 1.0
 
 /* params synapseb */
 #define INV_TAU_SYNAP (1 / TAU_SYNAP)
