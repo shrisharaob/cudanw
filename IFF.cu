@@ -250,7 +250,6 @@ __device__ double IFF_orimap(double vm) {
     else {
       iff = -1.0 * GFF_I * INV_TAU_SYNAP * gFF[mNeuron] * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
     }
-
     if(mNeuron == SAVE_CURRENT_FOR_NEURON) { dev_iffCurrent[curConter - 1] = 3.0;}
   }
   return iff;

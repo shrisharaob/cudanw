@@ -83,6 +83,10 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaSetDevice(deviceId));
   theta_degrees = host_theta;
   host_theta = PI * host_theta / (180.0); /* convert to radians */
+  /* ================ SIMULATING SOME JITTER IN INPUT ORIENTATION (COULD BE DUE TO EYE TITLT, TO CHECK FANO FACTOR M TUNING) ======= */
+  srand(time(NULL));
+  double tmprnd = ((double) rand() / (RAND_MAX + 1.0)) * (5.0) - (2.5); // simulatinge eye tilt
+  host_theta += (tmprnd * PI / 180.0);
   cudaMemcpyToSymbol(theta, &host_theta, sizeof(host_theta));
   /* ================= INITIALIZE ===============================================*/
   nSteps = (tStop - tStart) / DT;
@@ -90,7 +94,7 @@ int main(int argc, char *argv[]) {
   //  nSteps = 800;
   printf("\n N  = %llu \n NE = %llu \n NI = %llu \n K  = %d \n tStop = %d milli seconds nSteps = %d\n\n", N_NEURONS, NE, NI, (int)K, (int)tStop, nSteps);
   
-  printf(" theta = %2.3f \n contrast = %2.1f\n ksi = %f\n dt = %f \n tau = %f \n EXP_SUM = %.16f\n", host_theta, HOST_CONTRAST, ETA_E, DT, TAU_SYNAP, EXP_SUM);
+  printf(" theta = %2.3f \n contrast = %2.1f\n ksi = %f\n dt = %f \n tau = %f \n EXP_SUM = %.16f\n", host_theta * 180.0 / PI, HOST_CONTRAST, ETA_E, DT, TAU_SYNAP, EXP_SUM);
   printf("alpha = %f, RHO = %f\n", ALPHA, RHO);
   
   // STORE MEAN G_FF
@@ -519,19 +523,19 @@ int main(int argc, char *argv[]) {
   printf("saving vm to disk ....");
   fflush(stdout);
   
-  // if(nSteps > 20000) {
-  //     strcpy(filename, "gffmean");
-  //     sprintf(fileSuffix, "_R0%1.1f_theta%d_%.2f_%1.1f_%d_tr%s", R0, (int)theta_degrees, ALPHA, TAU_SYNAP, (int)(tStop), filetag);
-  //     strcat(filename, fileSuffix);
-  //     FILE* fpGFFmean;
-  //     fpGFFmean = fopen(strcat(filename, ".csv"),"w");
-  //     double denom = 0.0;
-  //     denom = (double)hostGFFCounter[0];
-  //     for(k = 0; k < N_NEURONS; ++k) {
-  // 	fprintf(fpGFFmean, "%f\n", (double)host_GFFmean[k] / denom);
-  //     }
-  //     fclose(fpGFFmean);
-  //   }
+  if(nSteps > 20000) {
+      strcpy(filename, "gffmean");
+      sprintf(fileSuffix, "_R0%1.1f_theta%d_%.2f_%1.1f_%d_tr%s", R0, (int)theta_degrees, ALPHA, TAU_SYNAP, (int)(tStop), filetag);
+      strcat(filename, fileSuffix);
+      FILE* fpGFFmean;
+      fpGFFmean = fopen(strcat(filename, ".csv"),"w");
+      double denom = 0.0;
+      denom = (double)hostGFFCounter[0];
+      for(k = 0; k < N_NEURONS; ++k) {
+  	fprintf(fpGFFmean, "%f\n", (double)host_GFFmean[k] / denom);
+      }
+      fclose(fpGFFmean);
+    }
 
 
   if(IF_SAVE) {

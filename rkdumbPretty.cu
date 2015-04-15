@@ -82,7 +82,7 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
       }
     }
     if(k > 20000) { // which is 1 sec for dt = 0.05
-      dev_GFFmean[mNeuron] += gFF[mNeuron];
+      dev_GFFmean[mNeuron] += dev_gE[mNeuron]; //gFF[mNeuron] +
       if(mNeuron == 0) {
         devGFFCounter += 1;
       }

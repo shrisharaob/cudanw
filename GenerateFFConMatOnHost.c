@@ -150,7 +150,7 @@ int main (void)
   gsl_rng *gslRGNState;
   double *conMat = NULL, xa, ya;
   int i, j, n = 10;
-  int IF_PERIODIC = 0;
+  int IF_PERIODIC = 0, IF_PRINT_CM_TO_FILE = 0;
   gsl_rng_env_setup();
   T = gsl_rng_default;
   gslRGNState = gsl_rng_alloc(T);
@@ -170,11 +170,25 @@ int main (void)
       conMat[i + j * N_NEURONS] = ConProb(xa, ya, FF_XCordinate(j), FF_YCordinate(j), L_FF, FF_CON_SIGMA, IF_PERIODIC);
     }
   }
-  
+  printf("done\n");  
   /* TRANSPOSE TO ACUTALLY MAKE IT PROJECTIONS FROM NFF TO L 2/3 */
+  printf("\n transposing matrix ... "); fflush(stdout);
   MatTranspose(conMat, N_NEURONS, NFF);
+  printf("done\n");  
   /* MUTIPLY WITH PREFACTOR */
+  printf("\n computing prefactors ... "); fflush(stdout);
   ConProbPreFactor(conMat);
+  printf("done\n");  
+  if(IF_PRINT_CM_TO_FILE) {
+    FILE *fpconmat = fopen("ffcm.csv", "w");
+    for(i = 0; i < NFF; ++i) {
+      for(j = 0; j < N_NEURONS; ++j) {
+	fprintf(fpconmat, "%f ", conMat[i + j * NFF]);
+      }
+      fprintf(fpconmat, "\n");
+    }
+    fclose(fpconmat);
+  }
   /* GENERATE CONNECTIVITY MATRIX */
   for(i = 0; i < NFF; ++i) {
     for(j = 0; j < N_NEURONS; ++j) {
@@ -186,7 +200,7 @@ int main (void)
       }
     }
   }
-  printf("done\n");
+
   /* GENERATE SPARSE REPRESENTATIONS */
   int idxVecFF[NFF], nPostNeuronsFF[NFF];
   int *sparseConVec;
@@ -254,17 +268,7 @@ int main (void)
     fprintf(fpFFCount, "%d\n", countFF);
   }
   fclose(fpFFCount);
-
-  /*
-  FILE *fpconmat = fopen("ffcm.csv", "w");
-  for(i = 0; i < NFF; ++i) {
-    for(j = 0; j < N_NEURONS; ++j) {
-      fprintf(fpconmat, "%f ", conMat[i + j * NFF]);
-    }
-    fprintf(fpconmat, "\n");
-  }
-  fclose(fpconmat);
-  */
+ 
 
   free(conMat);
   free(sparseConVec);
