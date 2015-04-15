@@ -1,11 +1,11 @@
 #ifndef _HOST_CONSTANTS_
 #define _HOST_CONSTANTS_
 
-#define NE 400ULL
-#define NI 100ULL
+#define NE 40000ULL
+#define NI 10000ULL
 #define N_Neurons (NE + NI)
 #define N_NEURONS N_Neurons
-#define K 10.0
+#define K 1000.0
 #define DT 0.05 /* ms*/ /* CHANGE EXP+SUM WHEN DT CHANGES   */
 #define TAU_SYNAP 3.0
 #define EXP_SUM exp(-1 * DT /TAU_SYNAP)  /*exp(-1 * DT / TAU_SYNAP !!!!!!!!!!! GENERALIZE !!!!!!! */
@@ -34,5 +34,5 @@
 #define CFF HOST_CFF
 #define L_FF 1.0
 #define FF_CON_SIGMA (L_FF * 0.2)
-#define NFF 400ULL
+#define NFF 40000ULL
 #endif
