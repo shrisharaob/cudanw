@@ -1,0 +1,4 @@
+  srand(time(NULL));
+  double tmprnd = ((double) rand() / (RAND_MAX + 1.0)) * (5.0) - (2.5); // simulatinge eye tilt
+  host_theta += (tmprnd * PI / 180.0);
+  cudaMemcpyToSymbol(theta, &host_theta, sizeof(host_theta));

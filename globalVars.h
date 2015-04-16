@@ -57,8 +57,8 @@
 #define ETA_I 1.2
 #define MU_E 0.0
 #define MU_I 0.0
-#define GFF_E (1.0 * 0.95 / sqrt(1.0 * K))
-#define GFF_I (1.0 * 1.26 / sqrt(1.0 * K))
+#define GFF_E (1.0 * 0.95 / sqrt(10.0 * K))
+#define GFF_I (1.0 * 1.26 / sqrt(10.0 * K))
 
 __device__ float randnXiA[N_Neurons], 
                  randuDelta[N_Neurons], 
