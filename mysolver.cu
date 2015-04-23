@@ -78,17 +78,17 @@ int main(int argc, char *argv[]) {
   theta_degrees = host_theta;
   host_theta = PI * host_theta / (180.0); /* convert to radians */
   /*======SIMULATING EYE TITLE ========== */
-  srand(time(NULL));
-  double tmprnd = ((double) rand() / (RAND_MAX + 1.0)) * (5.0) - (2.5); // simulatinge eye tilt
-  host_theta += (tmprnd * PI / 180.0);
-  cudaMemcpyToSymbol(theta, &host_theta, sizeof(host_theta));
+  // srand(time(NULL));
+  // double tmprnd = ((double) rand() / (RAND_MAX + 1.0)) * (5.0) - (2.5); // simulatinge eye tilt
+  // host_theta += (tmprnd * PI / 180.0);
   /* ================= INITIALIZE ===============================================*/
+  cudaMemcpyToSymbol(theta, &host_theta, sizeof(host_theta));
   nSteps = (tStop - tStart) / DT;
   lastNStepsToStore = (int)floor(STORE_LAST_T_MILLISEC  / DT);
   //  nSteps = 800;
   printf("\n N  = %llu \n NE = %llu \n NI = %llu \n K  = %d \n tStop = %d milli seconds nSteps = %d\n\n", N_NEURONS, NE, NI, (int)K, (int)tStop, nSteps);
   
-  printf(" theta = %2.3f \n contrast = %2.1f\n ksi = %f\n dt = %f \n tau = %f \n EXP_SUM = %.16f\n", host_theta * 180.0 / PI, HOST_CONTRAST, ETA_E, DT, TAU_SYNAP, EXP_SUM);
+  printf(" theta = %2.3f \n contrast = %2.1f\n ksi = %f\n dt = %f \n tau = %f \n EXP_SUM = %.16f\n, Conductance glb prefactor = %f", host_theta * 180.0 / PI, HOST_CONTRAST, ETA_E, DT, TAU_SYNAP, EXP_SUM, CONDUCTANCE_GLOBAL_PREFACTOR);
   printf("alpha = %f, RHO = %f\n", ALPHA, RHO);
   
   /* choose 256 threads per block for high occupancy */
