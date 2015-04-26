@@ -28,7 +28,7 @@
 #define CON_SIGMA (L / 5.0)
 */
 
-#define CONDUCTANCE_GLOBAL_PREFACTOR 1.75
+#define CONDUCTANCE_GLOBAL_PREFACTOR 1.0
 
 /* params synapseb */
 #define INV_TAU_SYNAP (1 / TAU_SYNAP)
@@ -59,8 +59,8 @@
 #define ETA_I 1.2
 #define MU_E 0.0
 #define MU_I 0.0
-#define GFF_E (CONDUCTANCE_GLOBAL_PREFACTOR * 0.95 / sqrt(10.0 * K))
-#define GFF_I (CONDUCTANCE_GLOBAL_PREFACTOR * 1.26 / sqrt(10.0 * K))
+#define GFF_E (CONDUCTANCE_GLOBAL_PREFACTOR * 0.95 / sqrt(1.0 * K))
+#define GFF_I (CONDUCTANCE_GLOBAL_PREFACTOR * 1.26 / sqrt(1.0 * K))
 
 __device__ float randnXiA[N_Neurons], 
                  randuDelta[N_Neurons], 

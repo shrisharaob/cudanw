@@ -38,7 +38,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  double tStart = 0.0, tStop =  3000.0;
+  double tStart = 0.0, tStop =  30000.0;
   double *spkTimes, *vm = NULL, host_theta = 0.0, theta_degrees; /* *vstart; 500 time steps */
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   double *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
@@ -406,7 +406,7 @@ int main(int argc, char *argv[]) {
   //  char fileSuffix[128], filename[128];
 
   strcpy(filename, "spkTimes");
-  sprintf(fileSuffix, "_xi%1.1f_theta%d_%.2f_%1.1f_%d_tr%s", ETA_E, (int)theta_degrees, ALPHA, TAU_SYNAP, (int)(tStop), filetag);
+  sprintf(fileSuffix, "_xi%1.1f_theta%d_%.2f_%1.1f_cntrst%d_%d_tr%s", ETA_E, (int)theta_degrees, ALPHA, TAU_SYNAP, (int)HOST_CONTRAST, (int)(tStop),filetag);
   strcat(filename, fileSuffix);
   fpSpkTimes = fopen(strcat(filename, ".csv"),"w");
   /*  fpSpkTimes = fopen("spkTimes.csv", "w");*/
