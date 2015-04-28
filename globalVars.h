@@ -49,7 +49,7 @@
 
 /* ff input */
 #define CFF 0.1000000000
-#define KFF 200.0
+#define KFF 100.0
 //#define GE_FF (0.95 * 4.0)
 //#define GI_FF (1.26 * 4.0)
 #define R0 0.002
