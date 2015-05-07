@@ -38,7 +38,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  double tStart = 0.0, tStop = 2000.0;
+  double tStart = 0.0, tStop = 5000.0;
   double *spkTimes, *vm = NULL, host_theta = 0.0, theta_degrees; /* *vstart; 500 time steps */
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   double *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
@@ -84,9 +84,10 @@ int main(int argc, char *argv[]) {
   theta_degrees = host_theta;
   host_theta = PI * host_theta / (180.0); /* convert to radians */
   /* ================ SIMULATING SOME JITTER IN INPUT ORIENTATION (COULD BE DUE TO EYE TITLT, TO CHECK FANO FACTOR M TUNING) ======= */
-  srand(time(NULL));
-  double tmprnd = ((double) rand() / (RAND_MAX + 1.0)) * (5.0) - (2.5); // simulatinge eye tilt
-  host_theta += (tmprnd * PI / 180.0);
+  //srand(time(NULL));
+  //  double tmprnd = ((double) rand() / (RAND_MAX + 1.0)) * (5.0) - (2.5); // simulatinge eye tilt
+  //  host_theta += (tmprnd * PI / 180.0);
+  
   cudaMemcpyToSymbol(theta, &host_theta, sizeof(host_theta));
   /* ================= INITIALIZE ===============================================*/
   nSteps = (tStop - tStart) / DT;

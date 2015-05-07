@@ -16,6 +16,7 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
   double v[N_STATEVARS], vout[N_STATEVARS], dv[N_STATEVARS], vmOld;
   int localTotNspks = 0, localLastNSteps;
   unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
+  int storedvmIdx;
   x1 = params.tStart;
   nstep = params.nSteps;
   totNSpks = devPtrs.dev_nSpks;
@@ -74,12 +75,16 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
     dev_z[mNeuron] = vout[2];
     dev_h[mNeuron] = vout[3];
     if(k >= localLastNSteps & (mNeuron >= N_NEURONS_TO_STORE_START &  mNeuron < N_NEURONS_TO_STORE_END)) {
-      y[(mNeuron - N_NEURONS_TO_STORE_START) + N_NEURONS_TO_STORE * (k - localLastNSteps)] = vout[0];
+      //      storedvmIdx = (int) ((double)k/4.0);
+      //      if(storedvmIdx * 4 == k) {
+	y[(mNeuron - N_NEURONS_TO_STORE_START) + N_NEURONS_TO_STORE * (k - localLastNSteps)] = vout[0];
+	//	y[(mNeuron - N_NEURONS_TO_STORE_START) + N_NEURONS_TO_STORE * (storedvmIdx - localLastNSteps)] = vout[0];
+	//      }
       /*      synapticCurrent[mNeuron + N_NEURONS *  (k - localLastNSteps)] = isynapNew;*/
-
-      if(mNeuron == 0) {
-        dev_time[k - localLastNSteps] = x;
-      }
+	
+	if(mNeuron == 0) {
+	  dev_time[k - localLastNSteps] = x;
+	}
     }
     if(k > 20000) { // which is 1 sec for dt = 0.05
       dev_GFFmean[mNeuron] += dev_gE[mNeuron]; //gFF[mNeuron] +
