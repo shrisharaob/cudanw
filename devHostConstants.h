@@ -1,12 +1,12 @@
 #ifndef _NEURON_COUNTS
 #define _NEURON_COUNTS
 
-#define NE 10000ULL
-#define NI 10000ULL
+#define NE 2ULL
+#define NI 2ULL
 #define N_Neurons (NE + NI)
 #define N_NEURONS N_Neurons
-#define K 100.0
-#define DT 0.025 /* ms*/ /* CHANGE EXP+SUM WHEN DT CHANGES   */
+#define K 1.0
+#define DT 0.05 /* ms*/ /* CHANGE EXP+SUM WHEN DT CHANGES   */
 #define TAU_SYNAP 3.0
 #define EXP_SUM exp(-1 * DT /TAU_SYNAP)  /*exp(-1 * DT / TAU_SYNAP !!!!!!!!!!! GENERALIZE !!!!!!! */
 #define MAX_UNI_RANDOM_VEC_LENGTH 10000000 //make constant 1e7
