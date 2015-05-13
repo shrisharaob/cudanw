@@ -432,6 +432,19 @@ int main(int argc, char *argv[]) {
   printf("generating sparse representation ..."); fflush(stdout);
   GenSparseMat(fullConVec, N_NEURONS, N_NEURONS, sparseConVec, idxVec, nPostNeurons);
 
+if(N_NEURONS < 8) {
+    for(i = 0; i < N_NEURONS; ++i) {
+      printf("neuron %d projects to : ", i);
+      for(int j = 0; j < nPostNeurons[i]; ++j) {
+        printf("%d ", sparseConVec[idxVec[i] + j]);
+      }
+      printf("\n");
+    }
+  }
+
+
+
+
   FILE *fpSparseConVec, *fpIdxVec, *fpNpostNeurons;
   fpSparseConVec = fopen("sparseConVec.dat", "wb");
   unsigned long int nElementsWritten, nConnections = 0;
@@ -533,16 +546,6 @@ int main(int argc, char *argv[]) {
   fclose(fpIdxVec);
   fclose(fpNpostNeurons);*/
     
-
-if(N_NEURONS < 2) {
-    for(i = 0; i < N_NEURONS; ++i) {
-      printf("neuron %d projects to : ", i);
-      for(int j = 0; j < nPostNeurons[i]; ++j) {
-        printf("%d ", sparseConVec[idxVec[i] + j]);
-      }
-      printf("\n");
-    }
-  }
 
 
 
