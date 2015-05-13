@@ -37,6 +37,7 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
       dev_isynap[mNeuron] = 0;
       dev_gE[mNeuron] = 0.0;
       dev_gI[mNeuron] = 0.0;
+      dev_sparseConVec = devPtrs.dev_sparseConVec;
       if(mNeuron < NE) {
         gaussNoiseE[mNeuron] = 0.0;
       }

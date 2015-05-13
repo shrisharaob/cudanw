@@ -8,7 +8,6 @@
 #define PI 3.14159265359
 #define SQRT_DT sqrt(DT)
 
-
 #define Cm 1.0 /* microF / cm^2  */
 #define E_Na 55.0 /* mV */
 #define E_K -80.0 /*-90*/
@@ -81,14 +80,14 @@ __device__ double gaussNoiseE[NE], gaussNoiseI[NI];
 __device__ curandState bgCurNoiseGenState[N_NEURONS], iffNormRandState[N_NEURONS];
 __device__ double dev_bgCur[N_CURRENT_STEPS_TO_STORE], dev_iff[N_CURRENT_STEPS_TO_STORE];
 __device__ int dev_nPostNeurons[N_NEURONS], dev_sparseIdx[N_NEURONS]; 
-__device__ int dev_sparseConVec[N_NEURONS * 2 * (int)K + N_NEURONS];
+// __device__ int dev_sparseConVec[N_NEURONS * 2 * (int)K + N_NEURONS];
+
+__device__ int *dev_sparseConVec;
 
 #define N_SPKS_IN_PREV_STEP 3000
 __device__ int dev_prevStepSpkIdx[N_NEURONS], /*this will hold the row id in the matrix dev_spksCountMat*/
   dev_ESpkCountMat[N_NEURONS * N_SPKS_IN_PREV_STEP],
   dev_ISpkCountMat[N_NEURONS * N_SPKS_IN_PREV_STEP];
-
-
 
 /* // recurrent input  */
 /* __device__ double *tempCurE, *tempCurI; */
@@ -107,7 +106,6 @@ __device__ int dev_prevStepSpkIdx[N_NEURONS], /*this will hold the row id in the
 /*   *tempRandnNew, */
 /*   *Itgrl, *ItgrlOld; */
 
-
 #define RHO 0.5 /* ratio - smatic / dendritic synapses*/
 #define SPK_THRESH 0.0
 
@@ -117,7 +115,7 @@ typedef struct
 } sparseMat;
 
 typedef struct {
-  int *dev_conVec, *dev_nSpks, *dev_spkNeuronIds, k;
+  int *dev_conVec, *dev_nSpks, *dev_spkNeuronIds, k, *dev_sparseConVec;
   double *dev_vm, *synapticCurrent, *dev_spkTimes, *dev_time;
   curandState *devStates;
 } devPtr_t;
