@@ -38,7 +38,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  double tStart = 0.0, tStop =  2000.0;
+  double tStart = 0.0, tStop =  25000.0;
   double *spkTimes, *vm = NULL, host_theta = 0.0, theta_degrees; /* *vstart; 500 time steps */
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   double *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
   cudaStream_t stream1;
   char filetag[16];
   cudaCheck(cudaStreamCreate(&stream1));
-  printf("old tstop = %f\n", tStop);
+  //  printf("old tstop = %f\n", tStop);
   /*PARSE INPUTS*/
   if(argc > 1) {
     deviceId = atoi(argv[1]);
@@ -88,13 +88,13 @@ int main(int argc, char *argv[]) {
   //  nSteps = 800;
   printf("\n N  = %llu \n NE = %llu \n NI = %llu \n K  = %d \n tStop = %d milli seconds nSteps = %d\n\n", N_NEURONS, NE, NI, (int)K, (int)tStop, nSteps);
   
-  printf(" theta = %2.3f \n contrast = %2.1f\n ksi = %f\n dt = %f \n tau = %f \n EXP_SUM = %.16f\n, Conductance glb prefactor = %f", host_theta * 180.0 / PI, HOST_CONTRAST, ETA_E, DT, TAU_SYNAP, EXP_SUM, CONDUCTANCE_GLOBAL_PREFACTOR);
-  printf("alpha = %f, RHO = %f\n", ALPHA, RHO);
+  printf(" theta = %2.3f \n contrast = %2.1f\n ksi = %f\n dt = %f \n tau = %f \n EXP_SUM = %.16f\n Conductance glb prefactor = %f", host_theta * 180.0 / PI, HOST_CONTRAST, ETA_E, DT, TAU_SYNAP, EXP_SUM, CONDUCTANCE_GLOBAL_PREFACTOR);
+  printf("\n alpha = %f, RHO = %f\n", ALPHA, RHO);
   
   /* choose 256 threads per block for high occupancy */
   int ThreadsPerBlock = 128;
   int BlocksPerGrid = (N_NEURONS + ThreadsPerBlock - 1) / ThreadsPerBlock;
-  printf("Threads per block : %d, Blocks per grid : %d \n", ThreadsPerBlock, BlocksPerGrid);
+  printf(" Threads per block : %d, Blocks per grid : %d \n", ThreadsPerBlock, BlocksPerGrid);
   /*INITIALIZE RND GENERATORS FOR ibf & iff */
   setupBGCurGenerator<<<BlocksPerGrid, ThreadsPerBlock>>>(time(NULL));
   setupIFFRndGenerator<<<BlocksPerGrid, ThreadsPerBlock>>>(time(NULL));

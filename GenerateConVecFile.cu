@@ -413,11 +413,17 @@ int main(int argc, char *argv[]) {
   sparseConVec = (int *)malloc((unsigned long long)N_NEURONS * (2ULL + (unsigned long long)K + N_NEURONS) * sizeof(int));
   printf("generating sparse representation ..."); fflush(stdout);
   GenSparseMat(fullConVec, N_NEURONS, N_NEURONS, sparseConVec, idxVec, nPostNeurons);
-
-  printf("done\n writing to file ... "); fflush(stdout);
   FILE *fpSparseConVec, *fpIdxVec, *fpNpostNeurons;
   fpSparseConVec = fopen("sparseConVec.dat", "wb");
-  fwrite(sparseConVec, sizeof(*sparseConVec), N_NEURONS * (2 * (int)K + N_NEURONS), fpSparseConVec);
+  unsigned long int nElementsWritten, nConnections = 0;
+  for(i = 0; i < N_NEURONS; ++i) {
+    nConnections += nPostNeurons[i];
+  }
+  printf("done\n#connections = %lu\n", nConnections);
+  printf("writing to file ... "); fflush(stdout);
+  fpSparseConVec = fopen("sparseConVec.dat", "wb");
+  //  fwrite(sparseConVec, sizeof(*sparseConVec), N_NEURONS * (2 * (int)K + N_NEURONS), fpSparseConVec);
+  nElementsWritten = fwrite(sparseConVec, sizeof(*sparseConVec), nConnections, fpSparseConVec);
   fclose(fpSparseConVec);
   fpIdxVec = fopen("idxVec.dat", "wb");
   fwrite(idxVec, sizeof(*idxVec), N_NEURONS,  fpIdxVec);
