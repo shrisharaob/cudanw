@@ -8,7 +8,7 @@ void GenSparseMat(float *conVec,  int rows, int clms, int* sparseVec, int* idxVe
      nPostNeurons : number of non-zero elements in ith row 
   */
   
-  int i, j, counter = 0, nPost;
+  unsigned long long int i, j, counter = 0, nPost;
   for(i = 0; i < rows; ++i) {
     nPost = 0;
     for(j = 0; j < clms; ++j) {
@@ -35,7 +35,7 @@ void GenSparseFeedForwardMat(float *conVec,  int nff, int nNeurons, int* sparseV
      nPostNeurons : nff-by-1          - number of 2/3 neurons reciving connections from 
   */
   
-  int i, j, counter = 0, nPost;
+  unsigned long long int i, j, counter = 0, nPost;
 
   for(i = 0; i < nff; ++i) {
     nPost = 0;
