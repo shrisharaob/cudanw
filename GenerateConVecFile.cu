@@ -373,6 +373,7 @@ int main(int argc, char *argv[]) {
     case biDir:
       printf("\nBi-dir\n");
       ConMatBiDir(fullConVec, bidirType); // defined in file : tinyRNG.cu 
+      TestBidir(fullConVec);
       break;
     case fixedEII:
       cudaCheck(cudaMalloc((void **)&fixedStates,  N_NEURONS * sizeof(curandState)));

@@ -29,7 +29,7 @@ __device__ double atomicAdd(double* address, double val)
 __device__ double alpha_n(double vm) {
   double out;
   if(vm != -34) { 
-    out = 0.1 * (vm + 34) / (1 - exp(-0.1 * (vm + 34)));
+    out = 0.1 * (vm + 34.0) / (1 - exp(-0.1 * (vm + 34.0)));
   }
   else {
     out = 0.1;
@@ -39,24 +39,24 @@ __device__ double alpha_n(double vm) {
 
 __device__ double beta_n(double vm) {
   double out;
-  out = 1.25 * exp(- (vm + 44) / 80);
+  out = 1.25 * exp(- (vm + 44.0) / 80.0);
   return out;
 }
 
 __device__ double alpha_m(double vm) {
   double out;
   if(vm != -30) { 
-    out = 0.1 * (vm + 30) / (1 - exp(-0.1 * (vm + 30)));
+    out = 0.1 * (vm + 30.0) / (1 - exp(-0.1 * (vm + 30.0)));
   }
   else {
-    out = 1;
+    out = 1.0;
   }
   return out;
 }
 
 __device__ double beta_m(double vm) {
   double out;
-  out = 4 * exp(-(vm + 55) / 18);
+  out = 4.0 * exp(-(vm + 55.0) / 18.0);
   return out;
 }
 
@@ -68,7 +68,7 @@ __device__ double alpha_h(double vm) {
 
 __device__ double beta_h(double vm) {
   double out;
-  out = 10 / (exp(-0.1 * (vm + 14)) + 1);
+  out = 10.0 / (exp(-0.1 * (vm + 14.0)) + 1.0);
   return out;
   }
 
@@ -82,7 +82,7 @@ __device__ double m_inf(double vm) {
 //z is the gating varible of the adaptation current
 __device__ double z_inf(double(vm)) {
   double out;
-  out = 1 / (1 + exp(-0.7 *(vm + 30)));
+  out = 1 / (1 + exp(-0.7 *(vm + 30.0)));
   return out;
 }
 
@@ -95,7 +95,7 @@ __device__ double z_inf(double(vm)) {
 __device__ void derivs(double t, double stateVar[], double dydx[], double isynap, double ibg, double iff) {
   double cur = 0.0;
   unsigned int kNeuron = threadIdx.x + blockDim.x * blockIdx.x;
-  double bgPrefactor = 1.0, iffPrefactor = 1.0;
+  double bgPrefactor = 1.0, iffPrefactor = 0.0;
   if(kNeuron < N_NEURONS) {
     /*    cur = 0.1 * sqrt(K);*/
     /*if((kNeuron == 0 & t >= 30 & t <= 35) | (kNeuron == 1 & t >= 280 & t <= 285)) {cur = 10;} 

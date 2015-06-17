@@ -8,7 +8,7 @@ void GenSparseMat(float *conVec,  int rows, int clms, int* sparseVec, int* idxVe
      nPostNeurons : number of non-zero elements in ith row 
   */
   
-  int i, j, counter = 0, nPost;
+  unsigned long long int i, j, counter = 0, nPost;
   for(i = 0; i < rows; ++i) {
     nPost = 0;
     for(j = 0; j < clms; ++j) {

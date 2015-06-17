@@ -30,7 +30,7 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
   k = devPtrs.k;
   if(mNeuron < N_NEURONS) {
     if(k == 0) {
-      dev_v[mNeuron] = (-1 * 70) +  (40 * randkernel(dev_state)); /* Vm(0) ~ U(-70, -30)*/
+      dev_v[mNeuron] = -70; //(-1.0 * 70.0) +  (40.0 * randkernel(dev_state)); /* Vm(0) ~ U(-70, -30)*/
       dev_n[mNeuron] = randkernel(dev_state); //0.3176;
       dev_z[mNeuron] = randkernel(dev_state); //0.1;
       dev_h[mNeuron] = randkernel(dev_state); //0.5961;

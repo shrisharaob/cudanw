@@ -61,6 +61,39 @@ void ConMatFixedEII(float *conVec) {
   }
 }
 
+unsigned int* TestBidir(float *conVec) {
+  // CURRENTLY TESTS ONLY E-2-E CONNECTIONS
+  unsigned long long i, j;
+  unsigned int countE = 0, countI = 0;
+  FILE *fpp = fopen("bidircntII.csv", "w");
+  FILE *fppE = fopen("bidircntEE.csv", "w");
+  for(j = NE; j < N_NEURONS; ++j) { // COLUMNS
+    //    printf("j = %llu\n", j);
+    countI = 0;
+    for(i = NE; i < N_NEURONS; ++i) { // ROWS
+      if(conVec[i + j * N_NEURONS] &&  conVec[j + i * N_NEURONS]) {
+	countI += 1;
+       }
+    }
+    fprintf(fpp, "%u\n", countI);
+    //    fprintf(stdout, "%u\n", countI);
+  }
+  fclose(fpp);
+
+  // E NEIRONS
+  for(j = 0; j < NE; ++j) { // COLUMNS
+    countE = 0;
+    for(i = 0; i < NE - 1; ++i) { // ROWS
+      if(conVec[i + j * N_NEURONS] &&  conVec[j + i * N_NEURONS]) {
+	countE += 1;
+      }
+    }
+    fprintf(fppE, "%u\n", countE);
+    //    fprintf(stdout, "%u\n", countI);
+  }
+  fclose(fppE);
+}
+
 void ConMatBiDir(float *conVec, int bidirType) {
   /* bidirType: 0  I-I
                 1  E-E

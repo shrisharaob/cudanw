@@ -38,7 +38,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  double tStart = 0.0, tStop =  3000.0;
+  double tStart = 0.0, tStop =  1000.0;
   double *spkTimes, *vm = NULL, host_theta = 0.0, theta_degrees; /* *vstart; 500 time steps */
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   double *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
@@ -454,11 +454,14 @@ int main(int argc, char *argv[]) {
     }
     printf("\n%d %d\n", i, k);
     fclose(fp);
-    /*    FILE* fpCur = fopen("currents.csv", "w");
+    /*    FILE* fpCur = fopen("currents.csv", "w");*/
+    FILE* fpCurbg = fopen("bgcur.csv", "w");
     for(i = 0; i < N_CURRENT_STEPS_TO_STORE; ++i) {
-    fprintf(fpCur, "%f;%f;%f;%f\n", curE[i], curI[i], ibgCur[i], curIff[i]);*/
+      fprintf(fpCur, "%f\n", ibgCur[i]);
+    /*    fprintf(fpCur, "%f;%f;%f;%f\n", curE[i], curI[i], ibgCur[i], curIff[i]);*/
       /*      fprintf(fpCur, "%f\n", curIff[i]);*/
-    //}
+    }
+    fclose(fpCurbg);
     fclose(fpCur);
     fpConMat = fopen("conMat.csv", "w");
     fpConMat = fopen("conVec.csv", "w");
