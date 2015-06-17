@@ -1,0 +1,21 @@
+
+ Computing on GPU0 
+
+ N  = 20000 
+ NE = 10000 
+ NI = 10000 
+ K  = 1000 
+ tStop = 1000 milli seconds nSteps = 20000
+
+ theta = 0.000 
+ contrast = 100.0
+ ksi = 1.200000
+ dt = 0.050000 
+ tau = 3.000000 
+ EXP_SUM = 0.9834714538216175
+ Conductance glb prefactor = 1.000000
+ alpha = 0.200000, RHO = 0.500000
+ Threads per block : 128, Blocks per grid : 157 
+ GPU memory allocation successful ! 
+ 
+ launching Simulation kernel ...
