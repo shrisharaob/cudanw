@@ -5,6 +5,9 @@
 #define NI 10000ULL
 #define N_Neurons (NE + NI)
 #define N_NEURONS N_Neurons
+#define K_I_PREFACTOR 1.8
+#define K_I_PREFACTOR_FF K_I_PREFACTOR
+
 #define K 1000.0
 #define DT 0.05 /* ms*/ /* CHANGE EXP+SUM WHEN DT CHANGES   */
 #define TAU_SYNAP 3.0
@@ -24,10 +27,13 @@
 __constant__ double CONTRAST = HOST_CONTRAST;
 __constant__ double theta;
 
-#define ALPHA 0.2
+#define ALPHA 0.0
 
 /* params patch */
 #define L 1.0
 #define CON_SIGMA (L / 5.0)
 #define PI 3.14159265359
+
+
+
 #endif

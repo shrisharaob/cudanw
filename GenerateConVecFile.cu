@@ -75,7 +75,6 @@ __global__ void kernelGenConMat(curandState *state, float *dev_conVec, int lChun
   if(id < maxNeurons & kNeuron < N_NEURONS) {
     k = (float)K;
     /* E --> EI */
-    /*    if(id < N_NEURONS & NE > 0) {*/
     if(kNeuron < NE) {
       n = (float)NE;
     }
@@ -83,14 +82,18 @@ __global__ void kernelGenConMat(curandState *state, float *dev_conVec, int lChun
       n = (float)NI;
     }
     for(i = 0; i < N_NEURONS; ++i) {
-      if(i < NE) {  /* E --> E */
+      // i is row and id is clmn
+      if(i < NE) {  /* E --> E/I */
+	//        n = (float)NE;
         if(k/n >= randkernel(state, kNeuron)) { /* neuron[id] receives input from i ? */
-          dev_conVec[id + i * maxNeurons] = 1;
+	  //	  dev_conVec[id + i * maxNeurons] = 1;
+          dev_conVec[i + id * maxNeurons] = 1;
         }
       }
-      if(i >= NE) { /* E --> I */
+      if(i >= NE) { /* I --> E/I */
+	//	n = (float)NI;
         if(k/n >= randkernel(state, kNeuron)) { /* neuron[id] receives input from i ? */
-          dev_conVec[id + i * maxNeurons] = 1;
+          dev_conVec[i + id * maxNeurons] = 1; // dev_conVec[id + i * maxNeurons] = 1;
         } 
       }
     }
@@ -114,6 +117,35 @@ __global__ void kernelGenConMat(curandState *state, float *dev_conVec, int lChun
   }
 }
 
+//-----------------------------
+__global__ void kernelGenConMatWithDiffK(curandState *state, float *dev_conVec, int lChunck, int maxNeurons){
+  /* indexing of matrix row + clm x N_NEURONS*/
+  unsigned long id =  (unsigned long int)threadIdx.x + blockIdx.x * blockDim.x;
+  unsigned long int kNeuron = id + lChunck * maxNeurons;
+  unsigned long int i;
+  float k;
+  if(id < maxNeurons & kNeuron < N_NEURONS) {
+    if(kNeuron < NE) {
+      k = (float)K;
+    }
+    else {
+      k = ((float)K) * K_I_PREFACTOR;
+    }
+    for(i = 0; i < N_NEURONS; ++i) {
+      if(i < NE) {  /* E --> E/I */
+        if(k/((float)NE) >= randkernel(state, kNeuron)) { /* neuron[id] receives input from i ? */
+          dev_conVec[i + id * maxNeurons] = 1;
+        }
+      }
+      if(i >= NE) { /* I --> E/I */
+        if(k/((float)NI) >= randkernel(state, kNeuron)) { /* neuron[id] receives input from i ? */
+	  dev_conVec[i + id * maxNeurons] = 1; //dev_conVec[id + i * maxNeurons] = 1;
+        } 
+      }
+    }
+  }
+}
+//------------------------------
 __global__ void kernelFixedEII(curandState *fixedState, curandState *state, float *dev_conVec, int lChunck, int maxNeurons){
   /* indexing of matrix row + clm x N_NEURONS*/
   unsigned long id =  (unsigned long int)threadIdx.x + blockIdx.x * blockDim.x;
@@ -293,7 +325,7 @@ int main(int argc, char *argv[]) {
   cudaDeviceProp prop;
   unsigned long maxMem = 12079136768;
   enum ConMat_type {
-    random, sparseE2E, distDependent, biDir, fixedEII
+    random, sparseE2E, distDependent, biDir, fixedEII, random_with_diffK
   };
   ConMat_type conMatType = biDir; 
   if(argc > 1) {
@@ -307,6 +339,8 @@ int main(int argc, char *argv[]) {
       conMatType = biDir;/* DEFAULT */
     if(atoi(argv[1]) == 5)
       conMatType = fixedEII;
+    if(atoi(argv[1]) == 6)
+      conMatType = random_with_diffK;
   }
   if(argc >2) {
     //    if(atoi(argv[2]) == 1) {
@@ -357,6 +391,10 @@ int main(int argc, char *argv[]) {
     case random:
       printf("\n random conmat \n");
       kernelGenConMat<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, dev_conVecPtr, i, maxNeurons);
+      break;
+    case random_with_diffK:
+      printf("\n random conmat with different K's for each population \n");
+      kernelGenConMatWithDiffK<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, dev_conVecPtr, i, maxNeurons);
       break;
     case distDependent:
       printf("\n anatomic conmat \n");
@@ -472,6 +510,7 @@ if(N_NEURONS < 2) {
   printf("\nN = %llu\n", N_NEURONS);
   int countE = 0, countI = 0;
   for(i = 0; i < N_NEURONS; ++i) {
+    // here index i is clm and j is row 
     countI = 0;
     countE = 0;
     for(int j = 0; j < N_NEURONS; ++j) {

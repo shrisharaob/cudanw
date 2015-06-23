@@ -27,7 +27,7 @@
 #define CON_SIGMA (L / 5.0)
 */
 
-#define CONDUCTANCE_GLOBAL_PREFACTOR 1.00
+#define CONDUCTANCE_GLOBAL_PREFACTOR 1.0
 
 /* params synapseb */
 #define INV_TAU_SYNAP (1 / TAU_SYNAP)
@@ -35,22 +35,21 @@
 #define V_I -80.0
 #define G_EE (0.15 * CONDUCTANCE_GLOBAL_PREFACTOR)
 #define G_EI (2.00 * CONDUCTANCE_GLOBAL_PREFACTOR)
-#define G_IE (0.45 * CONDUCTANCE_GLOBAL_PREFACTOR)
-#define G_II (3.00 * CONDUCTANCE_GLOBAL_PREFACTOR)
+#define G_IE (0.45 * CONDUCTANCE_GLOBAL_PREFACTOR / sqrt(K_I_PREFACTOR)) // * sqrt(Kpre) works
+#define G_II (3.00 * CONDUCTANCE_GLOBAL_PREFACTOR / sqrt(K_I_PREFACTOR)) // * sqrt(Kpre) works
 
 /* backgrund input */
 #define RB_E 0.002
 #define RB_I 0.002
 #define TAU_BG 3.0
 #define INV_TAU_BG (1.0 / TAU_BG)
-#define G_EB (CONDUCTANCE_GLOBAL_PREFACTOR * 0.3 /sqrt(K))
-#define G_IB (CONDUCTANCE_GLOBAL_PREFACTOR * 0.4 /sqrt(K))
+#define G_EB (CONDUCTANCE_GLOBAL_PREFACTOR * 0.3 / sqrt(K))
+#define G_IB (CONDUCTANCE_GLOBAL_PREFACTOR * 0.4 / sqrt(K * K_I_PREFACTOR)) // ??? K_I_PREFACTOR ???
 
 /* ff input */
 #define CFF 0.1000000000
-//#define KFF 100.0
-//#define GE_FF (0.95 * 4.0)
-//#define GI_FF (1.26 * 4.0)
+#define CFFE 0.1
+#define CFFI 0.1
 #define R0 0.002
 #define R1 0.02
 #define INP_FREQ (0.004 * PI)
@@ -58,8 +57,12 @@
 #define ETA_I 1.2
 #define MU_E 0.0
 #define MU_I 0.0
-#define GFF_E (CONDUCTANCE_GLOBAL_PREFACTOR * 0.95 / sqrt(1.0 * K))
-#define GFF_I (CONDUCTANCE_GLOBAL_PREFACTOR * 1.26 / sqrt(1.0 * K))
+
+#define GFF_E (CONDUCTANCE_GLOBAL_PREFACTOR * 0.95 / sqrt(K))
+#define GFF_I (CONDUCTANCE_GLOBAL_PREFACTOR * 1.26 / sqrt(K * K_I_PREFACTOR))
+//#define KFF 100.0
+//#define GE_FF (0.95 * 4.0)
+//#define GI_FF (1.26 * 4.0)
 
 __device__ float randnXiA[N_Neurons], 
                  randuDelta[N_Neurons], 

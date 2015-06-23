@@ -38,7 +38,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  double tStart = 0.0, tStop =  1000.0;
+  double tStart = 0.0, tStop =  25000.0;
   double *spkTimes, *vm = NULL, host_theta = 0.0, theta_degrees; /* *vstart; 500 time steps */
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   double *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
   nSteps = (tStop - tStart) / DT;
   lastNStepsToStore = (int)floor(STORE_LAST_T_MILLISEC  / DT);
   //  nSteps = 800;
-  printf("\n N  = %llu \n NE = %llu \n NI = %llu \n K  = %d \n tStop = %d milli seconds nSteps = %d\n\n", N_NEURONS, NE, NI, (int)K, (int)tStop, nSteps);
+  printf("\n N  = %llu \n NE = %llu \n NI = %llu \n KE  = %d, KI = %d \n tStop = %d milli seconds nSteps = %d\n\n", N_NEURONS, NE, NI, (int)K, (int)(K * K_I_PREFACTOR), (int)tStop, nSteps);
   
   printf(" theta = %2.3f \n contrast = %2.1f\n ksi = %f\n dt = %f \n tau = %f \n EXP_SUM = %.16f\n Conductance glb prefactor = %f", host_theta * 180.0 / PI, HOST_CONTRAST, ETA_E, DT, TAU_SYNAP, EXP_SUM, CONDUCTANCE_GLOBAL_PREFACTOR);
   printf("\n alpha = %f, RHO = %f\n", ALPHA, RHO);
@@ -153,7 +153,8 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaMallocHost((void **)&sparseConVec, nConnections * sizeof(int)));
   //  cudaCheck(cudaMallocHost((void **)&sparseConVec, N_NEURONS * (2 * K + 1) * sizeof(int)));
   cudaCheck(cudaMalloc((void **)&dev_sparseVec,  nConnections * sizeof(int)));  
-  dummy = fread(sparseConVec, sizeof(*sparseConVec), N_NEURONS * (2 * (int)K + 1), fpSparseConVec);
+  //  dummy = fread(sparseConVec, sizeof(*sparseConVec), N_NEURONS * (2 * (int)K + 1), fpSparseConVec);
+  dummy = fread(sparseConVec, sizeof(*sparseConVec), nConnections, fpSparseConVec);
   devPtrs.dev_sparseConVec = dev_sparseVec;
   if(dummy != nConnections) {
     printf("sparseConvec read error ? \n");
@@ -229,7 +230,7 @@ int main(int argc, char *argv[]) {
   kernelParams.nSteps = nSteps;
   kernelParams.tStop = tStop;
   kernelParams.tStart = tStart;
-  printf("\n launching Simulation kernel ...");
+  printf("\n launching Simulation kernel ... \n");
   fflush(stdout);
   
   
