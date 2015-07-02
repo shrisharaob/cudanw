@@ -1,14 +1,14 @@
 #ifndef _NEURON_COUNTS
 #define _NEURON_COUNTS
 
-#define NE 10000ULL
-#define NI 10000ULL
+#define NE 20000ULL
+#define NI 20000ULL
 #define N_Neurons (NE + NI)
 #define N_NEURONS N_Neurons
-#define K_I_PREFACTOR 1.8
-#define K_I_PREFACTOR_FF K_I_PREFACTOR
+#define K_REC_I_PREFACTOR 0.5// beta
+#define K_FF_I_PREFACTOR 1.0 // alpha
 
-#define K 1000.0
+#define K 2000.0
 #define DT 0.05 /* ms*/ /* CHANGE EXP+SUM WHEN DT CHANGES   */
 #define TAU_SYNAP 3.0
 #define EXP_SUM exp(-1 * DT /TAU_SYNAP)  /*exp(-1 * DT / TAU_SYNAP !!!!!!!!!!! GENERALIZE !!!!!!! */

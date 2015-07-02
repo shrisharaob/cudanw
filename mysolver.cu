@@ -38,7 +38,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  double tStart = 0.0, tStop =  25000.0;
+  double tStart = 0.0, tStop =  5000.0;
   double *spkTimes, *vm = NULL, host_theta = 0.0, theta_degrees; /* *vstart; 500 time steps */
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   double *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
@@ -86,7 +86,8 @@ int main(int argc, char *argv[]) {
   nSteps = (tStop - tStart) / DT;
   lastNStepsToStore = (int)floor(STORE_LAST_T_MILLISEC  / DT);
   //  nSteps = 800;
-  printf("\n N  = %llu \n NE = %llu \n NI = %llu \n KE  = %d, KI = %d \n tStop = %d milli seconds nSteps = %d\n\n", N_NEURONS, NE, NI, (int)K, (int)(K * K_I_PREFACTOR), (int)tStop, nSteps);
+  printf("\n N  = %llu \n NE = %llu \n NI = %llu \n KE  = %d, KI = %d \n tStop = %d milli seconds nSteps = %d\n\n", N_NEURONS, NE, NI, (int)K, (int)(K * K_REC_I_PREFACTOR), (int)tStop, nSteps);
+  printf("KFF_E = %d, KFF_I = %d", (int)(CFFE * K), (int)(CFFI * K));
   
   printf(" theta = %2.3f \n contrast = %2.1f\n ksi = %f\n dt = %f \n tau = %f \n EXP_SUM = %.16f\n Conductance glb prefactor = %f", host_theta * 180.0 / PI, HOST_CONTRAST, ETA_E, DT, TAU_SYNAP, EXP_SUM, CONDUCTANCE_GLOBAL_PREFACTOR);
   printf("\n alpha = %f, RHO = %f\n", ALPHA, RHO);

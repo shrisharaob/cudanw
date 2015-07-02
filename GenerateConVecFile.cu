@@ -129,7 +129,7 @@ __global__ void kernelGenConMatWithDiffK(curandState *state, float *dev_conVec, 
       k = (float)K;
     }
     else {
-      k = ((float)K) * K_I_PREFACTOR;
+      k = ((float)K) * K_REC_I_PREFACTOR;
     }
     for(i = 0; i < N_NEURONS; ++i) {
       if(i < NE) {  /* E --> E/I */

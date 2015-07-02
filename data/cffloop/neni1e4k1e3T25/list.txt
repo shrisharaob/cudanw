@@ -1,0 +1,8 @@
+spkTimes_xi1.2_theta0_0.00_3.0_cntrst100.0_25000_tr2.0.csv 1000
+spkTimes_xi1.2_theta22_0.00_3.0_cntrst100.0_25000_tr2.0.csv 1022
+spkTimes_xi1.2_theta45_0.00_3.0_cntrst100.0_25000_tr2.0.csv 1045
+spkTimes_xi1.2_theta67_0.00_3.0_cntrst100.0_25000_tr2.0.csv 1067
+spkTimes_xi1.2_theta90_0.00_3.0_cntrst100.0_25000_tr2.0.csv 1090
+spkTimes_xi1.2_theta112_0.00_3.0_cntrst100.0_25000_tr2.0.csv 1112
+spkTimes_xi1.2_theta135_0.00_3.0_cntrst100.0_25000_tr2.0.csv 1135
+spkTimes_xi1.2_theta157_0.00_3.0_cntrst100.0_25000_tr2.0.csv 1157

@@ -35,8 +35,8 @@
 #define V_I -80.0
 #define G_EE (0.15 * CONDUCTANCE_GLOBAL_PREFACTOR)
 #define G_EI (2.00 * CONDUCTANCE_GLOBAL_PREFACTOR)
-#define G_IE (0.45 * CONDUCTANCE_GLOBAL_PREFACTOR / sqrt(K_I_PREFACTOR)) // * sqrt(Kpre) works
-#define G_II (3.00 * CONDUCTANCE_GLOBAL_PREFACTOR / sqrt(K_I_PREFACTOR)) // * sqrt(Kpre) works
+#define G_IE (0.45 * CONDUCTANCE_GLOBAL_PREFACTOR / sqrt(K_REC_I_PREFACTOR)) // * sqrt(Kpre) works
+#define G_II (3.00 * CONDUCTANCE_GLOBAL_PREFACTOR / sqrt(K_REC_I_PREFACTOR)) // * sqrt(Kpre) works
 
 /* backgrund input */
 #define RB_E 0.002
@@ -44,12 +44,12 @@
 #define TAU_BG 3.0
 #define INV_TAU_BG (1.0 / TAU_BG)
 #define G_EB (CONDUCTANCE_GLOBAL_PREFACTOR * 0.3 / sqrt(K))
-#define G_IB (CONDUCTANCE_GLOBAL_PREFACTOR * 0.4 / sqrt(K * K_I_PREFACTOR)) // ??? K_I_PREFACTOR ???
+#define G_IB (CONDUCTANCE_GLOBAL_PREFACTOR * 0.4 / sqrt(K * K_REC_I_PREFACTOR)) // ??? K_I_PREFACTOR ???
 
 /* ff input */
 #define CFF 0.1000000000
-#define CFFE 0.1
-#define CFFI 0.1
+#define CFFE CFF
+#define CFFI (CFF * K_FF_I_PREFACTOR)
 #define R0 0.002
 #define R1 0.02
 #define INP_FREQ (0.004 * PI)
@@ -59,7 +59,7 @@
 #define MU_I 0.0
 
 #define GFF_E (CONDUCTANCE_GLOBAL_PREFACTOR * 0.95 / sqrt(K))
-#define GFF_I (CONDUCTANCE_GLOBAL_PREFACTOR * 1.26 / sqrt(K * K_I_PREFACTOR))
+#define GFF_I (CONDUCTANCE_GLOBAL_PREFACTOR * 1.26 * sqrt(K_REC_I_PREFACTOR) / (K_FF_I_PREFACTOR * sqrt(K)))
 //#define KFF 100.0
 //#define GE_FF (0.95 * 4.0)
 //#define GI_FF (1.26 * 4.0)

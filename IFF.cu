@@ -47,7 +47,7 @@ __device__ void RffTotal(double t) {
     if(mNeuron >= NE) {
       /*      rTotalPrev[mNeuron] = rTotal[mNeuron]; */
 
-      rTotal[mNeuron] = CFF * K * K_I_PREFACTOR * (R0 + R1 * log10(1.000 + varContrast)) + sqrt(CFF * K * K_I_PREFACTOR) * R0 * randnXiA[mNeuron] + sqrt(CFF * K* K_I_PREFACTOR) * R1 * log10(1.0 + varContrast) * (randnXiA[mNeuron] + ETA_I * randwZiA[mNeuron * 4] * cos(2.0 * (theta - randuDelta[mNeuron])) + MU_I * randwZiA[mNeuron * 4 + 1] * cos(INP_FREQ * t - randuPhi[mNeuron * 3]) + ETA_I * MU_I * 0.5 * (randwZiA[mNeuron * 4 + 2] * cos(2.0 * theta + INP_FREQ * t - randuPhi[mNeuron * 3 + 1]) + randwZiA[mNeuron * 4 + 3] * cos(2.0 * theta - INP_FREQ * t + randuPhi[mNeuron * 3 + 2])));
+      rTotal[mNeuron] = CFFI * K * (R0 + R1 * log10(1.000 + varContrast)) + sqrt(CFFI * K) * R0 * randnXiA[mNeuron] + sqrt(CFFI * K) * R1 * log10(1.0 + varContrast) * (randnXiA[mNeuron] + ETA_I * randwZiA[mNeuron * 4] * cos(2.0 * (theta - randuDelta[mNeuron])) + MU_I * randwZiA[mNeuron * 4 + 1] * cos(INP_FREQ * t - randuPhi[mNeuron * 3]) + ETA_I * MU_I * 0.5 * (randwZiA[mNeuron * 4 + 2] * cos(2.0 * theta + INP_FREQ * t - randuPhi[mNeuron * 3 + 1]) + randwZiA[mNeuron * 4 + 3] * cos(2.0 * theta - INP_FREQ * t + randuPhi[mNeuron * 3 + 2])));
     }
     /*
       rTotal[mNeuron] = (R0 + R1 * log10(1 + CONTRAST)) * (CFF * K + sqrt(CFF *K) * randnXiA[mNeuron]);*/
