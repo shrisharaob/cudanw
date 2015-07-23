@@ -38,7 +38,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  double tStart = 0.0, tStop =  5000.0;
+  double tStart = 0.0, tStop = 10000.0;
   double *spkTimes, *vm = NULL, host_theta = 0.0, theta_degrees; /* *vstart; 500 time steps */
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   double *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
@@ -57,6 +57,10 @@ int main(int argc, char *argv[]) {
   int IF_SAVE = 1;
   cudaStream_t stream1;
   char filetag[16];
+  double *firingrate;
+
+  printf("\n \n bg I  = %f \n", K*K_REC_I_PREFACTOR*G_IB*RB_I);
+  firingrate = (double *) malloc(sizeof(double) * N_NEURONS);
   cudaCheck(cudaStreamCreate(&stream1));
   //  printf("old tstop = %f\n", tStop);
   /*PARSE INPUTS*/
@@ -89,7 +93,7 @@ int main(int argc, char *argv[]) {
   printf("\n N  = %llu \n NE = %llu \n NI = %llu \n KE  = %d, KI = %d \n tStop = %d milli seconds nSteps = %d\n\n", N_NEURONS, NE, NI, (int)K, (int)(K * K_REC_I_PREFACTOR), (int)tStop, nSteps);
   printf("KFF_E = %d, KFF_I = %d", (int)(CFFE * K), (int)(CFFI * K));
   
-  printf(" theta = %2.3f \n contrast = %2.1f\n ksi = %f\n dt = %f \n tau = %f \n EXP_SUM = %.16f\n Conductance glb prefactor = %f", host_theta * 180.0 / PI, HOST_CONTRAST, ETA_E, DT, TAU_SYNAP, EXP_SUM, CONDUCTANCE_GLOBAL_PREFACTOR);
+  printf(" theta = %2.3f \n contrast = %2.1f\n ksi = %f\n dt = %f \n tau E = %f , tau I = %f \n EXP_SUM_E = %.16f, EXP_SUM_I = %.16f\n Conductance glb prefactor = %f", host_theta * 180.0 / PI, HOST_CONTRAST, ETA_E, DT, TAU_SYNAP_E, TAU_SYNAP_I, EXP_SUM_E, EXP_SUM_I, CONDUCTANCE_GLOBAL_PREFACTOR);
   printf("\n alpha = %f, RHO = %f\n", ALPHA, RHO);
   
   /* choose 256 threads per block for high occupancy */
@@ -135,7 +139,6 @@ int main(int argc, char *argv[]) {
   //  cudaCheck(cudaGetSymbolAddress((void **)&dev_sparseVec, dev_sparseConVec));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_idxVec, dev_sparseIdx));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_nPostneuronsPtr, dev_nPostNeurons));
-
   /*  cudaCheck(cudaMalloc((void **)&dev_sparseVec, N_NEURONS * ((int)2 * K + 1)* sizeof(int)));
   cudaCheck(cudaMalloc((void **)&dev_idxVec, N_NEURONS * sizeof(int)));
   cudaCheck(cudaMalloc((void **)&dev_nPostneuronsPtr, N_NEURONS * sizeof(int)));*/
@@ -246,6 +249,7 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaGetSymbolAddress((void **)&dev_nIPtr, dev_ISpkCountMat));
   for(i = 0; i < N_NEURONS; ++i) {
     host_IF_SPK[i] = 0;
+    firingrate[i] = 0.0;
   }
   /* TIME LOOP */
   size_t sizeOfInt = sizeof(int);
@@ -273,7 +277,7 @@ int main(int argc, char *argv[]) {
   int tmp;
   char fileSuffix[128], filename[128];
   strcpy(filename, "currents");
-  sprintf(fileSuffix, "_%1.1f_%1.f", ALPHA, TAU_SYNAP);
+  sprintf(fileSuffix, "_%1.1f_te%1.f_ti%1.f", ALPHA, TAU_SYNAP_E, TAU_SYNAP_I);
   strcat(filename, fileSuffix);
   FILE *fpCur = NULL;
   fpCur = fopen(strcat(filename, ".csv"), "w");
@@ -301,6 +305,9 @@ int main(int argc, char *argv[]) {
     /*instantaneous firing rate, rect non-overlapping window */
     for(i = 0; i < N_NEURONS; ++i) {
       if(host_IF_SPK[i]) {
+	if(k * DT > DISCARDTIME) {
+	  firingrate[i] += host_IF_SPK[i];
+	}
 	if(i < NE) {
 	  spksE += 1;
 	}
@@ -311,6 +318,7 @@ int main(int argc, char *argv[]) {
 		    nSpksInPrevStep += 1;*/
       }
     }
+    
     if(!(k%(int)(50.0/DT))) {
       fprintf(fpIFR, "%f %f \n", ((double)spksE) / (0.05 * (double)NE), ((double)spksI) / (0.05 * (double)NI));fflush(fpIFR);
       fprintf(stdout, "%f %f \n", ((double)spksE) / (0.05 * (double)NE), ((double)spksI) / (0.05 * (double)NI));
@@ -419,7 +427,7 @@ int main(int argc, char *argv[]) {
   //  char fileSuffix[128], filename[128];
 
   strcpy(filename, "spkTimes");
-  sprintf(fileSuffix, "_xi%1.1f_theta%d_%.2f_%1.1f_cntrst%.1f_%d_tr%s", ETA_E, (int)theta_degrees, ALPHA, TAU_SYNAP, HOST_CONTRAST, (int)(tStop),filetag);
+  sprintf(fileSuffix, "_xi%1.1f_theta%d_%.2f_%1.1f_cntrst%.1f_%d_tr%s", ETA_E, (int)theta_degrees, ALPHA, TAU_SYNAP_E, HOST_CONTRAST, (int)(tStop),filetag);
   strcat(filename, fileSuffix);
   fpSpkTimes = fopen(strcat(filename, ".csv"),"w");
   /*  fpSpkTimes = fopen("spkTimes.csv", "w");*/
@@ -435,12 +443,22 @@ int main(int argc, char *argv[]) {
   }
   fclose(fpSpkTimes);
   printf("done\n");
+  printf("computing firing rates ....");
+  fflush(stdout);
+  strcpy(filename, "firingrates");
+  sprintf(fileSuffix, "_xi%1.1f_theta%d_%.2f_%1.1f_cntrst%.1f_%d_tr%s", ETA_E, (int)theta_degrees, ALPHA, TAU_SYNAP_E, HOST_CONTRAST, (int)(tStop),filetag);
+  strcat(filename, fileSuffix);
+  FILE *fpFiringrate = fopen(strcat(filename, ".csv"),"w");
+  for(i = 0; i < N_NEURONS; ++i) {
+    fprintf(fpFiringrate, "%f\n", firingrate[i] / ((tStop - DISCARDTIME) * 0.001));
+  }
+  fclose(fpFiringrate);
   printf("saving vm to disk ....");
   fflush(stdout);
   if(IF_SAVE) {
     //    char fileSuffix[128], filename[128];
     strcpy(filename, "vm");
-    sprintf(fileSuffix, "_xi%1.1f_theta%d_%.2f_%1.1f_%d_tr%s", ETA_E, (int)theta_degrees, ALPHA, TAU_SYNAP, (int)(tStop), filetag);
+    sprintf(fileSuffix, "_xi%1.1f_theta%d_%.2f_%1.1f_%d_tr%s", ETA_E, (int)theta_degrees, ALPHA, TAU_SYNAP_E, (int)(tStop), filetag);
     //sprintf(fileSuffix, "_%1.1f_%1.1f", ALPHA, TAU_SYNAP);
     strcat(filename, fileSuffix);
     fp = fopen(strcat(filename, ".csv"),"w");
@@ -479,6 +497,7 @@ int main(int argc, char *argv[]) {
   }
   printf("done\n");
   /*================== CLEANUP ===================================================================*/
+  free(firingrate);
   cudaCheck(cudaFreeHost(vm));
   cudaCheck(cudaFreeHost(host_time));
   /*  cudaCheck(cudaFreeHost(host_isynap));*/

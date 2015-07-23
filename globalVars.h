@@ -7,6 +7,7 @@
 #define MAX_SPKS 80000000
 #define PI 3.14159265359
 #define SQRT_DT sqrt(DT)
+#define DISCARDTIME 1000 // ms, discard time to compute the firing rate
 
 #define Cm 1.0 /* microF / cm^2  */
 #define E_Na 55.0 /* mV */
@@ -30,11 +31,12 @@
 #define CONDUCTANCE_GLOBAL_PREFACTOR 1.0
 
 /* params synapseb */
-#define INV_TAU_SYNAP (1 / TAU_SYNAP)
+#define INV_TAU_SYNAP_E (1 / TAU_SYNAP_E)
+#define INV_TAU_SYNAP_I (1 / TAU_SYNAP_I)
 #define V_E 0.0
 #define V_I -80.0
-#define G_EE (0.15 * CONDUCTANCE_GLOBAL_PREFACTOR)
-#define G_EI (2.00 * CONDUCTANCE_GLOBAL_PREFACTOR)
+#define G_EE (0.15 * CONDUCTANCE_GLOBAL_PREFACTOR) 
+#define G_EI (2.00 * CONDUCTANCE_GLOBAL_PREFACTOR) 
 #define G_IE (0.45 * CONDUCTANCE_GLOBAL_PREFACTOR / sqrt(K_REC_I_PREFACTOR)) // * sqrt(Kpre) works
 #define G_II (3.00 * CONDUCTANCE_GLOBAL_PREFACTOR / sqrt(K_REC_I_PREFACTOR)) // * sqrt(Kpre) works
 
@@ -44,7 +46,9 @@
 #define TAU_BG 3.0
 #define INV_TAU_BG (1.0 / TAU_BG)
 #define G_EB (CONDUCTANCE_GLOBAL_PREFACTOR * 0.3 / sqrt(K))
-#define G_IB (CONDUCTANCE_GLOBAL_PREFACTOR * 0.4 / sqrt(K * K_REC_I_PREFACTOR)) // ??? K_I_PREFACTOR ???
+#define G_IB (CONDUCTANCE_GLOBAL_PREFACTOR * 0.4 / sqrt(K * K_REC_I_PREFACTOR)) 
+//#define G_IB (CONDUCTANCE_GLOBAL_PREFACTOR * 0.4 / sqrt(K))
+
 
 /* ff input */
 #define CFF 0.1000000000
@@ -74,8 +78,8 @@ __device__ double dt, *thetaVec;
 __device__ double dev_gE[N_NEURONS], dev_gI[N_NEURONS], dev_isynap[N_NEURONS], dev_iffCurrent[N_Neurons];
 __device__ int dev_IF_SPK[N_NEURONS], curConter = 0;
 
-#define SAVE_CURRENT_FOR_NEURON 2
-#define N_CURRENT_STEPS_TO_STORE 5000
+#define SAVE_CURRENT_FOR_NEURON 20010
+#define N_CURRENT_STEPS_TO_STORE 1
 
 __device__ double glbCurE[N_CURRENT_STEPS_TO_STORE], glbCurI[N_CURRENT_STEPS_TO_STORE]; /* !!!!!! GENERALIZE */
 __device__ double rTotal[N_Neurons], gFF[N_Neurons]; /* rTotalPrev[N_Neurons];*/
@@ -109,7 +113,7 @@ __device__ int dev_prevStepSpkIdx[N_NEURONS], /*this will hold the row id in the
 /*   *tempRandnNew, */
 /*   *Itgrl, *ItgrlOld; */
 
-#define RHO 0.5 /* ratio - smatic / dendritic synapses*/
+#define RHO 0.1 /* ratio - somatic / dendritic synapses*/
 #define SPK_THRESH 0.0
 
 typedef struct 

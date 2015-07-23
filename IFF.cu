@@ -36,7 +36,6 @@ __device__ void RffTotal(double t) {
     */
     if(mNeuron < NE) {
       /**  !!!!! COS IN RADIANS ?????? */
-
       rTotal[mNeuron] = CFF * K * (R0 +  R1 * log10(1.000 + varContrast))
 	+ sqrt(CFF * K) * R0 * randnXiA[mNeuron]
 	+ sqrt(CFF * K) * R1 * log10(1.0 + varContrast) * (randnXiA[mNeuron] 
@@ -51,7 +50,6 @@ __device__ void RffTotal(double t) {
     }
     /*
       rTotal[mNeuron] = (R0 + R1 * log10(1 + CONTRAST)) * (CFF * K + sqrt(CFF *K) * randnXiA[mNeuron]);*/
-
   }
 }
  
@@ -62,11 +60,13 @@ __device__ void Gff(double t) {
   if(mNeuron < N_Neurons) {
     if(t > DT) {
       tmp = gffItgrl[mNeuron];
-      tmp = tmp * (1 - DT / TAU_SYNAP) + (SQRT_DT * INV_TAU_SYNAP) * normRndKernel(iffNormRandState);
       if(mNeuron < NE) {
+        tmp = tmp * (1 - DT / TAU_SYNAP_E) + (SQRT_DT * INV_TAU_SYNAP_E) * normRndKernel(iffNormRandState);
         gFF[mNeuron] =   GFF_E * (rTotal[mNeuron] + sqrt(rTotal[mNeuron]) * tmp);
       }
       if(mNeuron >= NE) {
+	//     tmp = tmp * (1 - DT / TAU_SYNAP_I) + (SQRT_DT * INV_TAU_SYNAP_I) * normRndKernel(iffNormRandState);
+	tmp = tmp * (1 - DT / TAU_SYNAP_E) + (SQRT_DT * INV_TAU_SYNAP_E) * normRndKernel(iffNormRandState);
         gFF[mNeuron] =  GFF_I * (rTotal[mNeuron] + sqrt(rTotal[mNeuron]) * tmp);
       }
       gffItgrl[mNeuron] = tmp;
@@ -75,7 +75,6 @@ __device__ void Gff(double t) {
       gffItgrl[mNeuron] = 0.0;
       gFF[mNeuron] = 0.0;
     }
-    
   }
 }
 

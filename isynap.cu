@@ -15,8 +15,8 @@ __device__ double isynap(double vm, int *dev_conVec) {
   if(mNeuron < N_NEURONS) {
     gE = dev_gE[mNeuron];
     gI = dev_gI[mNeuron];
-    gE *= EXP_SUM;
-    gI *= EXP_SUM;
+    gE *= EXP_SUM_E;
+    gI *= EXP_SUM_I;
     for(i = 0; i < N_NEURONS; ++i) {
       if(dev_IF_SPK[i]) { /* too many global reads */
         spkNeuronId[localNSpks] = i; 
@@ -36,14 +36,14 @@ __device__ double isynap(double vm, int *dev_conVec) {
     dev_gE[mNeuron] = gE;
     dev_gI[mNeuron] = gI;
     if(mNeuron < NE) {
-      tempCurE = -1 *  gE * (1/sqrt(K)) * INV_TAU_SYNAP * G_EE
+      tempCurE = -1 *  gE * (1/sqrt(K)) * INV_TAU_SYNAP_E * G_EE
                           * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
-      tempCurI = -1 * gI * (1/sqrt(K)) * INV_TAU_SYNAP * G_EI
+      tempCurI = -1 * gI * (1/sqrt(K)) * INV_TAU_SYNAP_I * G_EI
                           * (RHO * (vm - V_I) + (1 - RHO) * (E_L - V_I));
     }
     if(mNeuron >= NE){
-      tempCurE = -1 * gE * (1/sqrt(K)) * INV_TAU_SYNAP * G_IE * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
-      tempCurI = -1 * gI * (1/sqrt(K)) * INV_TAU_SYNAP * G_II * (RHO * (vm - V_I) + (1 - RHO) * (E_L - V_I));
+      tempCurE = -1 * gE * (1/sqrt(K)) * INV_TAU_SYNAP_E * G_IE * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
+      tempCurI = -1 * gI * (1/sqrt(K)) * INV_TAU_SYNAP_I * G_II * (RHO * (vm - V_I) + (1 - RHO) * (E_L - V_I));
     }
     totIsynap = tempCurE + tempCurI; 
   }
@@ -53,8 +53,8 @@ __device__ double isynap(double vm, int *dev_conVec) {
 __global__ void expDecay() {
   unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   if(mNeuron < N_NEURONS) {
-    dev_gE[mNeuron] *= EXP_SUM;
-    dev_gI[mNeuron] *= EXP_SUM;
+    dev_gE[mNeuron] *= EXP_SUM_E;
+    dev_gI[mNeuron] *= EXP_SUM_I;
   }
 }
 
@@ -62,8 +62,8 @@ __global__ void expDecay(int *dev_histCountE, int *dev_histCountI) {
   unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   int stride = gridDim.x * blockDim.x;
   while(mNeuron < N_NEURONS) {
-    dev_gE[mNeuron] *= EXP_SUM;
-    dev_gI[mNeuron] *= EXP_SUM;
+    dev_gE[mNeuron] *= EXP_SUM_E;
+    dev_gI[mNeuron] *= EXP_SUM_I;
     /*    if(mNeuron == 0) {
       for(int i = 0; i < N_NEURONS; ++i) {*/
     dev_histCountE[mNeuron] = 0;
@@ -146,12 +146,12 @@ __global__ void computeIsynap(double t) {
   if(mNeuron < N_NEURONS) {
     vm = dev_v[mNeuron];
     if(mNeuron < NE) {
-      tempCurE = -1 * dev_gE[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP * G_EE * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
-      tempCurI = -1 * dev_gI[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP * G_EI * (RHO * (vm - V_I) + (1 - RHO) * (E_L - V_I));
+      tempCurE = -1 * dev_gE[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP_E * G_EE * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
+      tempCurI = -1 * dev_gI[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP_I * G_EI * (RHO * (vm - V_I) + (1 - RHO) * (E_L - V_I));
     }
     if(mNeuron >= NE){
-      tempCurE = -1 * dev_gE[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP * G_IE * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
-      tempCurI = -1 * dev_gI[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP * G_II * (RHO * (vm - V_I) + (1 - RHO) * (E_L - V_I));
+      tempCurE = -1 * dev_gE[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP_E * G_IE * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
+      tempCurI = -1 * dev_gI[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP_I * G_II * (RHO * (vm - V_I) + (1 - RHO) * (E_L - V_I));
     }
     dev_isynap[mNeuron] = tempCurE + tempCurI; 
     if(mNeuron == SAVE_CURRENT_FOR_NEURON) {
