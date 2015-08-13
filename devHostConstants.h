@@ -5,11 +5,13 @@
 #define NI 20000ULL
 #define N_Neurons (NE + NI)
 #define N_NEURONS N_Neurons
-#define K_REC_I_PREFACTOR .5 // beta
+#define K_REC_I_PREFACTOR 1.0 // beta
 #define K_FF_I_PREFACTOR 1.0 // alpha
+#define K_FF_EI_PREFACTOR 1.0
+#define PREFACTOR_REC_BG 1.0
 
-#define K 2000.0
-#define DT 0.025 /* ms*/ /* CHANGE EXP+SUM WHEN DT CHANGES   */
+#define K (2000.0 / (PREFACTOR_REC_BG * PREFACTOR_REC_BG))
+#define DT 0.05 /* ms*/ /* CHANGE EXP+SUM WHEN DT CHANGES   */
 #define TAU_SYNAP_E 3.0
 #define TAU_SYNAP_I 3.0
 #define EXP_SUM_E exp(-1 * DT /TAU_SYNAP_E)

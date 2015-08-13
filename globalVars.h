@@ -35,35 +35,35 @@
 #define INV_TAU_SYNAP_I (1 / TAU_SYNAP_I)
 #define V_E 0.0
 #define V_I -80.0
-#define G_EE (0.15 * CONDUCTANCE_GLOBAL_PREFACTOR) 
-#define G_EI (2.00 * CONDUCTANCE_GLOBAL_PREFACTOR) 
-#define G_IE (0.45 * CONDUCTANCE_GLOBAL_PREFACTOR / sqrt(K_REC_I_PREFACTOR)) // * sqrt(Kpre) works
-#define G_II (3.00 * CONDUCTANCE_GLOBAL_PREFACTOR / sqrt(K_REC_I_PREFACTOR)) // * sqrt(Kpre) works
+#define G_EE (0.15 * CONDUCTANCE_GLOBAL_PREFACTOR * PREFACTOR_REC_BG) 
+#define G_EI (2.00 * CONDUCTANCE_GLOBAL_PREFACTOR * PREFACTOR_REC_BG) 
+#define G_IE (0.45 * CONDUCTANCE_GLOBAL_PREFACTOR * PREFACTOR_REC_BG / sqrt(K_REC_I_PREFACTOR)) // * sqrt(Kpre) works
+#define G_II (3.00 * CONDUCTANCE_GLOBAL_PREFACTOR * PREFACTOR_REC_BG / sqrt(K_REC_I_PREFACTOR)) // * sqrt(Kpre) works
 
 /* backgrund input */
 #define RB_E 0.002
 #define RB_I 0.002
 #define TAU_BG 3.0
 #define INV_TAU_BG (1.0 / TAU_BG)
-#define G_EB (CONDUCTANCE_GLOBAL_PREFACTOR * 0.3 / sqrt(K))
-#define G_IB (CONDUCTANCE_GLOBAL_PREFACTOR * 0.4 / sqrt(K * K_REC_I_PREFACTOR)) 
+#define G_EB (CONDUCTANCE_GLOBAL_PREFACTOR * PREFACTOR_REC_BG * 0.3 / sqrt(K))
+#define G_IB (CONDUCTANCE_GLOBAL_PREFACTOR * PREFACTOR_REC_BG * 0.4 / sqrt(K * K_REC_I_PREFACTOR)) 
 //#define G_IB (CONDUCTANCE_GLOBAL_PREFACTOR * 0.4 / sqrt(K))
 
 
 /* ff input */
-#define CFF 0.1000000000
-#define CFFE CFF
-#define CFFI (CFF * K_FF_I_PREFACTOR)
+#define CFF (0.1000000000 * PREFACTOR_REC_BG) // PREFACTOR_REC_BG is the sqrt of the prefactor of K=2000, this is done so that the firing rates remain the same for for different values of K
+#define CFFE (CFF * K_FF_EI_PREFACTOR)
+#define CFFI (CFF * K_FF_I_PREFACTOR * K_FF_EI_PREFACTOR)
 #define R0 0.002
 #define R1 0.02
 #define INP_FREQ (0.004 * PI)
-#define ETA_E 1.2
-#define ETA_I 1.2
+#define ETA_E 0.8
+#define ETA_I 0.8
 #define MU_E 0.0
 #define MU_I 0.0
 
-#define GFF_E (CONDUCTANCE_GLOBAL_PREFACTOR * 0.95 / sqrt(K))
-#define GFF_I (CONDUCTANCE_GLOBAL_PREFACTOR * 1.26 * sqrt(K_REC_I_PREFACTOR) / (K_FF_I_PREFACTOR * sqrt(K)))
+#define GFF_E (CONDUCTANCE_GLOBAL_PREFACTOR * 0.95 / (sqrt(K) * K_FF_EI_PREFACTOR * PREFACTOR_REC_BG))
+#define GFF_I (CONDUCTANCE_GLOBAL_PREFACTOR * 1.26 * sqrt(K_REC_I_PREFACTOR) / (PREFACTOR_REC_BG * K_FF_I_PREFACTOR * K_FF_EI_PREFACTOR * sqrt(K)))
 //#define KFF 100.0
 //#define GE_FF (0.95 * 4.0)
 //#define GI_FF (1.26 * 4.0)
@@ -113,7 +113,7 @@ __device__ int dev_prevStepSpkIdx[N_NEURONS], /*this will hold the row id in the
 /*   *tempRandnNew, */
 /*   *Itgrl, *ItgrlOld; */
 
-#define RHO 0.1 /* ratio - somatic / dendritic synapses*/
+#define RHO 0.5 /* ratio - somatic / dendritic synapses*/
 #define SPK_THRESH 0.0
 
 typedef struct 

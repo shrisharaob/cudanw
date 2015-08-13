@@ -38,7 +38,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  double tStart = 0.0, tStop = 10000.0;
+  double tStart = 0.0, tStop = 100000.0;
   double *spkTimes, *vm = NULL, host_theta = 0.0, theta_degrees; /* *vstart; 500 time steps */
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   double *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
@@ -438,8 +438,10 @@ int main(int argc, char *argv[]) {
     totalNSpks = MAX_SPKS;
     printf("\n ***** WARNING MAX_SPKS EXCEEDED limit of %d *****\n", MAX_SPKS);
   }
-  for(i = 1; i <= totalNSpks; ++i) {
-    fprintf(fpSpkTimes, "%f;%f\n", spkTimes[i], (double)spkNeuronIds[i]);
+  if(IF_SAVE) {
+      for(i = 1; i <= totalNSpks; ++i) {
+        fprintf(fpSpkTimes, "%f;%f\n", spkTimes[i], (double)spkNeuronIds[i]);
+      }
   }
   fclose(fpSpkTimes);
   printf("done\n");

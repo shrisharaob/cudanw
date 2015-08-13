@@ -36,9 +36,9 @@ __device__ void RffTotal(double t) {
     */
     if(mNeuron < NE) {
       /**  !!!!! COS IN RADIANS ?????? */
-      rTotal[mNeuron] = CFF * K * (R0 +  R1 * log10(1.000 + varContrast))
-	+ sqrt(CFF * K) * R0 * randnXiA[mNeuron]
-	+ sqrt(CFF * K) * R1 * log10(1.0 + varContrast) * (randnXiA[mNeuron] 
+      rTotal[mNeuron] = CFFE * K * (R0 +  R1 * log10(1.000 + varContrast))
+	+ sqrt(CFFE * K) * R0 * randnXiA[mNeuron]
+	+ sqrt(CFFE * K) * R1 * log10(1.0 + varContrast) * (randnXiA[mNeuron] 
 		      + ETA_E * randwZiA[mNeuron * 4] * cos(2.0 * (theta - randuDelta[mNeuron])) 
 		      + MU_E * randwZiA[mNeuron *4 + 1] * cos(INP_FREQ * t - randuPhi[mNeuron * 3])
 		      + ETA_E * MU_E * 0.5 * (randwZiA[mNeuron * 4 + 2] * cos(2.0 * theta + INP_FREQ * t - randuPhi[mNeuron * 3 + 1]) + randwZiA[mNeuron * 4 + 3] * cos(2.0 * theta - INP_FREQ * t + randuPhi[mNeuron * 3 + 2])));
