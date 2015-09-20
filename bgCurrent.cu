@@ -8,7 +8,7 @@ __device__ double bgCur(double vm) {
       gNoise = gaussNoiseE[mNeuron];
       gNoise = gNoise * (1 - DT * INV_TAU_BG) + SQRT_DT  * INV_TAU_BG * normRndKernel(bgCurNoiseGenState);
       //      gNoise = 0;
-      gE = G_EB * K * (RB_E + sqrt(RB_E / K) * gNoise);
+      gE = G_EB * K * K_REC_E_PREFACTOR * (RB_E + sqrt(RB_E / (K * K_REC_E_PREFACTOR)) * gNoise);
       /*      iBg = -1 * gE * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));*/
       iBg = -1 * gE * (RHO * vm + (1 - RHO) * E_L);
       gaussNoiseE[mNeuron] = gNoise;

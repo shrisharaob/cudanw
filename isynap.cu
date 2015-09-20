@@ -140,6 +140,7 @@ __global__ void spkSum(int nSpksInPrevStep) {
 }
 
 __global__ void computeIsynap(double t) {
+  // THIS IS THE FUNCTION BEING USED CURRENTLY
   unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   double vm, tempCurE = 0, tempCurI = 0;
   int localCurConter;
@@ -147,13 +148,23 @@ __global__ void computeIsynap(double t) {
     vm = dev_v[mNeuron];
     if(mNeuron < NE) {
       tempCurE = -1 * dev_gE[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP_E * G_EE * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
+      //      tempCurE = -1 * dev_gE[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP_EE * G_EE * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
       tempCurI = -1 * dev_gI[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP_I * G_EI * (RHO * (vm - V_I) + (1 - RHO) * (E_L - V_I));
     }
     if(mNeuron >= NE){
       tempCurE = -1 * dev_gE[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP_E * G_IE * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
+      //    tempCurE = -1 * dev_gE[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP_IE * G_IE * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));      
       tempCurI = -1 * dev_gI[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP_I * G_II * (RHO * (vm - V_I) + (1 - RHO) * (E_L - V_I));
+      //tempCurI = -1 * dev_gI[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP_II * G_II * (RHO * (vm - V_I) + (1 - RHO) * (E_L - V_I));
+
     }
-    dev_isynap[mNeuron] = tempCurE + tempCurI; 
+    dev_isynap[mNeuron] = tempCurE + tempCurI;
+
+    if(t > N_I_AVGCUR_STORE_START_TIME & mNeuron >= NE & mNeuron < NE + N_I_2BLOCK_NA_CURRENT)    {
+      dev_totalAvgEcurrent2I[mNeuron - NE] += tempCurE / ((TSTOP / DT) - (TSTOP - N_I_AVGCUR_STORE_START_TIME)/DT);
+      dev_totalAvgIcurrent2I[mNeuron - NE] += tempCurI / ((TSTOP / DT) - (TSTOP - N_I_AVGCUR_STORE_START_TIME)/DT);
+    }
+    
     if(mNeuron == SAVE_CURRENT_FOR_NEURON) {
       localCurConter = curConter;
       if(localCurConter < N_CURRENT_STEPS_TO_STORE) {

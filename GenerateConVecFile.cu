@@ -126,7 +126,7 @@ __global__ void kernelGenConMatWithDiffK(curandState *state, float *dev_conVec, 
   float k;
   if(id < maxNeurons & kNeuron < N_NEURONS) {
     if(kNeuron < NE) {
-      k = (float)K;
+      k = ((float)K) * K_REC_E_PREFACTOR;
     }
     else {
       k = ((float)K) * K_REC_I_PREFACTOR;
@@ -265,7 +265,13 @@ __global__ void KernelGenConmatBiDir(curandState *state, float *dev_conVec, int 
   double alpha = ALPHA, pBi, pUni, p, k, n;
 
   if(id < maxNeurons & kNeuron < N_NEURONS) {
-    k = (double)K;
+    // k = (double)K;
+    if(kNeuron < NE) {
+      k = ((float)K) * K_REC_E_PREFACTOR;
+    }
+    else {
+      k = ((float)K) * K_REC_I_PREFACTOR;
+    }
     if(kNeuron < NE) {
       n = (double)NE;
     }

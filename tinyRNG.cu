@@ -64,9 +64,10 @@ void ConMatFixedEII(float *conVec) {
 unsigned int* TestBidir(float *conVec) {
   // CURRENTLY TESTS ONLY E-2-E CONNECTIONS
   unsigned long long i, j;
-  unsigned int countE = 0, countI = 0;
+  unsigned int countE = 0, countI = 0, countE2I = 0;
   FILE *fpp = fopen("bidircntII.csv", "w");
   FILE *fppE = fopen("bidircntEE.csv", "w");
+  FILE *fppE2I = fopen("bidircntE2I.csv", "w");  
   for(j = NE; j < N_NEURONS; ++j) { // COLUMNS
     //    printf("j = %llu\n", j);
     countI = 0;
@@ -92,6 +93,19 @@ unsigned int* TestBidir(float *conVec) {
     //    fprintf(stdout, "%u\n", countI);
   }
   fclose(fppE);
+
+  for(i = 0; i < NE; ++i) {
+    countE2I = 0;
+    if(i < NE) {
+      for(j = NE; j < N_NEURONS; ++j) {
+	if(conVec[i + j * N_NEURONS] &&  conVec[j + i * N_NEURONS]) {
+	  countE2I += 1;
+	}
+      }
+    }
+    fprintf(fppE2I, "%u\n", countE2I);
+  }
+  fclose(fppE2I);
 }
 
 void ConMatBiDir(float *conVec, int bidirType) {
@@ -115,9 +129,12 @@ void ConMatBiDir(float *conVec, int bidirType) {
   else if(bidirType == 0) {
     printf("\n bidir in I --> I\n");
   }
-  else {
+  else if (bidirType == 2)  {
     printf("\n bidir in  E --> E and I --> I\n");
   }
+  else if (bidirType == 3)  {
+    printf("\n bidir in E <--> I\n");
+  }  
   /* INITIALIZE */
   for(i = 0; i < N_NEURONS; ++i) {
     for(j =0; j < N_NEURONS; ++j) {
@@ -127,10 +144,10 @@ void ConMatBiDir(float *conVec, int bidirType) {
   /* COMPUTE p */
   for(i = 0; i < N_NEURONS; ++i) {
     if(i < NE) {
-      p = (double)K / (double)NE;
+      p = ((double)K * K_REC_E_PREFACTOR) / (double)NE;
     }
     else {
-      p = (double)K / (double)NI;
+      p = ((double)K * K_REC_I_PREFACTOR) / (double)NI;
     }
     pBi = alpha * p + (1 - alpha) * p * p;
     pUni = 2 * (1 - alpha) * p * (1 - p);
@@ -254,8 +271,41 @@ void ConMatBiDir(float *conVec, int bidirType) {
       }
     }
 
+    /* BI-DIR CONNECTIONS IN E <--> I   */
+    if(bidirType == 3) { 
+      if(i < NE){
+	for(j = 0; j < NE; ++j) { /* E --> E */
+	  if(p >= tinymt32_generate_float(&state)) {
+	    conVec[i + j * N_NEURONS] = 1;
+	  }
+	}
+	
+        for(j = NE; j < N_NEURONS; ++j) { // E <--> I
+          if(pBi > tinymt32_generate_float(&state)) {
+            conVec[i + j * N_NEURONS] = 1; // i --> j
+            conVec[j + i * N_NEURONS] = 1; //  j --> i
+          }
+          else {
+            if(pUni > tinymt32_generate_float(&state)) {
+              if(tinymt32_generate_float(&state) > 0.5) {
+                conVec[j + i * N_NEURONS] = 1; // i --> j
+              }
+              else {
+                conVec[i + j * N_NEURONS] = 1; //  j --> i
+              }
+            }      
+          }
+        }
+      }
 
-
+      if(i >= NE) {
+        for(j = NE; j < N_NEURONS; ++j) {/* I --> I */
+	  if(p >= tinymt32_generate_float(&state)) {
+	    conVec[i + j * N_NEURONS] = 1;
+	  }
+        }
+      }
+    }
   }
 }
 

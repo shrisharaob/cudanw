@@ -38,7 +38,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  double tStart = 0.0, tStop = 100000.0;
+  double tStart = 0.0, tStop = TSTOP;
   double *spkTimes, *vm = NULL, host_theta = 0.0, theta_degrees; /* *vstart; 500 time steps */
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   double *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
@@ -58,6 +58,7 @@ int main(int argc, char *argv[]) {
   cudaStream_t stream1;
   char filetag[16];
   double *firingrate;
+
 
   printf("\n \n bg I  = %f \n", K*K_REC_I_PREFACTOR*G_IB*RB_I);
   firingrate = (double *) malloc(sizeof(double) * N_NEURONS);
@@ -90,10 +91,11 @@ int main(int argc, char *argv[]) {
   nSteps = (tStop - tStart) / DT;
   lastNStepsToStore = (int)floor(STORE_LAST_T_MILLISEC  / DT);
   //  nSteps = 800;
-  printf("\n N  = %llu \n NE = %llu \n NI = %llu \n KE  = %d, KI = %d \n tStop = %d milli seconds nSteps = %d\n\n", N_NEURONS, NE, NI, (int)K, (int)(K * K_REC_I_PREFACTOR), (int)tStop, nSteps);
+  printf("\n N  = %llu \n NE = %llu \n NI = %llu \n KE  = %d, KI = %d \n tStop = %d milli seconds nSteps = %d\n\n", N_NEURONS, NE, NI, (int)(K * K_REC_E_PREFACTOR), (int)(K * K_REC_I_PREFACTOR), (int)tStop, nSteps);
   printf("KFF_E = %d, KFF_I = %d", (int)(CFFE * K), (int)(CFFI * K));
   
   printf(" theta = %2.3f \n contrast = %2.1f\n ksi = %f\n dt = %f \n tau E = %f , tau I = %f \n EXP_SUM_E = %.16f, EXP_SUM_I = %.16f\n Conductance glb prefactor = %f", host_theta * 180.0 / PI, HOST_CONTRAST, ETA_E, DT, TAU_SYNAP_E, TAU_SYNAP_I, EXP_SUM_E, EXP_SUM_I, CONDUCTANCE_GLOBAL_PREFACTOR);
+  printf("\n tau FF = %f", TAU_FF);
   printf("\n alpha = %f, RHO = %f\n", ALPHA, RHO);
   
   /* choose 256 threads per block for high occupancy */
@@ -112,6 +114,48 @@ int main(int argc, char *argv[]) {
   setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(devNormRandState, tttt);
   AuxRffTotal<<<BlocksPerGrid, ThreadsPerBlock>>>(devNormRandState, devStates);
   cudaCheck(cudaFree(devNormRandState));
+
+  float *devPtr_randnXiA = NULL, *devPtr_randuDelta = NULL, *devPtr_randwZiA = NULL, *devPtr_randuPhi = NULL;
+  float *hostPtr_randnXiA = NULL, *hostPtr_randuDelta = NULL, *hostPtr_randwZiA = NULL, *hostPtr_randuPhi = NULL;
+  cudaCheck(cudaMallocHost((void **)&hostPtr_randnXiA, N_NEURONS * sizeof(*hostPtr_randnXiA)));
+  cudaCheck(cudaMallocHost((void **)&hostPtr_randuDelta, N_NEURONS * sizeof(*hostPtr_randuDelta)));
+  cudaCheck(cudaMallocHost((void **)&hostPtr_randwZiA, 4 * N_NEURONS * sizeof(*hostPtr_randwZiA)));
+  //cudaCheck(cudaMallocHost((void **)&hostPtr_randuPhi, 4 * N_NEURONS * sizeof(*hostPtr_randuPhi)));    
+  cudaCheck(cudaGetSymbolAddress((void **)&devPtr_randnXiA, randnXiA));
+  cudaCheck(cudaGetSymbolAddress((void **)&devPtr_randuDelta, randuDelta));
+  cudaCheck(cudaGetSymbolAddress((void **)&devPtr_randwZiA, randwZiA));
+  cudaCheck(cudaGetSymbolAddress((void **)&devPtr_randuPhi, randuPhi));
+  //  printf("pointer dev: %p %p %p %p", devPtr_randnXiA, devPtr_randuDelta, devPtr_randwZiA, devPtr_randuPhi);
+  //  printf("\npointer host: %p %p %p %p\n", hostPtr_randnXiA, hostPtr_randuDelta, hostPtr_randwZiA, hostPtr_randuPhi);
+  FILE *fpRandXiA, *fpRandZiA, *fpRanduDelta;
+  fpRandXiA = fopen("randnXiA.csv", "w");
+  fpRandZiA = fopen("randnZiA.csv", "w");
+  fpRanduDelta = fopen("randnDelta.csv", "w");  
+  cudaCheck(cudaMemcpy(hostPtr_randnXiA, devPtr_randnXiA,N_NEURONS * sizeof(*hostPtr_randnXiA), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(hostPtr_randwZiA, devPtr_randwZiA,  4 * N_NEURONS * sizeof(*hostPtr_randwZiA), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(hostPtr_randuDelta, devPtr_randuDelta,  N_NEURONS * sizeof(*hostPtr_randuDelta), cudaMemcpyDeviceToHost)); 
+  for(unsigned int i = 0; i < N_NEURONS; i++) {
+    fprintf(fpRandXiA, "%f\n", hostPtr_randnXiA[i]);
+    fprintf(fpRanduDelta, "%f\n", hostPtr_randuDelta[i]);    
+    fprintf(fpRandZiA, "%f;%f;%f;%f\n", hostPtr_randwZiA[i*4], hostPtr_randwZiA[i*4 + 1], hostPtr_randwZiA[i*4 + 2], hostPtr_randwZiA[i*4 + 3]);
+  }
+  fclose(fpRandXiA);
+  fclose(fpRanduDelta);
+  fclose(fpRandZiA);
+  cudaCheck(cudaFreeHost(hostPtr_randnXiA));
+  cudaCheck(cudaFreeHost(hostPtr_randwZiA));
+  cudaCheck(cudaFreeHost(hostPtr_randuDelta));    
+
+  float *devPtr_totalAvgEcurrent2I = NULL, *devPtr_totalAvgIcurrent2I = NULL;
+  float *hostPtr_totalAvgEcurrent2I = NULL, *hostPtr_totalAvgIcurrent2I = NULL;
+  cudaCheck(cudaMallocHost((void **)&hostPtr_totalAvgEcurrent2I, N_I_2BLOCK_NA_CURRENT * sizeof(*hostPtr_totalAvgEcurrent2I)));
+  cudaCheck(cudaMallocHost((void **)&hostPtr_totalAvgIcurrent2I, N_I_2BLOCK_NA_CURRENT * sizeof(*hostPtr_totalAvgIcurrent2I)));
+  cudaCheck(cudaGetSymbolAddress((void **)&devPtr_totalAvgEcurrent2I, dev_totalAvgEcurrent2I));
+  cudaCheck(cudaGetSymbolAddress((void **)&devPtr_totalAvgIcurrent2I, dev_totalAvgIcurrent2I));
+
+
+
+  
   /* gENERATE CONNECTION MATRIX */
   /*  cudaCheck(cudaMalloc((void **)&dev_conVec, N_NEURONS * N_NEURONS * sizeof(int)));*/
   /*  cudaCheck(cudaMallocHost((void **)&conVec, N_NEURONS * N_NEURONS * sizeof(int)));  */
@@ -239,7 +283,7 @@ int main(int argc, char *argv[]) {
   
   
   
-  int *dev_IF_SPK_Ptr = NULL, *dev_prevStepSpkIdxPtr = NULL, *host_IF_SPK = NULL, *host_prevStepSpkIdx = NULL,  *dev_nEPtr = NULL, *dev_nIPtr = NULL;
+  int *dev_IF_SPK_Ptr = NULL, *dev_prevStepSpkIdxPtr = NULL, *host_IF_SPK = NULL, *host_prevStepSpkIdx = NULL, *dev_nEPtr = NULL, *dev_nIPtr = NULL;
   int nSpksInPrevStep;
   cudaCheck(cudaMallocHost((void **)&host_IF_SPK, N_NEURONS * sizeof(int)));
   cudaCheck(cudaMallocHost((void **)&host_prevStepSpkIdx, N_NEURONS * sizeof(int)));
@@ -420,6 +464,21 @@ int main(int argc, char *argv[]) {
   fpElapsedTime = fopen("elapsedTime.csv", "a+");
   fprintf(fpElapsedTime, "%llu %f %d\n", N_NEURONS, elapsedTime, *nSpks);
   fclose(fpElapsedTime);
+
+  cudaCheck(cudaMemcpy(hostPtr_totalAvgEcurrent2I, devPtr_totalAvgEcurrent2I,N_I_2BLOCK_NA_CURRENT * sizeof(*hostPtr_totalAvgEcurrent2I), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(hostPtr_totalAvgIcurrent2I, devPtr_totalAvgIcurrent2I,N_I_2BLOCK_NA_CURRENT * sizeof(*hostPtr_totalAvgIcurrent2I), cudaMemcpyDeviceToHost));
+
+  strcpy(filename, "avgNaBlockedECur");
+  sprintf(fileSuffix, "_xi%1.1f_theta%d_%.2f_%1.1f_cntrst%.1f_%d_tr%s", ETA_E, (int)theta_degrees, ALPHA, TAU_SYNAP_E, HOST_CONTRAST, (int)(tStop),filetag);
+  strcat(filename, fileSuffix);
+  FILE *fpAvgNaBlockedCurEI= fopen(strcat(filename, ".csv"),"w");
+  for(unsigned int i = 0; i < N_I_2BLOCK_NA_CURRENT; i++) {
+    fprintf(fpAvgNaBlockedCurEI, "%f;%f\n", hostPtr_totalAvgEcurrent2I[i], hostPtr_totalAvgIcurrent2I[i]);
+  }
+  fclose(fpAvgNaBlockedCurEI);
+  cudaCheck(cudaFreeHost(hostPtr_totalAvgEcurrent2I));
+  cudaCheck(cudaFreeHost(hostPtr_totalAvgIcurrent2I));
+
   /* ================= SAVE TO DISK =============================================================*/
 
   printf(" saving results to disk ... "); 
@@ -438,11 +497,11 @@ int main(int argc, char *argv[]) {
     totalNSpks = MAX_SPKS;
     printf("\n ***** WARNING MAX_SPKS EXCEEDED limit of %d *****\n", MAX_SPKS);
   }
-  if(IF_SAVE) {
+  //  if(IF_SAVE) {
       for(i = 1; i <= totalNSpks; ++i) {
         fprintf(fpSpkTimes, "%f;%f\n", spkTimes[i], (double)spkNeuronIds[i]);
       }
-  }
+      //  }
   fclose(fpSpkTimes);
   printf("done\n");
   printf("computing firing rates ....");
