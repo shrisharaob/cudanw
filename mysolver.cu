@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaSetDevice(deviceId));
   theta_degrees = host_theta;
   host_theta = PI * host_theta / (180.0); /* convert to radians */
-  /*======SIMULATING EYE TITLE ========== */
+  /* ======SIMULATING EYE TILTE ========== */
   // srand(time(NULL));
   // double tmprnd = ((double) rand() / (RAND_MAX + 1.0)) * (5.0) - (2.5); // simulatinge eye tilt
   // host_theta += (tmprnd * PI / 180.0);
