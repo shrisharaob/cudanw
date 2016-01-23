@@ -134,17 +134,25 @@ __global__ void kernelGenConMatWithDiffK(curandState *state, float *dev_conVec, 
     for(i = 0; i < N_NEURONS; ++i) {
       if(i < NE) {  /* E --> E/I */
         if(k/((float)NE) >= randkernel(state, kNeuron)) { /* neuron[id] receives input from i ? */
-          dev_conVec[i + id * maxNeurons] = 1;
+          // dev_conVec[i + id * maxNeurons] = 1;
+          dev_conVec[i + id * N_NEURONS] = 1;	  
         }
       }
       if(i >= NE) { /* I --> E/I */
         if(k/((float)NI) >= randkernel(state, kNeuron)) { /* neuron[id] receives input from i ? */
-	  dev_conVec[i + id * maxNeurons] = 1; //dev_conVec[id + i * maxNeurons] = 1;
+	  //	  dev_conVec[i + id * maxNeurons] = 1; //dev_conVec[id + i * maxNeurons] = 1;
+          dev_conVec[i + id * N_NEURONS] = 1;	  
         } 
       }
     }
+    //======================================
+    // for(i = 0; i < N_NEURONS; ++i) {
+    //   dev_conVec[i + id * N_NEURONS]  = i + id * N_NEURONS + lChunck * maxNeurons * N_NEURONS;
+    // }
+    //=========================================
   }
 }
+
 //------------------------------
 __global__ void kernelFixedEII(curandState *fixedState, curandState *state, float *dev_conVec, int lChunck, int maxNeurons){
   /* indexing of matrix row + clm x N_NEURONS*/
@@ -357,8 +365,8 @@ int main(int argc, char *argv[]) {
   printf("Global Mem = %ld\n", prop.totalGlobalMem);
   i = 0;
   maxMem = prop.totalGlobalMem;
-  if(maxMem < (N_NEURONS * N_NEURONS * 4 + N_NEURONS * 5)) {
-    while(maxMem < ((N_NEURONS / nChunks) * N_NEURONS * 4.0   + N_NEURONS * 5.0)) {
+  if(maxMem < (N_NEURONS * N_NEURONS * 4 + N_NEURONS * 4)) {
+    while(maxMem < ((N_NEURONS / nChunks) * N_NEURONS * 4   + N_NEURONS * 5)) {
       nChunks += 1;
     }
     maxNeurons = N_NEURONS / nChunks;
@@ -415,16 +423,17 @@ int main(int argc, char *argv[]) {
       kernelGenConMatSparseE2E<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, dev_conVecPtr, i, maxNeurons);
       break;
     case biDir:
-      printf("\nBi-dir\n");
-      ConMatBiDir(fullConVec, bidirType); // defined in file : tinyRNG.cu 
-      TestBidir(fullConVec);
-      break;
+      if(i == 0){
+	printf("\nBi-dir\n");
+	ConMatBiDir(fullConVec, bidirType); // defined in file : tinyRNG.cu
+	TestBidir(fullConVec);
+	}
+       break;
     case fixedEII:
       cudaCheck(cudaMalloc((void **)&fixedStates,  N_NEURONS * sizeof(curandState)));
       setup_kernel<<<BlocksPerGrid, ThreadsPerBlock>>>(fixedStates, 1326783ULL);
       printf("fixed EI, IE, II\n");
       ConMatFixedEII(fullConVec);
-    
       /*      kernelFixedEII<<<BlocksPerGrid, ThreadsPerBlock>>>(fixedStates, devStates, dev_conVecPtr, i, maxNeurons);*/
     default:
       kernelGenConMat<<<BlocksPerGrid, ThreadsPerBlock>>>(devStates, dev_conVecPtr, i, maxNeurons);
@@ -434,13 +443,43 @@ int main(int argc, char *argv[]) {
       printf("done\ncopying dev to host ...");
       cudaCheck(cudaMemcpy(conVec, dev_conVecPtr, (N_NEURONS / nChunks) * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
       printf(" done\n");
+      printf("#Elements in a chunk: %llu \n", (N_NEURONS / nChunks) * N_NEURONS);
+      printf("#Elements in a chunk: %llu \n", chunckSize);            
+
+      // for(int ii = 0; ii < chunckSize; ++ii) {
+      // 	conVec[ii]  = ii + i * chunckSize;
+      // }
+      // printf("------------------------\n");	
+      // for(int ii = 0; ii < chunckSize; ++ii) {
+
+      // 	printf("%d ", (int)conVec[ii]);
+      // }
+      // printf("\n");	
+      // printf("------------------\n");	
+      // for(int ii = 0; ii < 4; ++ii) {
+      // 	  printf("%d %d\n", (int)conVec[ii], (int)conVec[ii + N_NEURONS]);
+      // 	}
+
+      // }	
+      // else {
+      // 	for(int ii = 0; ii < 4; ++ii) {
+      // 	  //	  printf("%d %d\n", (int)conVec[ii + i * chunckSize], (int)conVec[ii + N_NEURONS + i * chunckSize]);
+      // 	  printf("%d %d\n", (int)(ii + i * chunckSize), (int)(ii + N_NEURONS + i * chunckSize));	  
+      // 	}
+      // }
+      
       for(unsigned long long int j = 0; j < chunckSize; ++j) {
-      /*      printf("%du\n", j + chunckSize * i);*/
+	/*      printf("%du\n", j + chunckSize * i);*/
         fullConVec[j + chunckSize * i] = conVec[j];
       } 
     }
   }
 
+	  // for(int ii = 0; ii < 4; ++ii) {
+	  //   printf("%d %d %d %d\n", (int)fullConVec[ii], (int)fullConVec[ii + N_NEURONS], (int)fullConVec[ii + chunckSize],  (int)fullConVec[ii + N_NEURONS + chunckSize]);
+	  // }
+
+  
   //   printf("done\ncopying dev to host ...");
   //   cudaCheck(cudaMemcpy(conVec, dev_conVecPtr, (N_NEURONS / nChunks) * N_NEURONS * sizeof(float), cudaMemcpyDeviceToHost));
   //   printf(" done\n");
@@ -487,9 +526,8 @@ int main(int argc, char *argv[]) {
   fclose(fpSparseConVec);
   fclose(fpIdxVec);
   fclose(fpNpostNeurons);*/
-    
-
-if(N_NEURONS < 2) {
+ 
+ if(N_NEURONS < 2) {
     for(i = 0; i < N_NEURONS; ++i) {
       printf("neuron %d projects to : ", i);
       for(int j = 0; j < nPostNeurons[i]; ++j) {
@@ -498,8 +536,6 @@ if(N_NEURONS < 2) {
       printf("\n");
     }
   }
-
-
 
   /*
   int buffer[N_NEURONS * N_NEURONS], j;

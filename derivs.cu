@@ -103,7 +103,13 @@ __device__ void derivs(double t, double stateVar[], double dydx[], double isynap
     /*    if(kNeuron >= 13520) {
       cur = 3.0;
       }*/
-    
+    // if(t < 2000) {
+    //   iffPrefactor = 0.0;
+    // }
+    // else {
+    //   iffPrefactor = 1.0;
+    // }
+
     if (kNeuron < NE) {
       if(kNeuron >= 0 & kNeuron < N_E_2BLOCK_NA_CURRENT) { /* BLOCK Na2+ CHANNEL FOR THESE NEURONS */
         dydx[0] =  1/Cm * (cur 

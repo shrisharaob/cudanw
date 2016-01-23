@@ -33,9 +33,9 @@
 /* params synapseb */
 #define INV_TAU_SYNAP_E (1 / TAU_SYNAP_E)
 #define INV_TAU_SYNAP_I (1 / TAU_SYNAP_I)
-/* #define INV_TAU_SYNAP_EE (1 / TAU_SYNAP_EE) */
+#define INV_TAU_SYNAP_EE (1 / TAU_SYNAP_EE)
 /* #define INV_TAU_SYNAP_IE (1 / TAU_SYNAP_IE) */
-/* #define INV_TAU_SYNAP_II (1 / TAU_SYNAP_II) */
+#define INV_TAU_SYNAP_II (1 / TAU_SYNAP_II)
 #define V_E 0.0
 #define V_I -80.0
 #define G_EE (0.15 * CONDUCTANCE_GLOBAL_PREFACTOR * PREFACTOR_REC_BG / sqrt(K_REC_E_PREFACTOR)) 
@@ -60,8 +60,8 @@
 #define R0 0.002
 #define R1 0.02
 #define INP_FREQ (0.004 * PI)
-#define ETA_E 0.8
-#define ETA_I 0.8
+#define ETA_E 1.2 //0.8
+#define ETA_I 1.2 //0.8
 #define MU_E 0.0
 #define MU_I 0.0
 
@@ -82,8 +82,8 @@ __device__ double dt, *thetaVec;
 __device__ double dev_gE[N_NEURONS], dev_gI[N_NEURONS], dev_isynap[N_NEURONS], dev_iffCurrent[N_Neurons];
 __device__ int dev_IF_SPK[N_NEURONS], curConter = 0;
 
-#define SAVE_CURRENT_FOR_NEURON 20010
-#define N_CURRENT_STEPS_TO_STORE 1
+#define SAVE_CURRENT_FOR_NEURON 0
+#define N_CURRENT_STEPS_TO_STORE 2  //  = Tms2store / DT
 
 __device__ float dev_totalAvgEcurrent2I[N_I_2BLOCK_NA_CURRENT], dev_totalAvgIcurrent2I[N_I_2BLOCK_NA_CURRENT];
 
@@ -97,10 +97,11 @@ __device__ int dev_nPostNeurons[N_NEURONS], dev_sparseIdx[N_NEURONS];
 
 __device__ int *dev_sparseConVec;
 
+/*USED IN ROUTINE COMPUTEG_OPTIMAL*/
 #define N_SPKS_IN_PREV_STEP 3000
-__device__ int dev_prevStepSpkIdx[N_NEURONS], /*this will hold the row id in the matrix dev_spksCountMat*/
-  dev_ESpkCountMat[N_NEURONS * N_SPKS_IN_PREV_STEP],
-  dev_ISpkCountMat[N_NEURONS * N_SPKS_IN_PREV_STEP];
+/* __device__ int dev_prevStepSpkIdx[N_NEURONS], /\*this will hold the row id in the matrix dev_spksCountMat*\/ */
+/*   dev_ESpkCountMat[N_NEURONS * N_SPKS_IN_PREV_STEP], */
+/*   dev_ISpkCountMat[N_NEURONS * N_SPKS_IN_PREV_STEP]; */
 
 /* // recurrent input  */
 /* __device__ double *tempCurE, *tempCurI; */

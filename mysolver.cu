@@ -59,7 +59,6 @@ int main(int argc, char *argv[]) {
   char filetag[16];
   double *firingrate;
 
-
   printf("\n \n bg I  = %f \n", K*K_REC_I_PREFACTOR*G_IB*RB_I);
   firingrate = (double *) malloc(sizeof(double) * N_NEURONS);
   cudaCheck(cudaStreamCreate(&stream1));
@@ -281,16 +280,16 @@ int main(int argc, char *argv[]) {
   printf("\n launching Simulation kernel ... \n");
   fflush(stdout);
   
-  
-  
-  int *dev_IF_SPK_Ptr = NULL, *dev_prevStepSpkIdxPtr = NULL, *host_IF_SPK = NULL, *host_prevStepSpkIdx = NULL, *dev_nEPtr = NULL, *dev_nIPtr = NULL;
+
+  // int *dev_prevStepSpkIdxPtr = NULL;
+  int *dev_IF_SPK_Ptr = NULL,  *host_IF_SPK = NULL, *host_prevStepSpkIdx = NULL, *dev_nEPtr = NULL, *dev_nIPtr = NULL;
   int nSpksInPrevStep;
   cudaCheck(cudaMallocHost((void **)&host_IF_SPK, N_NEURONS * sizeof(int)));
   cudaCheck(cudaMallocHost((void **)&host_prevStepSpkIdx, N_NEURONS * sizeof(int)));
   cudaCheck(cudaGetSymbolAddress((void **)&dev_IF_SPK_Ptr, dev_IF_SPK));
-  cudaCheck(cudaGetSymbolAddress((void **)&dev_prevStepSpkIdxPtr, dev_prevStepSpkIdx));
-  cudaCheck(cudaGetSymbolAddress((void **)&dev_nEPtr, dev_ESpkCountMat));
-  cudaCheck(cudaGetSymbolAddress((void **)&dev_nIPtr, dev_ISpkCountMat));
+  // cudaCheck(cudaGetSymbolAddress((void **)&dev_prevStepSpkIdxPtr, dev_prevStepSpkIdx));
+  // cudaCheck(cudaGetSymbolAddress((void **)&dev_nEPtr, dev_ESpkCountMat));
+  // cudaCheck(cudaGetSymbolAddress((void **)&dev_nIPtr, dev_ISpkCountMat));
   for(i = 0; i < N_NEURONS; ++i) {
     host_IF_SPK[i] = 0;
     firingrate[i] = 0.0;
@@ -306,9 +305,14 @@ int main(int argc, char *argv[]) {
   int *histVec = NULL, *dev_histVec = NULL; /* for storing the post-synaptic neurons to be updated */
   int histVecIndx = 0;
   unsigned int histVecLength = N_NEURONS * (int)K;
-  if((unsigned long long)K >= NE | (unsigned long long)K >= NI) {
-    histVecLength = (unsigned int)(N_NEURONS * N_NEURONS);
-  }
+  printf("\n\n NK = %u\n", histVecLength);
+  /*---------------------------------------------------------------------------*/  
+  /* WHAT IS THIS BLOCK FOR?? */
+  // if((unsigned long long)K >= NE | (unsigned long long)K >= NI) {
+  //   histVecLength = (unsigned int)(N_NEURONS * N_NEURONS);
+  // }
+  /*---------------------------------------------------------------------------*/
+  printf("\n\n NK = %u\n", histVecLength);
   cudaCheck(cudaMallocHost((void **)&histVec, histVecLength * sizeof(*histVec)));
   cudaCheck(cudaMalloc((void **)&dev_histVec, histVecLength * sizeof(*dev_histVec)));
   test_xform xform; // defined in cuda_histogram.h
@@ -536,11 +540,13 @@ int main(int argc, char *argv[]) {
     printf("\n%d %d\n", i, k);
     fclose(fp);
     /*    FILE* fpCur = fopen("currents.csv", "w");*/
-    FILE* fpCurbg = fopen("bgcur.csv", "w");
+    FILE *fpCurbg = fopen("bgcur.csv", "w");
+    FILE *fpCurEI = fopen("currents_total_E_and_I.csv", "w");
     for(i = 0; i < N_CURRENT_STEPS_TO_STORE; ++i) {
-      fprintf(fpCur, "%f\n", ibgCur[i]);
-    /*    fprintf(fpCur, "%f;%f;%f;%f\n", curE[i], curI[i], ibgCur[i], curIff[i]);*/
+      // fprintf(fpCur, "%f\n", ibgCur[i]);
+      // fprintf(fpCur, "%f;%f;%f;%f\n", curE[i], curI[i], ibgCur[i], curIff[i]);
       /*      fprintf(fpCur, "%f\n", curIff[i]);*/
+      fprintf(fpCurEI, "%f;%f\n", curE[i] + ibgCur[i] + curIff[i], curI[i] );      
     }
     fclose(fpCurbg);
     fclose(fpCur);

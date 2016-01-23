@@ -62,6 +62,7 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
     isynapNew = dev_isynap[mNeuron];
     iff = dev_iffCurrent[mNeuron];
     ibg = bgCur(vmOld);
+    
     /* runge kutta 4 */
     derivs(x, v, dv, isynapNew, ibg, iff);
     rk4(v, dv, N_STATEVARS, x, DT, vout, isynapNew, ibg, iff);
@@ -71,6 +72,14 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
     dev_n[mNeuron] = vout[1];
     dev_z[mNeuron] = vout[2];
     dev_h[mNeuron] = vout[3];
+
+    // if(mNeuron == SAVE_CURRENT_FOR_NEURON) {
+    //   int  localCurConter = curConter;      
+    //   if(localCurConter < N_CURRENT_STEPS_TO_STORE) {
+    // 	glbCurE[localCurConter] += iff + ibg;
+    //   }
+    // }    
+    
     if(k >= localLastNSteps & (mNeuron >= N_NEURONS_TO_STORE_START &  mNeuron < N_NEURONS_TO_STORE_END)) {
       y[(mNeuron - N_NEURONS_TO_STORE_START) + N_NEURONS_TO_STORE * (k - localLastNSteps)] = vout[0];
       /*      synapticCurrent[mNeuron + N_NEURONS *  (k - localLastNSteps)] = isynapNew;*/
@@ -87,6 +96,7 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
     if(k > 4000 &  mNeuron >= NE & mNeuron <= NE + N_I_SAVE_CUR) {
       synapticCurrent[mNeuron - NE] = isynapNew + ibg + 0.0 * iff;
     }
+
 
     if(k*DT > N_I_AVGCUR_STORE_START_TIME & mNeuron >= NE & mNeuron < NE + N_I_2BLOCK_NA_CURRENT) {
       dev_totalAvgEcurrent2I[mNeuron - NE] += (ibg + iff) / ((TSTOP / DT) - (TSTOP - N_I_AVGCUR_STORE_START_TIME)/DT);

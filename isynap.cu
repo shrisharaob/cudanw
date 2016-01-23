@@ -62,8 +62,16 @@ __global__ void expDecay(int *dev_histCountE, int *dev_histCountI) {
   unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   int stride = gridDim.x * blockDim.x;
   while(mNeuron < N_NEURONS) {
-    dev_gE[mNeuron] *= EXP_SUM_E;
-    dev_gI[mNeuron] *= EXP_SUM_I;
+    // dev_gE[mNeuron] *= EXP_SUM_E;
+    // dev_gI[mNeuron] *= EXP_SUM_I;
+    if(mNeuron < NE) {
+      dev_gE[mNeuron] *= EXP_SUM_EE;      
+      dev_gI[mNeuron] *= EXP_SUM_I;
+    }
+    else {
+      dev_gE[mNeuron] *= EXP_SUM_E;      
+      dev_gI[mNeuron] *= EXP_SUM_II;
+    }
     /*    if(mNeuron == 0) {
       for(int i = 0; i < N_NEURONS; ++i) {*/
     dev_histCountE[mNeuron] = 0;
@@ -103,41 +111,41 @@ __global__ void computeConductance() {
   }
 }
 
-__global__ void computeG_Optimal() {
-  unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
-  int kNeuron, localSpkId;
-  if(mNeuron < N_NEURONS) {
-    if(dev_IF_SPK[mNeuron]) {  
-      localSpkId = dev_prevStepSpkIdx[mNeuron];
-      for(kNeuron = 0; kNeuron < dev_nPostNeurons[mNeuron]; ++kNeuron) { 
-        if(mNeuron < NE) {       
-	  dev_ESpkCountMat[dev_sparseConVec[dev_sparseIdx[mNeuron] + kNeuron] + N_NEURONS + localSpkId] += 1;
-	}
-        else{
-	  dev_ISpkCountMat[dev_sparseConVec[dev_sparseIdx[mNeuron] + kNeuron] + N_NEURONS + localSpkId] += 1;
-	}
-      }
-    }
-  }
-}
+// __global__ void computeG_Optimal() {
+//   unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
+//   int kNeuron, localSpkId;
+//   if(mNeuron < N_NEURONS) {
+//     if(dev_IF_SPK[mNeuron]) {  
+//       localSpkId = dev_prevStepSpkIdx[mNeuron];
+//       for(kNeuron = 0; kNeuron < dev_nPostNeurons[mNeuron]; ++kNeuron) { 
+//         if(mNeuron < NE) {       
+// 	  dev_ESpkCountMat[dev_sparseConVec[dev_sparseIdx[mNeuron] + kNeuron] + N_NEURONS + localSpkId] += 1;
+// 	}
+//         else{
+// 	  dev_ISpkCountMat[dev_sparseConVec[dev_sparseIdx[mNeuron] + kNeuron] + N_NEURONS + localSpkId] += 1;
+// 	}
+//       }
+//     }
+//   }
+// }
 
 
-__global__ void spkSum(int nSpksInPrevStep) {
-  unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
-  int i, gE, gI; 
-  int stride = gridDim.x * blockDim.x;
-  while(mNeuron < N_NEURONS) {
-    gE = 0;
-    gI = 0;
-    for(i = 0; i < nSpksInPrevStep ; ++i){
-      gE += dev_ESpkCountMat[mNeuron + i * N_NEURONS];
-      gI += dev_ISpkCountMat[mNeuron + i * N_NEURONS];
-    }	
-    dev_gE[mNeuron] += (double)gE;
-    dev_gI[mNeuron] += (double)gI;
-    mNeuron += stride;
-  }
-}
+// __global__ void spkSum(int nSpksInPrevStep) {
+//   unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
+//   int i, gE, gI; 
+//   int stride = gridDim.x * blockDim.x;
+//   while(mNeuron < N_NEURONS) {
+//     gE = 0;
+//     gI = 0;
+//     for(i = 0; i < nSpksInPrevStep ; ++i){
+//       gE += dev_ESpkCountMat[mNeuron + i * N_NEURONS];
+//       gI += dev_ISpkCountMat[mNeuron + i * N_NEURONS];
+//     }	
+//     dev_gE[mNeuron] += (double)gE;
+//     dev_gI[mNeuron] += (double)gI;
+//     mNeuron += stride;
+//   }
+// }
 
 __global__ void computeIsynap(double t) {
   // THIS IS THE FUNCTION BEING USED CURRENTLY
@@ -147,15 +155,15 @@ __global__ void computeIsynap(double t) {
   if(mNeuron < N_NEURONS) {
     vm = dev_v[mNeuron];
     if(mNeuron < NE) {
-      tempCurE = -1 * dev_gE[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP_E * G_EE * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
-      //      tempCurE = -1 * dev_gE[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP_EE * G_EE * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
+      //tempCurE = -1 * dev_gE[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP_E * G_EE * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
+      tempCurE = -1 * dev_gE[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP_EE * G_EE * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
       tempCurI = -1 * dev_gI[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP_I * G_EI * (RHO * (vm - V_I) + (1 - RHO) * (E_L - V_I));
     }
     if(mNeuron >= NE){
       tempCurE = -1 * dev_gE[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP_E * G_IE * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
       //    tempCurE = -1 * dev_gE[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP_IE * G_IE * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));      
-      tempCurI = -1 * dev_gI[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP_I * G_II * (RHO * (vm - V_I) + (1 - RHO) * (E_L - V_I));
-      //tempCurI = -1 * dev_gI[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP_II * G_II * (RHO * (vm - V_I) + (1 - RHO) * (E_L - V_I));
+      //      tempCurI = -1 * dev_gI[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP_I * G_II * (RHO * (vm - V_I) + (1 - RHO) * (E_L - V_I));
+      tempCurI = -1 * dev_gI[mNeuron] * (1/sqrt(K)) * INV_TAU_SYNAP_II * G_II * (RHO * (vm - V_I) + (1 - RHO) * (E_L - V_I));
 
     }
     dev_isynap[mNeuron] = tempCurE + tempCurI;

@@ -84,7 +84,9 @@ __device__ double IFF(double vm) {
   double iff = 0.0;
   if(mNeuron < N_Neurons) {
     iff = -1 * gFF[mNeuron] * (RHO * (vm - V_E) + (1 - RHO) * (E_L - V_E));
-    if(mNeuron == SAVE_CURRENT_FOR_NEURON) { dev_iff[curConter - 1] = iff;}
+    if(mNeuron == SAVE_CURRENT_FOR_NEURON) {
+     dev_iff[curConter - 1] = iff;
+    }
   }
   return iff;
 }

@@ -1,16 +1,19 @@
 #!/bin/bash
 set -eu
 set -x
+counter=0
+tau=24
 for n in $(< $1)
 do
     echo $n
     eval sed "-i 's^#define ALPHA .*^#define ALPHA ${n}^' devHostConstants.h"    
     make clean
-    rm *.dat
-    nvcc -arch=sm_35 -O2 GenerateConVecFile.cu -o genconvec_alpha$n.out
-    nvcc -arch=sm_35 -O9 mysolver.cu -o nw_alpha$n.out
-#    mv nw_t3_$n.out ../tmp/alpha$n/
-#    mv genconvec_t3_$n ../tmp/alpha$n/
-    ./genconvec_alpha$n.out 
-    ./nw_alpha$n.out
+    nvcc -arch=sm_35 -O4 mysolver.cu -o nw.out
+    mv nw.out /homecentral/srao/cuda/data/pub/bidir/i2i/tau${tau}/p${counter}/fano    
+    nvcc -arch=sm_35 -O2 GenerateConVecFile.cu -o genconvec.out
+    mv genconvec.out /homecentral/srao/cuda/data/pub/bidir/i2i/tau${tau}/p${counter}/fano    
+#    mkdir /homecentral/srao/cuda/data/pub/bidir/i2i/tau${tau}/p${counter}/fano
+
+
+    counter=$((counter+1))     
 done
