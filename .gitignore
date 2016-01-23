@@ -6,5 +6,7 @@
 *.dat
 *.eps
 *.png
+*.npy
+
 vm
 spkTimes
