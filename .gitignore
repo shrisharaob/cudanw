@@ -4,6 +4,7 @@
 *.csv
 *.*#
 *.dat
-
+*.eps
+*.png
 vm
 spkTimes
