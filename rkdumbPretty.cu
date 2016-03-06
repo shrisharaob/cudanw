@@ -13,7 +13,7 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
   int k;
   double x, isynapNew = 0, ibg = 0, iff = 0;
   double v[N_STATEVARS], vout[N_STATEVARS], dv[N_STATEVARS], vmOld;
-  int localTotNspks = 0, localLastNSteps;
+  unsigned int localTotNspks = 0, localLastNSteps = 0;
   unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   x1 = params.tStart;
   nstep = params.nSteps;
@@ -50,7 +50,9 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
       dev_totalAvgEcurrent2I[mNeuron - NE] = 0.0;
       dev_totalAvgIcurrent2I[mNeuron - NE] = 0.0;
     }
-    localLastNSteps = nstep - STORE_LAST_N_STEPS;
+    //    if(nstep >= STORE_LAST_N_STEPS) {
+      localLastNSteps = nstep - STORE_LAST_N_STEPS;
+      //    }
     /* TIMELOOP */
     x = x1 + (double)k * DT;
     dev_IF_SPK[mNeuron] = 0;

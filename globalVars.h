@@ -4,7 +4,7 @@
 #include "devHostConstants.h"
 #include "math.h"
 
-#define MAX_SPKS 80000000
+#define MAX_SPKS 80000000ULL
 #define PI 3.14159265359
 #define SQRT_DT sqrt(DT)
 #define DISCARDTIME 1000 // ms, discard time to compute the firing rate
@@ -60,8 +60,8 @@
 #define R0 0.002
 #define R1 0.02
 #define INP_FREQ (0.004 * PI)
-#define ETA_E 0.0 //1.2 //0.8
-#define ETA_I 0.0 //1.2 //0.8
+#define ETA_E 0.8
+#define ETA_I 0.8
 #define MU_E 0.0
 #define MU_I 0.0
 

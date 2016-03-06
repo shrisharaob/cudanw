@@ -59,6 +59,7 @@ int main(int argc, char *argv[]) {
   char filetag[16];
   double *firingrate;
 
+
   printf("\n \n bg I  = %f \n", K*K_REC_I_PREFACTOR*G_IB*RB_I);
   firingrate = (double *) malloc(sizeof(double) * N_NEURONS);
   cudaCheck(cudaStreamCreate(&stream1));
@@ -463,7 +464,7 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaMemcpy(ibgCur, dev_ibg, N_CURRENT_STEPS_TO_STORE * sizeof(double), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(curIff, dev_curiff, N_CURRENT_STEPS_TO_STORE * sizeof(double), cudaMemcpyDeviceToHost));
   printf("\n nSpks = %d\n", *nSpks);
-  printf(" MAX SPKS stored on GPU = %d \n", MAX_SPKS); 
+  printf(" MAX SPKS stored on GPU = %ul \n", MAX_SPKS); 
   printf("\n Simulation completed ! \n");
   fpElapsedTime = fopen("elapsedTime.csv", "a+");
   fprintf(fpElapsedTime, "%llu %f %d\n", N_NEURONS, elapsedTime, *nSpks);
@@ -499,9 +500,9 @@ int main(int argc, char *argv[]) {
   fflush(stdout);
   if(*nSpks > MAX_SPKS) {
     totalNSpks = MAX_SPKS;
-    printf("\n ***** WARNING MAX_SPKS EXCEEDED limit of %d *****\n", MAX_SPKS);
+    printf("\n ***** WARNING MAX_SPKS EXCEEDED limit of %ul *****\n", MAX_SPKS);
   }
-  //  if(IF_SAVE) {
+  // if(IF_SAVE) {
       for(i = 1; i <= totalNSpks; ++i) {
         fprintf(fpSpkTimes, "%f;%f\n", spkTimes[i], (double)spkNeuronIds[i]);
       }
