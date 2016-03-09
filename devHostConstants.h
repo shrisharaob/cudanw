@@ -19,7 +19,7 @@
 #define K 2000.0
 #define DT 0.025 /* ms*/ /* CHANGE EXP+SUM WHEN DT CHANGES   */
 #define TSTOP 12000.0 //ms
-#define TAU_SYNAP_E 6.0
+#define TAU_SYNAP_E 12.0
 #define TAU_SYNAP_I TAU_SYNAP_E
 #define TAU_SYNAP_EE TAU_SYNAP_E
 /* #define TAU_SYNAP_IE TAU_SYNAP_EE */
@@ -36,7 +36,7 @@
 #define HOST_CONTRAST 100.0
 
 #define N_NEURONS_TO_STORE_START 0  // store membrane voltage
-#define N_NEURONS_TO_STORE_END 50
+#define N_NEURONS_TO_STORE_END 80
 #define N_NEURONS_TO_STORE (N_NEURONS_TO_STORE_END - N_NEURONS_TO_STORE_START)
 #define N_E_2BLOCK_NA_CURRENT 1 // number of first n neurons to have their Na2+ currents blocked
 #define N_I_2BLOCK_NA_CURRENT 1
