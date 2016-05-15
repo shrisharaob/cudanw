@@ -5,8 +5,8 @@ do
     do
 	cd /homecentral/srao/cuda/data/pub/bidir/i2i/tau${tau_s}/p${p}
 	pwd
-#	./genconvec.out 3 0
-	./nw.out 0 1 0 0
-#	rm *.dat
+	# rm *.dat
+	# ./genconvec.out 3 0
+	./nw.out 0 0 0 0
     done
 done
