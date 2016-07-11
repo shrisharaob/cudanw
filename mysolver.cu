@@ -27,6 +27,7 @@ void __cudaCheck(cudaError err, const char *file, const int line)
     exit(-1);
   }
 }
+
 void __cudaCheckLastError(const char *errorMessage, const char *file, const int line)
 {
   cudaError_t err = cudaGetLastError();
@@ -58,7 +59,6 @@ int main(int argc, char *argv[]) {
   cudaStream_t stream1;
   char filetag[16];
   double *firingrate;
-
 
   printf("\n \n bg I  = %f \n", K*K_REC_I_PREFACTOR*G_IB*RB_I);
   firingrate = (double *) malloc(sizeof(double) * N_NEURONS);
