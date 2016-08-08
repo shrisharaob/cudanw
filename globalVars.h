@@ -7,7 +7,7 @@
 #define MAX_SPKS 80000000ULL
 #define PI 3.14159265359
 #define SQRT_DT sqrt(DT)
-#define DISCARDTIME 1000 // ms, discard time to compute the firing rate
+#define DISCARDTIME 2000 // ms, discard time to compute the firing rate
 
 #define Cm 1.0 /* microF / cm^2  */
 #define E_Na 55.0 /* mV */

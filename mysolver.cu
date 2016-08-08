@@ -59,6 +59,9 @@ int main(int argc, char *argv[]) {
   cudaStream_t stream1;
   char filetag[16];
   double *firingrate;
+  double tStep = 1000; // 1000ms
+  char frfilename[128];
+  
 
   printf("\n \n bg I  = %f \n", K*K_REC_I_PREFACTOR*G_IB*RB_I);
   firingrate = (double *) malloc(sizeof(double) * N_NEURONS);
@@ -374,6 +377,16 @@ int main(int argc, char *argv[]) {
       spksE = 0; 
       spksI = 0;
     }
+    if(!(fmod((k * DT ), tStep))) {
+      FILE *fpFrChunk;
+      //      fpFrChunk = sprintf(frfilename, "fr_%1.1f_te%1.f_ti%1.f", ALPHA, TAU_SYNAP_E, TAU_SYNAP_I);
+      sprintf(frfilename, "fr_xi%1.1f_theta%d_%.2f_%1.1f_cntrst%.1f_%d_tr%s_tStop%d.csv", ETA_E, (int)theta_degrees, ALPHA, TAU_SYNAP_E, HOST_CONTRAST, (int)(tStop),filetag, (int)(k * DT));
+      fpFrChunk = fopen(frfilename, "w");
+      for(i = 0; i < N_NEURONS; ++i) {
+	fprintf(fpFrChunk, "%f\n", firingrate[i] / (((k * DT) - DISCARDTIME) * 0.001));
+      }
+      fclose(fpFrChunk);
+    }
     /*-----------------------------------------------------------------------*/
     expDecay<<<BlocksPerGrid, ThreadsPerBlock>>>(dev_histCountE, dev_histCountI);
     cudaCheckLastError("exp");
@@ -502,11 +515,11 @@ int main(int argc, char *argv[]) {
     totalNSpks = MAX_SPKS;
     printf("\n ***** WARNING MAX_SPKS EXCEEDED limit of %ul *****\n", MAX_SPKS);
   }
-  // if(IF_SAVE) {
+  if(IF_SAVE) {
       for(i = 1; i <= totalNSpks; ++i) {
         fprintf(fpSpkTimes, "%f;%f\n", spkTimes[i], (double)spkNeuronIds[i]);
       }
-      //  }
+  }
   fclose(fpSpkTimes);
   printf("done\n");
   printf("computing firing rates ....");
