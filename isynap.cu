@@ -152,7 +152,7 @@ __global__ void spkSum(int nSpksInPrevStep) {
 __global__ void computeIsynap(double t) {
   unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   double vm, tempCurE = 0, tempCurI = 0;
-  int localCurConter;
+  // int localCurConter;
   if(mNeuron < N_NEURONS) {
     vm = dev_v[mNeuron];
     if(mNeuron < NE) {

@@ -4,10 +4,10 @@
 #include "devHostConstants.h"
 #include "math.h"
 
-#define MAX_SPKS 80000000
+#define MAX_SPKS 50000000
 #define PI 3.14159265359
 #define SQRT_DT sqrt(DT)
-
+#define DISCARDTIME 2000 // ms, discard time to compute the firing rate
 
 #define Cm 1.0 /* microF / cm^2  */
 #define E_Na 55.0 /* mV */
@@ -59,8 +59,8 @@
 #define ETA_I 1.2
 #define MU_E 0.0
 #define MU_I 0.0
-#define GFF_E ((0.95 * CONDUCTANCE_GLOBAL_PREFACTOR) / sqrt(10.0 * K))
-#define GFF_I ((1.26 * CONDUCTANCE_GLOBAL_PREFACTOR) / sqrt(10.0 * K))
+#define GFF_E ((0.95 * CONDUCTANCE_GLOBAL_PREFACTOR) / sqrt(K))
+#define GFF_I ((1.26 * CONDUCTANCE_GLOBAL_PREFACTOR) / sqrt(K))
 
 __device__ float randnXiA[N_Neurons], 
                  randuDelta[N_Neurons], 
@@ -79,7 +79,7 @@ __device__ int dev_IF_SPK[N_NEURONS], curConter = 0;
 
 
 #define SAVE_CURRENT_FOR_NEURON 2
-#define N_CURRENT_STEPS_TO_STORE 5000
+#define N_CURRENT_STEPS_TO_STORE 5
 
 
 __device__ double dev_GFFmean[N_NEURONS];

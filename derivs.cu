@@ -105,7 +105,7 @@ __device__ void derivs(double t, double stateVar[], double dydx[], double isynap
       }*/
     
     if (kNeuron < NE) {
-      if(kNeuron >= 0 & kNeuron < N_E_2BLOCK_NA_CURRENT) { /* BLOCK Na2+ CHANNEL FOR THESE NEURONS */
+      if(kNeuron < N_E_2BLOCK_NA_CURRENT) { /* BLOCK Na2+ CHANNEL FOR THESE NEURONS */
         dydx[0] =  1/Cm * (cur 
                            - G_K * pow(stateVar[1], 4) * (stateVar[0] - E_K) 
                            - G_L_E * (stateVar[0] - E_L)

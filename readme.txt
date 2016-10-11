@@ -1,2 +1,3 @@
 THIS BRANCH IS FOR DEVELOPING ORIENTATION SELETIVTY MAPS IN LAYER 4 
 this is a branch off from opt_dev 
+USE runsim.sh
