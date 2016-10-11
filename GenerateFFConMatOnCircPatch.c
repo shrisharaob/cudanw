@@ -81,26 +81,39 @@ void ConProbPreFactorRec(double *convec) {
   for(i = 0; i < N_NEURONS; ++i) { // sum over rows
     for(j = 0; j < N_NEURONS; ++j) {
       if(i < NE) {
-	preFactorE2All += (double)convec[i + j * N_NEURONS];
+	preFactorE2All += convec[i + j * N_NEURONS];
       }
       else {
-	preFactorI2All += (double)convec[i + j * N_NEURONS];
+	preFactorI2All += convec[i + j * N_NEURONS];
       }
     }
-  }
-  preFactorI2All = (double)K / preFactorI2All;
-  preFactorE2All = (double)K / preFactorE2All;
-  /* now multiply the prefactor */
-  for(i = 0; i < N_NEURONS; ++i) {
-    for(j = 0; j < N_NEURONS; ++j) {    
+    preFactorI2All = 2.0 * (double)K / preFactorI2All;
+    preFactorE2All = 2.0 * (double)K / preFactorE2All;
+    for(j = 0; j < N_NEURONS; ++j) {
       if(i < NE) {
-        convec[i + j * N_NEURONS] *= (float)preFactorE2All;
+        convec[i + j * N_NEURONS] *= preFactorE2All;
       }
       else {
-        convec[i + j * N_NEURONS] *= (float)preFactorI2All;
+        convec[i + j * N_NEURONS] *= preFactorI2All;
       }
     }
+    preFactorI2All = 0.0;
+    preFactorE2All = 0.0;
   }
+  
+  /* preFactorI2All = (double)K / preFactorI2All; */
+  /* preFactorE2All = (double)K / preFactorE2All; */
+  /* /\* now multiply the prefactor *\/ */
+  /* for(i = 0; i < N_NEURONS; ++i) { */
+  /*   for(j = 0; j < N_NEURONS; ++j) {     */
+  /*     if(i < NE) { */
+  /*       convec[i + j * N_NEURONS] *= preFactorE2All; */
+  /*     } */
+  /*     else { */
+  /*       convec[i + j * N_NEURONS] *= preFactorI2All; */
+  /*     } */
+  /*   } */
+  /* } */
 
 }
 
@@ -174,8 +187,19 @@ int main (void)
   for(i = 0; i < N_NEURONS; i++) {
     for(j = 0; j < NFF; j++) {
       conMatFF[i + j * N_NEURONS] = ConProb(xCord[i], xCordFF[j], FF_CON_SIGMA_X, yCord[i], yCordFF[j], FF_CON_SIGMA_Y);
+        /* conMatFF[i + j * N_NEURONS] = ConProb(0.1, 0.5, FF_CON_SIGMA_X, 0.5, 0, FF_CON_SIGMA_Y);       */
+
     }
   }
+
+
+  /* for(i = 0; i < N_NEURONS; i++) { */
+  /*   for(j = 0; j < NFF; j++) { */
+  /*         printf("%f \n", conMatFF[i + j * N_NEURONS]); */
+
+  /*   } */
+  /* } */
+  
   printf("done\n");  
   /* TRANSPOSE TO ACUTALLY MAKE IT PROJECTIONS FROM NFF TO L 2/3 */
   printf("\n transposing matrix ... "); fflush(stdout);
@@ -184,7 +208,10 @@ int main (void)
   /* MUTIPLY WITH PREFACTOR */
   printf("\n computing prefactors ... "); fflush(stdout);
   ConProbPreFactor(conMatFF);
-  printf("done\n");  
+  printf("done\n");
+
+
+  
   if(IF_PRINT_CM_TO_FILE) {
     FILE *fpconmat = fopen("ffcm.csv", "w");
     for(i = 0; i < NFF; ++i) {
@@ -242,7 +269,9 @@ int main (void)
   printf("\n Generating recurrent connection matrix ... "); fflush(stdout);
   for(i = 0; i < N_NEURONS; i++) {
     for(j = 0; j < N_NEURONS; j++) {
-      conMat[i + j * N_NEURONS] = ConProb(xCord[i], xCord[j], CON_SIGMA_X, yCord[i], yCord[j], CON_SIGMA_Y);      // i to j
+           conMat[i + j * N_NEURONS] = ConProb(xCord[i], xCord[j], CON_SIGMA_X, yCord[i], yCord[j], CON_SIGMA_Y);      // i to j
+      /* conMat[i + j * N_NEURONS] = ConProb(0.1, 0.5, CON_SIGMA_X, 0.5, 0.0, CON_SIGMA_Y);      // i to j */
+      /* printf("%f \n", conMat[i + j * N_NEURONS]);    */
     }
   }
   printf("done\n");  
@@ -250,26 +279,26 @@ int main (void)
   ConProbPreFactorRec(conMat);
   printf("done\n");
 
-  double preFactorI2All = 0.0,  preFactorE2All = 0.0;
-  for(i = 0; i < N_NEURONS; ++i) { // sum over rows
-    for(j = 0; j < N_NEURONS; ++j) {
-      //      printf("%f \n", conMat[i + j * N_NEURONS]);
-      if(i < NE) {
-	preFactorE2All += conMat[i + j * N_NEURONS];
-      }
-      else {
-	preFactorI2All += conMat[i + j * N_NEURONS];
-      }
-    }
-  }
-  printf("\n\n ===>%f %f \n", preFactorI2All, preFactorE2All);
+  /* double preFactorI2All = 0.0,  preFactorE2All = 0.0; */
+  /* for(i = 0; i < N_NEURONS; ++i) { // sum over rows */
+  /*   for(j = 0; j < N_NEURONS; ++j) { */
+  
+  /*     if(i < NE) { */
+  /* 	preFactorE2All += conMat[i + j * N_NEURONS]; */
+  /*     } */
+  /*     else { */
+  /* 	preFactorI2All += conMat[i + j * N_NEURONS]; */
+  /*     } */
+  /*   } */
+  /* } */
+  /* printf("\n\n ===>%f %f \n", preFactorI2All, preFactorE2All); */
 
 
   
   /* GENERATE CONNECTIVITY MATRIX */
   for(i = 0; i < N_NEURONS; ++i) {
     for(j = 0; j < N_NEURONS; ++j) {
-      if(conMat[i + j * N_NEURONS] > gsl_rng_uniform(gslRGNState)) {
+      if(conMat[i + j * N_NEURONS] >= gsl_rng_uniform(gslRGNState)) {
         conMat[i + j * N_NEURONS] = 1.0;
       }
       else {
