@@ -73,6 +73,37 @@ void ConProbPreFactor(double *conProbMat) {
 }
 
 
+/* void ConProbPreFactorRec(float *convec) { */
+/*   /\*  COMPUTE PRE-FACTOR AND MULTIPLY zB[clm] = K / sum(conProd(:, clm)) *\/ */
+/*   unsigned long int i, j; */
+/*   double preFactorE2All, preFactorI2All; */
+/*   preFactorI2All = 0.0; */
+/*   preFactorE2All = 0.0; */
+/*   for(i = 0; i < N_NEURONS; ++i) { // sum over rows */
+/*     for(j = 0; j < N_NEURONS; ++j) { */
+/*       if(i < NE) { */
+/* 	preFactorE2All += (double)convec[i + j * N_NEURONS]; */
+/*       } */
+/*       else { */
+/* 	preFactorI2All += (double)convec[i + j * N_NEURONS]; */
+/*       } */
+/*     } */
+/*   } */
+/*   preFactorI2All = (double)K / preFactorI2All; */
+/*   preFactorE2All = (double)K / preFactorE2All; */
+/*   /\* now multiply the prefactor *\/ */
+/*   for(i = 0; i < N_NEURONS; ++i) { */
+/*     for(j = 0; j < N_NEURONS; ++j) {     */
+/*       if(i < NE) { */
+/*         convec[i + j * N_NEURONS] *= (float)preFactorE2All; */
+/*       } */
+/*       else { */
+/*         convec[i + j * N_NEURONS] *= (float)preFactorI2All; */
+/*       } */
+/*     } */
+/*   } */
+/* } */
+
 double FF_YCordinate(unsigned long int neuronIdx) {
   // nA - number of FF neurons
   double nA = (double)NFF;
