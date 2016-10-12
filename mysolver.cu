@@ -148,7 +148,6 @@ int main(int argc, char *argv[]) {
   fpFFPOAngles = fopen("poAnglesFF.dat", "rb");
   ffdummytmp = fread(host_L4PO, sizeof(float), NFF, fpFFPOAngles);
   fclose(fpFFPOAngles);
-  printf("hello\n");  
   cudaCheck(cudaMemcpy(dev_L4PO_Ptr, host_L4PO, NFF * sizeof(float), cudaMemcpyHostToDevice));  
   //  cudaCheck(cudaMemcpy(host_L4PO, dev_L4PO_Ptr, NFF * sizeof(float), cudaMemcpyDeviceToHost));
   FILE *fpPo = fopen("poinmap.csv", "w");
@@ -193,7 +192,7 @@ int main(int argc, char *argv[]) {
 
   /* READ FF SPARSE CONNECTION MAT */
   FILE *fpSparseConVecFF, *fpIdxVecFF, *fpNpostNeuronsFF;
-  fpSparseConVecFF = fopen("sparseConVecFFFF.dat", "rb");
+  fpSparseConVecFF = fopen("sparseConVecFF.dat", "rb");
   fpIdxVecFF = fopen("idxVecFF.dat", "rb");
   fpNpostNeuronsFF = fopen("nPostNeuronsFF.dat", "rb");
   dummy = fread(nPostNeuronsFF, sizeof(*nPostNeuronsFF), NFF, fpNpostNeuronsFF);
@@ -207,7 +206,7 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaMallocHost((void **)&sparseConVecFF, nConnectionsFF * sizeof(int)));
 
   devPtrs.dev_sparseConVecFF = dev_sparseConVecFFPtr;
-  printf("hello\n");        
+
   //  dummy = fread(sparseConVecFF, sizeof(*sparseConVecFF), N_NEURONS * (2ULL * (unsigned long long)(CFF * K) + 1), fpSparseConVecFF);
   dummy = fread(sparseConVecFF, sizeof(*sparseConVecFF), nConnectionsFF, fpSparseConVecFF);
   fclose(fpSparseConVecFF);
@@ -217,6 +216,7 @@ int main(int argc, char *argv[]) {
   }
   dummy = fread(idxVecFF, sizeof(*idxVecFF), NFF, fpIdxVecFF);
   fclose(fpIdxVecFF);
+  printf("hello\n");          
   //  cudaCheck(cudaMemcpy(dev_sparseVec, sparseConVec, N_NEURONS * (2 * K + 1) * sizeof(int), cudaMemcpyHostToDevice));
   printf("sparse convec ptr: %p\n", dev_idxVec);
   cudaCheck(cudaMemcpy(dev_sparseConVecPtr, sparseConVec,  nConnections * sizeof(int), cudaMemcpyHostToDevice));
