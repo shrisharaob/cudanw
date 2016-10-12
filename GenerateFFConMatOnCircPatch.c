@@ -64,7 +64,7 @@ void ConProbPreFactor(double *conProbMat) {
     for(i = 0; i < NFF; ++i) {
       preFactor += conProbMat[i + j * NFF];
     }
-    preFactor =  2.0 * (CFF * K) / preFactor; // FACTOR OF TWO BECAUSE BOTH POPULATIONS ARE CONSIDERED
+    preFactor =  1.0 * (CFF * K) / preFactor; // FACTOR OF TWO BECAUSE BOTH POPULATIONS ARE CONSIDERED
     for(i = 0; i < NFF; ++i) {
       conProbMat[i + j * NFF] *= preFactor;
     }
@@ -118,6 +118,14 @@ void ConProbPreFactorRec(double *convec) {
 }
 
 
+void GetXYAngle(double *xCords, double *yCords, float *angles, unsigned long nCordinates) {
+  unsigned long i;
+  for(i = 0; i < nCordinates; ++i) {
+    angles[i] = 0.5 * (atan2(yCords[i] - PATCH_CENTER_Y, xCords[i] - PATCH_CENTER_X)) + PI * 0.5;
+    //    printf("%f %f %f\n", yCords[i] - PATCH_CENTER_Y, xCords[i] - PATCH_CENTER_X, angles[i]);
+  }
+}
+
 void GenXYCordinate(double *ffXcord, double *ffYcord, unsigned long nCordinates) {
   unsigned long i;
   const gsl_rng_type * TXY;
@@ -169,6 +177,7 @@ int main (void)
   gsl_rng *gslRGNState;
   double *conMatFF = NULL, xa, ya;
   double *xCord = NULL, *yCord = NULL, *xCordFF = NULL, *yCordFF = NULL;
+  float *xyAnglesFF = NULL, *xyAngles = NULL;
   int i, j, n = 10;
   int IF_PERIODIC = 0, IF_PRINT_CM_TO_FILE = 0;
   gsl_rng_env_setup();
@@ -178,10 +187,16 @@ int main (void)
   //  double u = gsl_rng_uniform (r);
   xCordFF = (double *)malloc((unsigned long long)NFF * sizeof(double));
   yCordFF = (double *)malloc((unsigned long long)NFF * sizeof(double));
+  xyAnglesFF = (float *)malloc((unsigned long long)NFF * sizeof(float));  
   xCord = (double *)malloc((unsigned long long)N_NEURONS * sizeof(double));
-  yCord = (double *)malloc((unsigned long long)N_NEURONS * sizeof(double));  
+  yCord = (double *)malloc((unsigned long long)N_NEURONS * sizeof(double));
+  xyAngles = (float *)malloc((unsigned long long)N_NEURONS * sizeof(float));
   GenXYCordinate(xCordFF, yCordFF, NFF);
-  GenXYCordinate(xCord, yCord, N_NEURONS);  
+  GenXYCordinate(xCord, yCord, N_NEURONS);
+
+  GetXYAngle(xCord, yCord, xyAngles, N_NEURONS);   
+  GetXYAngle(xCordFF, yCordFF, xyAnglesFF, NFF);
+
   conMatFF = (double *)malloc((unsigned long long)NFF * N_NEURONS * sizeof(double));
   printf("\n Generating feed forward connection matrix ... "); fflush(stdout);
   for(i = 0; i < N_NEURONS; i++) {
@@ -243,7 +258,15 @@ int main (void)
   GenSparseMat(conMatFF, NFF, N_NEURONS, sparseConVecFF, idxVecFF, nPostNeuronsFF);
   /* WRITE SPARSEVEC TO BINARY FILE */
   FILE *fpSparseConVecFF = NULL, *fpIdxVecFF = NULL, *fpNpostNeuronsFF = NULL;
-  fpSparseConVecFF = fopen("sparseConVecFFFF.dat", "wb");
+  FILE *fpXcordsFF = NULL, *fpYcordsFF = NULL, *fpAnglesFF = NULL;
+  FILE *fpXcords = NULL, *fpYcords = NULL, *fpAngles = NULL;
+  /* FILE *testFloat; */
+  /* testFloat = fopen("tstfloat.dat", "wb"); */
+  /* float tstfltrray[3] = {0.1, 0.93, 1.8098}; */
+  /* fwrite(tstfltrray, sizeof(float), 3, testFloat); */
+  /* fclose(testFloat); */
+  
+  fpSparseConVecFF = fopen("sparseConVecFF.dat", "wb");
   unsigned int nElementsWritten, nConnections = 0;
   for(i = 0; i < NFF; ++i) {
     nConnections += nPostNeuronsFF[i];
@@ -260,9 +283,33 @@ int main (void)
   fpNpostNeuronsFF = fopen("nPostNeuronsFF.dat", "wb");
   fwrite(nPostNeuronsFF, sizeof(int), NFF, fpNpostNeuronsFF);
   fclose(fpNpostNeuronsFF);
+  
+  fpXcordsFF = fopen("xCordsFF.dat", "wb");
+  fwrite(xCordFF, sizeof(double), NFF, fpXcordsFF);
+  fclose(fpXcordsFF);
+  fpYcordsFF = fopen("yCordsFF.dat", "wb");
+  fwrite(yCordFF, sizeof(double), NFF, fpYcordsFF);
+  fclose(fpYcordsFF);
+  fpAnglesFF = fopen("poAnglesFF.dat", "wb");
+  fwrite(xyAnglesFF, sizeof(float), NFF, fpAnglesFF);
+  fclose(fpAnglesFF);
+
+  fpXcords = fopen("xCords.dat", "wb");
+  fwrite(xCord, sizeof(double), N_NEURONS, fpXcords);
+  fclose(fpXcords);
+  fpYcords = fopen("yCords.dat", "wb");
+  fwrite(yCord, sizeof(double), N_NEURONS, fpYcords);
+  fclose(fpYcords);
+  fpAngles = fopen("poAngles.dat", "wb");
+  fwrite(xyAngles, sizeof(float), N_NEURONS, fpAngles);
+  fclose(fpAngles);
+    
   printf("done\n");
   free(conMatFF);
-  free(sparseConVecFF);  
+  free(sparseConVecFF);
+  free(xyAngles);
+  free(xyAnglesFF);
+  
   // GENEREATE RECURRENT CONNECTIONS
   double *conMat = NULL;
   conMat = (double *)malloc((unsigned long long)N_NEURONS * N_NEURONS * sizeof(double)); // RECURRENT

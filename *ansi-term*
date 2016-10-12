@@ -1,0 +1,1074 @@
+srao@pcneurophys80:~/cuda$ ssh -X pcneurophys83
+Welcome to Ubuntu 12.04.5 LTS (GNU/Linux 3.2.0-109-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com/
+
+  System information as of Tue Oct 11 22:25:52 CEST 2016
+19573 srao       20   0 97704  4736  3440 S  0.0  0.0  0:05.82 │  │  └─ sshd: srao@pts/8
+19574 srao       20   0 29548  5376  3588 S  0.0  0.0  0:00.10 │  │     └─ -bash
+20178 srao       20   0 27.0G 20.5G 20680 S 107. 34.8  5h32:30 │  │        └─ python GenConMatOnCirc.py 1000 10000 10000
+20209 srao       20   0 27.0G 20.5G 20680 R 37.4 34.8  1h40:29 │  │           ├─ python GenConMatOnCirc.py 1000 10000 10000
+20208 srao       20   0 27.0G 20.5G 20680 S 66.4 34.8  3h40:50 │  │           ├─ python GenConMatOnCirc.py 1000 10000 10000
+20207 srao       20   0 27.0G 20.5G 20680 S  2.6 34.8  5:34.22 │  │           ├─ python GenConMatOnCirc.py 1000 10000 10000
+20206 srao       20   0 21.3G 15.1G  6236 S  2.0 25.6  7:40.16 │  │           ├─ python GenConMatOnCirc.py 1000 10000 10000
+20205 srao       20   0 21.3G 15.1G  6236 S  2.6 25.6  7:41.46 │  │           ├─ python GenConMatOnCirc.py 1000 10000 10000
+20204 srao       20   0 21.3G 15.1G  6236 S  2.6 25.6  7:43.14 │  │           ├─ python GenConMatOnCirc.py 1000 10000 10000
+20203 srao       20   0 21.3G 15.1G  6236 S  3.9 25.6  7:46.02 │  │           ├─ python GenConMatOnCirc.py 1000 10000 10000
+20202 srao       20   0 21.3G 15.1G  6236 S  2.6 25.6  7:42.85 │  │           ├─ python GenConMatOnCirc.py 1000 10000 10000
+20201 srao       20   0 21.3G 15.1G  6236 S  3.3 25.6  7:43.14 │  │           ├─ python GenConMatOnCirc.py 1000 10000 10000
+20200 srao       20   0 21.3G 15.1G  6236 S  2.0 25.6  7:41.87 │  │           ├─ python GenConMatOnCirc.py 1000 10000 10000
+20199 srao       20   0 21.3G 15.1G  6236 S  3.3 25.6  7:45.47 │  │           ├─ python GenConMatOnCirc.py 1000 10000 10000
+20198 srao       20   0 21.3G 15.1G  6236 S  2.6 25.6  7:43.16 │  │           ├─ python GenConMatOnCirc.py 1000 10000 10000
+20197 srao       20   0 21.3G 15.1G  6236 S  3.3 25.6  7:43.61 │  │           ├─ python GenConMatOnCirc.py 1000 10000 10000
+20196 srao       20   0 21.3G 15.1G  6236 S  3.9 25.6  7:42.78 │  │           ├─ python GenConMatOnCirc.py 1000 10000 10000
+20195 srao       20   0 21.3G 15.1G  6236 S  2.6 25.6  7:42.81 │  │           ├─ python GenConMatOnCirc.py 1000 10000 10000
+20194 srao       20   0 21.3G 15.1G  6236 S  2.6 25.6  7:42.90 │  │           ├─ python GenConMatOnCirc.py 1000 10000 10000
+20193 srao       20   0 21.3G 15.1G  6236 S  2.0 25.6  7:42.93 │  │           ├─ python GenConMatOnCirc.py 1000 10000 10000
+20192 srao       20   0 21.3G 15.1G  6236 S  2.0 25.6  7:42.38 │  │           ├─ python GenConMatOnCirc.py 1000 10000 10000
+20191 srao       20   0 21.3G 15.1G  6236 S  3.3 25.6  7:42.24 │  │           └─ python GenConMatOnCirc.py 1000 10000 10000
+18142 srao       20   0 98104  4632  3324 S  0.0  0.0  0:00.60 │     └─ sshd: srao@pts/10
+18143 srao       20   0 29576  5288  3472 S  0.0  0.0  0:00.07 │        └─ -bash
+
+
+
+
+
+
+
+
+
+F1Help  F2Setup F3SearchF4FilterF5SortedF6CollapF7Nice -F8Nice +F9Kill  F10Quit
+srao@pcneurophys85:~$ cd nda; python GenConMatOnCirc.py 1 2 2                                                                                                                                                       
+generating cordinates
+generating connection probabilities, NE, NI, K 2 2 1
+Traceback (most recent call last):
+  File "GenConMatOnCirc.py", line 163, in <module>
+    cprob = GenerateConProbMat(NE + NI, [0.1, 0.5], [0.5, 0.0], connectionSigma, connectionSigma, K)
+  File "GenConMatOnCirc.py", line 122, in GenerateConProbMat
+    tmpCords = np.zeros((xCords.size, xCords.size))
+AttributeError: 'list' object has no attribute 'size'
+srao@pcneurophys85:~/nda$ ^C
+srao@pcneurophys85:~/nda$ cd nda; python GenConMatOnCirc.py 1 2 2
+-bash: cd: nda: No such file or directory
+generating cordinates
+generating connection probabilities, NE, NI, K 2 2 1
+#cores 16
+=-09==x=x=x=x=x=x=x=x=x=x
+[[ 0.5  0.5  0.5  0.5]
+ [ 0.5  0.5  0.5  0.5]
+ [ 0.5  0.5  0.5  0.5]
+ [ 0.5  0.5  0.5  0.5]]
+=-09==x=x=x=x=x=x=x=x=x=x
+generating  connectivity matrix... done!
+Generating sparse representation ... done!
+npost sum = 7
+convec sum =  7
+mean K 0.5 0.5 1.0
+srao@pcneurophys85:~/nda$ cd nda; python GenConMatOnCirc.py 1 2 2
+-bash: cd: nda: No such file or directory
+generating cordinates
+generating connection probabilities, NE, NI, K 2 2 1
+#cores 16
+xxxxxxxxxxxxx there you go  (2,)
+=-09==x=x=x=x=x=x=x=x=x=x
+[[ 0.5  0.5  0.5  0.5]
+ [ 0.5  0.5  0.5  0.5]
+ [ 0.5  0.5  0.5  0.5]
+ [ 0.5  0.5  0.5  0.5]]
+=-09==x=x=x=x=x=x=x=x=x=x
+generating  connectivity matrix... done!
+Generating sparse representation ... done!
+npost sum = 7
+convec sum =  7
+mean K 1.0 1.0 1.0
+srao@pcneurophys85:~/nda$ ipython 
+/usr/lib/python2.7/dist-packages/IPython/utils/path.py:297: UserWarning: Ignoring ~/.config/ipython in fav
+our of ~/.ipython. Remove ~/.config/ipython to get rid of this message                                   
+  'to get rid of this message').format(cu(xdg_ipdir), cu(ipdir)))
+Python 2.7.12 (default, Jul  1 2016, 15:12:24) 
+Type "copyright", "credits" or "license" for more information.
+
+IPython 2.4.1 -- An enhanced Interactive Python.
+?         -> Introduction and overview of IPython's features.
+%quickref -> Quick reference.
+help      -> Python's own help system.
+object?   -> Details about 'object', use 'object??' for extra details.
+
+In [1]: import np
+---------------------------------------------------------------------------
+ImportError                               Traceback (most recent call last)
+<ipython-input-1-c8b5cdb7455a> in <module>()
+----> 1 import np
+
+ImportError: No module named np
+
+In [2]: import numpy as np
+
+In [3]: pwd
+Out[3]: u'/homecentral/srao/Documents/code/mypybox/nda/spkStats'
+
+In [4]: cd
+/homecentral/srao
+
+In [5]: cd cuda
+/homecentral/srao/Documents/code/cuda/cudanw
+
+In [6]: ls -lht | head
+total 11M
+-rw-r--r--  1 srao users 5,9K oct.  11  2016 countE.csv
+-rw-r--r--  1 srao users 5,9K oct.  11  2016 countI.csv
+-rw-r--r--  1 srao users 7,9K oct.  11  2016 idxVec.dat
+-rw-r--r--  1 srao users 7,9K oct.  11  2016 nPostNeurons.dat
+-rw-r--r--  1 srao users 783K oct.  11  2016 sparseConVec.dat
+-rw-r--r--  1 srao users 4,0K oct.  11  2016 idxVecFF.dat
+-rw-r--r--  1 srao users 4,0K oct.  11  2016 nPostNeuronsFF.dat
+-rw-r--r--  1 srao users 312K oct.  11  2016 sparseConVecFFFF.dat
+-rwxr-xr-x  1 srao users  19K oct.  11  2016 genffmat.out*
+ls: write error
+
+In [7]: ce = np.loadtxt('cou
+countE.csv     countI.csv     countlines.c~  
+
+In [7]: ce = np.loadtxt('countE.csv')
+
+In [8]: ce.shape
+Out[8]: (2000,)
+
+In [9]: ce.mean()
+Out[9]: 50.000500000000002
+
+In [10]: ce = np.loadtxt('countI.csv')
+
+In [11]: ce.mean()
+Out[11]: 50.201500000000003
+
+In [12]: ce = np.loadtxt('countI.csv')
+
+In [13]: ce.mean()
+Out[13]: 950.03499999999997
+
+In [14]: ce = np.loadtxt('countI.csv')
+
+In [15]: ce.mean()
+Out[15]: 49.866500000000002
+
+In [16]: ce = np.loadtxt('countI.csv')
+
+In [17]: ce.mean()
+Out[17]: 50.084000000000003
+
+In [18]: ce = np.loadtxt('countI.csv')
+
+In [19]: ce.mean()
+Out[19]: 100.2805
+
+In [20]: ce = np.loadtxt('countE.csv')
+
+In [21]: ce.mean()
+Out[21]: 99.391999999999996
+
+In [22]: plt.hist(ce)
+---------------------------------------------------------------------------
+NameError                                 Traceback (most recent call last)
+<ipython-input-22-a832f24ad2a4> in <module>()
+----> 1 plt.hist(ce)
+
+NameError: name 'plt' is not defined
+
+In [23]: import numpy as np
+
+In [24]: import pylab as plt
+
+In [25]: plt.ion()
+
+In [26]: plt.hist(ce)
+Out[26]: 
+(array([  16.,   50.,  250.,  441.,  537.,  419.,  201.,   61.,   20.,    5.]),
+ array([  73. ,   78.9,   84.8,   90.7,   96.6,  102.5,  108.4,  114.3,
+         120.2,  126.1,  132. ]),
+ <a list of 10 Patch objects>)
+
+In [27]: pwd
+Out[27]: u'/homecentral/srao/Documents/code/cuda/cudanw'
+
+In [28]: ls -lht *.dat | head
+-rw-r--r-- 1 srao users 7,9K oct.  12  2016 nPostNeurons.dat
+-rw-r--r-- 1 srao users 7,9K oct.  12  2016 idxVec.dat
+-rw-r--r-- 1 srao users 1,6M oct.  12  2016 sparseConVec.dat
+-rw-r--r-- 1 srao users  16K oct.  12  2016 poAngles.dat
+-rw-r--r-- 1 srao users 7,9K oct.  12  2016 poAnglesFF.dat
+-rw-r--r-- 1 srao users  16K oct.  12  2016 xCords.dat
+-rw-r--r-- 1 srao users  16K oct.  12  2016 yCords.dat
+-rw-r--r-- 1 srao users 4,0K oct.  12  2016 nPostNeuronsFF.dat
+-rw-r--r-- 1 srao users 7,9K oct.  12  2016 xCordsFF.dat
+-rw-r--r-- 1 srao users 7,9K oct.  12  2016 yCordsFF.dat
+
+In [29]: fp = open('poA
+poAngles.dat    poAnglesFF.dat  
+
+In [29]: fp = open('poAnglesFF.dat', 'rb')
+
+In [30]: fp.
+fp.close       fp.fileno      fp.name        fp.readinto    fp.softspace   fp.writelines  
+fp.closed      fp.flush       fp.newlines    fp.readline    fp.tell        fp.xreadlines  
+fp.encoding    fp.isatty      fp.next        fp.readlines   fp.truncate    
+fp.errors      fp.mode        fp.read        fp.seek        fp.write       
+
+In [30]: fp.
+fp.close       fp.fileno      fp.name        fp.readinto    fp.softspace   fp.writelines  
+fp.closed      fp.flush       fp.newlines    fp.readline    fp.tell        fp.xreadlines  
+fp.encoding    fp.isatty      fp.next        fp.readlines   fp.truncate    
+fp.errors      fp.mode        fp.read        fp.seek        fp.write       
+
+In [30]: poFF = fp.read()
+
+In [31]: poFF
+Out[31]: '\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb
+!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf
+9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\x
+ea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.D
+T\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xf
+b!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\x
+f9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\
+xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.
+DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\x
+fb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\
+xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?
+\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea
+.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\
+xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!
+\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9
+?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xe
+a.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT
+\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb
+!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf
+9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\x
+ea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.D
+T\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xf
+b!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\x
+f9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\
+xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.
+DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\x
+fb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\
+xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?
+\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea
+.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\
+xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!
+\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9
+?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xe
+a.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT
+\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb
+!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf
+9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\x
+ea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.D
+T\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xf
+b!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\x
+f9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\
+xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.
+DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\x
+fb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\
+xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?
+\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea
+.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\
+xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!
+\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9
+?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xe
+a.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT
+\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb
+!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf
+9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\x
+ea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.D
+T\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xf
+b!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\x
+f9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\
+xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.
+DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\x
+fb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\
+xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?
+\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea
+.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\
+xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!
+\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9
+?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xe
+a.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT
+\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb
+!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf
+9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\x
+ea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.D
+T\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xf
+b!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\x
+f9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\
+xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.
+DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\x
+fb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\
+xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?
+\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea
+.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\
+xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!
+\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9
+?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xe
+a.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT
+\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb
+!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf
+9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\x
+ea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.D
+T\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xf
+b!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\x
+f9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\
+xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.
+DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\x
+fb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\
+xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?
+\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea
+.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\
+xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!
+\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9
+?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xe
+a.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT
+\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb
+!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf
+9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\x
+ea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.D
+T\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xf
+b!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\x
+f9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\
+xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.
+DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\x
+fb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\
+xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?
+\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea
+.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\
+xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!
+\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9
+?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xe
+a.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT
+\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb
+!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf
+9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\x
+ea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.D
+T\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xf
+b!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\x
+f9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\
+xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.
+DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\x
+fb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\
+xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?
+\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea
+.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\
+xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!
+\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9
+?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xe
+a.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT
+\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb
+!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf
+9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\x
+ea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.D
+T\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xf
+b!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\x
+f9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\
+xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.
+DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\x
+fb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\
+xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?
+\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea
+.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\
+xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!
+\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9
+?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xe
+a.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT
+\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb
+!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf
+9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\x
+ea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.D
+T\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xf
+b!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\x
+f9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\
+xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?\xea.DT\xfb!\xf9?'                                                      
+
+In [32]: poFF = np.from
+np.frombuffer    np.fromiter      np.fromstring
+np.fromfile      np.frompyfunc    
+np.fromfunction  np.fromregex     
+
+In [32]: poFF = np.fromf
+np.fromfile      np.fromfunction  
+
+In [32]: poFF = np.fromfile(fp, dtype=float)
+
+In [33]: poFF
+Out[33]: array([], dtype=float64)
+
+In [34]: poFF = np.fromfile(fp, dtype=np.fl)
+np.flatiter      np.float         np.float_
+np.flatnonzero   np.float128      np.floating
+np.flexible      np.float16       np.floor
+np.fliplr        np.float32       np.floor_divide
+np.flipud        np.float64       
+
+In [34]: poFF = np.fromfile(fp, dtype=np.flo)
+np.float         np.float32       np.floating
+np.float128      np.float64       np.floor
+np.float16       np.float_        np.floor_divide
+
+In [34]: poFF = np.fromfile(fp, dtype=np.floa)
+np.float     np.float16   np.float64   np.floating
+np.float128  np.float32   np.float_    
+
+In [34]: poFF = np.fromfile(fp, dtype=np.float)
+
+In [35]: poFF
+Out[35]: array([], dtype=float64)
+
+In [36]: fp.close()
+
+In [37]: fp = open('poAnglesFF.dat', 'r')
+
+In [38]: poFF = np.fromfile(fp, dtype=np.float)
+
+In [39]: fp.close()
+
+In [40]: poFF
+Out[40]: 
+array([ 1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633,                                              
+        1.57079633,  1.57079633,  1.57079633,  1.57079633, 
+ 1.57079633])                                             
+
+In [41]: poFF.shape
+Out[41]: (1000,)
+
+In [42]: np.uni
+np.unicode   np.unicode0  np.unicode_  np.union1d   np.unique    
+
+In [42]: len(np.unique(poFF))
+Out[42]: 1
+
+In [43]: 
+
+In [43]: 
+
+In [43]: 
+
+In [43]: 
+
+In [43]: ls
+alphalist.txt                   GenFeedForwardConVecFile.cu~  profile_hist.txt
+alphalist.txt~                  genffmat.out*                 profile_hist.txt~
+alphaloop/                      #GenFixedEII.c#               ReadFromFile.cu
+alphaloop00.sh~                 GenFixedEII.c                 readme.txt
+#alphaloop.sh#*                 GenFixedEII.c~                rk4.cu
+alphaloop.sh*                   genlist_cntrst.sh~*           rkdumb.cu
+alphaloop.sh~*                  genlist.sh~*                  rkdumbPretty.cu
+aux.cu                          GenSparseMat.cu               runsim.sh*
+avg_autocorr_bidir_I.png        gffloop.sh~                   scalesAsfN.m
+avgCorr_bidir_I.npy             gffloop.txt~                  scalesAsfN.sh*
+avgTime.sh*                     globalVars.h                  sparseConVec.dat
+bgCurrent.cu                    globalVars.h~                 sparseConVecFF.dat
+cffloop.sh~                     #histFuncs.cu#                sparseConVecFFFF.dat
+cffloop.txt~                    hostConstants.h               Startup.py
+C:\nppdf32Log\debuglog.txt      hostConstants.h~              Startup.pyc
+contrastloop.sh~*               idxVec.dat                    submitjobtogpu.sh~
+countE.csv                      idxVecFF.dat                  taulist_0.txt
+countI.csv                      IFF.cu                        taulist_0.txt~
+countlines.c~                   instant_fr.csv                taulist_1.txt
+cuda_forall.h                   isynap.cu                     taulist_1.txt~
+cudaHist.cu~                    kloop.sh~*                    taulist_3.txt
+cuda_histogram.h                kloop.txt~                    taulist_ff.txt
+cudaRandFuncs.cu                kratio.txt~                   taulist.txt
+cuda_reduce.h                   list.txt                      taulist.txt~
+cuda_rnd.h                      ls                            #tauloop.sh#*
+currents_0.0_3.csv              lst.txt                       tauloop.sh*
+data/                           Makefile                      tauloop.sh~*
+derivs.cu                       mycurand.h                    thetaloop.sh*
+devFunctionProtos.h             mysolver.cu                   tinyRGN.c
+devHostConstants.h              nPostNeurons.dat              tinyRGN.c~
+devHostConstants.h~             nPostNeuronsFF.dat            tinyRNG.cu
+FanoOriDependency.py~           nvprof_analysis.txt           tinyRNG.cu~
+ffcount.csv                     nw.out*                       trialLoop.sh*
+GenBiDir.c                      nw_tau3_init1*                trialLoop.sh~
+GenBiDir.c~                     parallelSynap.cu              tst
+GenConProbDistDepMat.cu         ploop0.sh~*                   tstMain.cu
+GenConProbDistDepMat.cu~        ploop_a.sh~*                  warp_standard.h
+genconvec.out*                  ploop.sh~*                    WriteFiringRateTofile.cu~
+GenerateConVecFile.cu           plotPy.py                     xCords.dat
+GenerateFFConMatOnCircPatch.c   plotPy.pyc                    xCordsFF.dat
+GenerateFFConMatOnCircPatch.c~  plotvm.m                      yCords.dat
+GenerateFFConMatOnHost.c        poAngles.dat                  yCordsFF.dat
+GenerateFFConMatOnHost.c~       poAnglesFF.dat
+GenFeedForwardConVecFile.cu     poinmap.csv
+
+In [44]: fp.close()
+
+In [45]: fp = open('poAnglesFF.dat', 'r')
+
+In [46]: poFF = np.fromfile(fp, dtype=np.float)
+
+In [47]: fp.close()
+
+In [48]: plt.hist(poFF)
+Out[48]: 
+(array([  56.,   85.,  113.,  126.,  129.,  130.,  113.,  
+106.,   89.,   53.]),                                    
+ array([ 1.58179478,  1.65858034,  1.73536591,  1.81215147
+,  1.88893703,                                           
+         1.96572259,  2.04250816,  2.11929372,  2.19607928
+,  2.27286485,                                           
+         2.34965041]),
+ <a list of 10 Patch objects>)
+
+In [49]: fp = open('poAnglesFF.dat', 'r'); poFF = np.fromfile(fp, dtype=np.float); fp.close()
+
+In [50]: plt.hist(poFF)
+Out[50]: 
+(array([  41.,   83.,  121.,  120.,  154.,  130.,  135.,  108.,   70.,   38.]),
+ array([ 1.5755645 ,  1.652907  ,  1.73024949,  1.80759198,  1.88493447,
+         1.96227696,  2.03961945,  2.11696194,  2.19430443,  2.27164692,
+         2.34898942]),
+ <a list of 10 Patch objects>)
+
+In [51]: fp = open('xC.dat', 'r'); poFF = np.fromfile(fp, dtype=np.float); fp.close()                   
+xCords.dat    xCordsFF.dat  
+
+In [51]: fp = open('xCordsFF.dat', 'r'); xFF = np.fromfile(fp, dtype=np.float); fp.close()              
+
+In [52]: fp = open('xCordsFF.dat', 'r'); xFF = np.fromfile(fp, dtype=np.float); fp.close()
+
+In [53]: fp = open('yCordsFF.dat', 'r'); yFF = np.fromfile(fp, dtype=np.float); fp.close()              
+
+In [54]: plt.clf()
+
+In [55]: plt.plot(xFF, yFF, '.')
+Out[55]: [<matplotlib.lines.Line2D at 0x7fea779ce190>]
+
+In [56]: fp = open('poAnglesFF.dat', 'r'); poFF = np.fromfile(fp, dtype=np.float); fp.close()
+
+In [57]: plt.clf()
+
+In [58]: plt.hist(poFF)
+Out[58]: 
+(array([ 115.,   87.,  107.,  103.,   92.,   84.,  104.,   89.,  109.,  110.]),
+ array([  2.67985251e-03,   3.16455089e-01,   6.30230325e-01,
+          9.44005561e-01,   1.25778080e+00,   1.57155603e+00,
+          1.88533127e+00,   2.19910650e+00,   2.51288174e+00,
+          2.82665698e+00,   3.14043221e+00]),
+ <a list of 10 Patch objects>)
+
+In [59]: plt.sca
+plt.sca      plt.scatter  
+
+In [59]: plt.scatter(xFF, yFF, c = po
+%popd           poAngles.dat    poAnglesFF.dat  poFF            poinmap.csv     pow
+
+In [59]: plt.scatter(xFF, yFF, c = poFF, cmap = 'csv')
+---------------------------------------------------------------------------
+ValueError                                Traceback (most recent call last)
+<ipython-input-59-a57bf1f186ec> in <module>()
+----> 1 plt.scatter(xFF, yFF, c = poFF, cmap = 'csv')
+
+/usr/lib/python2.7/dist-packages/matplotlib/pyplot.pyc in scatter(x, y, s, c, marker, cmap, norm, vmin, 
+vmax, alpha, linewidths, verts, edgecolors, hold, data, **kwargs)                                      
+   3249                          vmin=vmin, vmax=vmax, alpha=alpha,
+   3250                          linewidths=linewidths, verts=verts,
+-> 3251                          edgecolors=edgecolors, data=data, **kwargs)
+   3252     finally:
+   3253         ax.hold(washold)
+
+/usr/lib/python2.7/dist-packages/matplotlib/__init__.pyc in inner(ax, *args, **kwargs)
+   1812                     warnings.warn(msg % (label_namer, func.__name__),
+   1813                                   RuntimeWarning, stacklevel=2)
+-> 1814             return func(ax, *args, **kwargs)
+   1815         pre_doc = inner.__doc__
+   1816         if pre_doc is None:
+
+/usr/lib/python2.7/dist-packages/matplotlib/axes/_axes.pyc in scatter(self, x, y, s, c, marker, cmap, no
+rm, vmin, vmax, alpha, linewidths, verts, edgecolors, **kwargs)                                        
+   3901                 raise ValueError(msg)
+   3902             collection.set_array(np.asarray(c))
+-> 3903             collection.set_cmap(cmap)
+   3904             collection.set_norm(norm)
+   3905 
+
+/usr/lib/python2.7/dist-packages/matplotlib/cm.pyc in set_cmap(self, cmap)
+    304         ACCEPTS: a colormap or registered colormap name
+    305         """
+--> 306         cmap = get_cmap(cmap)
+    307         self.cmap = cmap
+    308         self.changed()
+
+/usr/lib/python2.7/dist-packages/matplotlib/cm.pyc in get_cmap(name, lut)
+    164         raise ValueError(
+    165             "Colormap %s is not recognized. Possible values are: %s"
+--> 166             % (name, ', '.join(sorted(cmap_d.keys()))))
+    167 
+    168 
+
+ValueError: Colormap csv is not recognized. Possible values are: Accent, Accent_r, Blues, Blues_r, BrBG,
+ BrBG_r, BuGn, BuGn_r, BuPu, BuPu_r, CMRmap, CMRmap_r, Dark2, Dark2_r, GnBu, GnBu_r, Greens, Greens_r, G
+reys, Greys_r, OrRd, OrRd_r, Oranges, Oranges_r, PRGn, PRGn_r, Paired, Paired_r, Pastel1, Pastel1_r, Pas
+tel2, Pastel2_r, PiYG, PiYG_r, PuBu, PuBuGn, PuBuGn_r, PuBu_r, PuOr, PuOr_r, PuRd, PuRd_r, Purples, Purp
+les_r, RdBu, RdBu_r, RdGy, RdGy_r, RdPu, RdPu_r, RdYlBu, RdYlBu_r, RdYlGn, RdYlGn_r, Reds, Reds_r, Set1,
+ Set1_r, Set2, Set2_r, Set3, Set3_r, Spectral, Spectral_r, Wistia, Wistia_r, YlGn, YlGnBu, YlGnBu_r, YlG
+n_r, YlOrBr, YlOrBr_r, YlOrRd, YlOrRd_r, afmhot, afmhot_r, autumn, autumn_r, binary, binary_r, bone, bon
+e_r, brg, brg_r, bwr, bwr_r, cool, cool_r, coolwarm, coolwarm_r, copper, copper_r, cubehelix, cubehelix_
+r, flag, flag_r, gist_earth, gist_earth_r, gist_gray, gist_gray_r, gist_heat, gist_heat_r, gist_ncar, gi
+st_ncar_r, gist_rainbow, gist_rainbow_r, gist_stern, gist_stern_r, gist_yarg, gist_yarg_r, gnuplot, gnup
+lot2, gnuplot2_r, gnuplot_r, gray, gray_r, hot, hot_r, hsv, hsv_r, inferno, inferno_r, jet, jet_r, magma
+, magma_r, nipy_spectral, nipy_spectral_r, ocean, ocean_r, pink, pink_r, plasma, plasma_r, prism, prism_
+r, rainbow, rainbow_r, seismic, seismic_r, spectral, spectral_r, spring, spring_r, summer, summer_r, ter
+rain, terrain_r, viridis, viridis_r, winter, winter_r                                                  
+
+In [60]: plt.clf()
+
+In [61]: plt.scatter(xFF, yFF, c = poFF, cmap = 'hsv')
+Out[61]: <matplotlib.collections.PathCollection at 0x7fea73857110>
+
+In [62]: poFF.shape
+Out[62]: (1000,)
+
+In [63]: xFF.shape
+Out[63]: (1000,)
+
+In [64]: yFF.shape
+Out[64]: (1000,)
+
+In [65]: plt.col
+plt.colorbar      plt.colormaps     plt.colors        plt.column_stack  
+
+In [65]: plt.color
+plt.colorbar   plt.colormaps  plt.colors     
+
+In [65]: plt.colorbar()
+Out[65]: <matplotlib.colorbar.Colorbar at 0x7fea737d1c10>
+
+In [66]: np.ar
+np.arange        np.arcsinh       np.argmax        np.argwhere      np.array_equal   np.array_str
+np.arccos        np.arctan        np.argmin        np.around        np.array_equiv   
+np.arccosh       np.arctan2       np.argpartition  np.array         np.array_repr    
+np.arcsin        np.arctanh       np.argsort       np.array2string  np.array_split   
+
+In [66]: popy = 0.5 * (np.atan2(xFF, yFF) + np.pi)
+---------------------------------------------------------------------------
+AttributeError                            Traceback (most recent call last)
+<ipython-input-66-cb73135830f6> in <module>()
+----> 1 popy = 0.5 * (np.atan2(xFF, yFF) + np.pi)
+
+AttributeError: 'module' object has no attribute 'atan2'
+
+In [67]: popy = 0.5 * (np.artan2(xFF, yFF) + np.pi)                                                     
+np.arange        np.arcsinh       np.argmax        np.argwhere      np.array_equal   np.array_str
+np.arccos        np.arctan        np.argmin        np.around        np.array_equiv   
+np.arccosh       np.arctan2       np.argpartition  np.array         np.array_repr    
+np.arcsin        np.arctanh       np.argsort       np.array2string  np.array_split   
+
+In [67]: popy = 0.5 * (np.arctan2(xFF, yFF) + np.pi)                                                    
+
+In [68]: plt.clf()
+
+In [69]: plt.sca
+plt.sca      plt.scatter  
+
+In [69]: plt.scatter(xFF, yFF, c = pop, cmap = 'hsv')                                                   
+%popd  popy   
+
+In [69]: plt.scatter(xFF, yFF, c = popy, cmap = 'hsv')                                                  
+Out[69]: <matplotlib.collections.PathCollection at 0x7fea74502450>
+
+In [70]: plt.clf()
+
+In [71]: plt.scatter(xFF - 0.5, yFF - 0.5, c = popy, cmap = 'hsv')                                      

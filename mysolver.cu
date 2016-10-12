@@ -38,7 +38,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  double tStart = 0.0, tStop = 20000.0;
+  double tStart = 0.0, tStop = 52000.0;
   double *spkTimes, *vm = NULL, host_theta = 0.0, theta_degrees; /* *vstart; 500 time steps */
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   double *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
@@ -136,13 +136,21 @@ int main(int argc, char *argv[]) {
   /* SETUP POISSION RAND GENERATOR */
   cudaCheck(cudaMalloc((void **)&poisRandState,  NFF * sizeof(curandState)));
   setup_pois_kernel<<<(NFF + ThreadsPerBlock - 1) / ThreadsPerBlock, ThreadsPerBlock>>>(poisRandState, time(NULL));
-  AuxRffTotalWithOriMap<<<(NFF + ThreadsPerBlock - 1) / ThreadsPerBlock, ThreadsPerBlock>>>(); // assign POs in the ori map for the poiss generators 
+  // AuxRffTotalWithOriMap<<<(NFF + ThreadsPerBlock - 1) / ThreadsPerBlock, ThreadsPerBlock>>>(); // assign POs in the ori map for the poiss generators 
   /* ===================================================================================================================== */
   /* SAVE ORIMAP IN LAYER 4 */
   float *dev_L4PO_Ptr = NULL, *host_L4PO = NULL;
   cudaCheck(cudaGetSymbolAddress((void **)&dev_L4PO_Ptr, POInOriMap));
   cudaCheck(cudaMallocHost((void **)&host_L4PO, NFF * sizeof(float)));
-  cudaCheck(cudaMemcpy(host_L4PO, dev_L4PO_Ptr, NFF * sizeof(float), cudaMemcpyDeviceToHost));
+  FILE *fpFFPOAngles = NULL;
+  int ffdummytmp;
+
+  fpFFPOAngles = fopen("poAnglesFF.dat", "rb");
+  ffdummytmp = fread(host_L4PO, sizeof(float), NFF, fpFFPOAngles);
+  fclose(fpFFPOAngles);
+  printf("hello\n");  
+  cudaCheck(cudaMemcpy(dev_L4PO_Ptr, host_L4PO, NFF * sizeof(float), cudaMemcpyHostToDevice));  
+  //  cudaCheck(cudaMemcpy(host_L4PO, dev_L4PO_Ptr, NFF * sizeof(float), cudaMemcpyDeviceToHost));
   FILE *fpPo = fopen("poinmap.csv", "w");
   for(int ikl = 0; ikl < NFF; ikl++) {
     fprintf(fpPo, "%f\n", host_L4PO[ikl]);
@@ -182,9 +190,10 @@ int main(int argc, char *argv[]) {
 
   dummy = fread(idxVec, sizeof(*idxVec), N_NEURONS, fpIdxVec);
   fclose(fpIdxVec);
+
   /* READ FF SPARSE CONNECTION MAT */
   FILE *fpSparseConVecFF, *fpIdxVecFF, *fpNpostNeuronsFF;
-  fpSparseConVecFF = fopen("sparseConVecFF.dat", "rb");
+  fpSparseConVecFF = fopen("sparseConVecFFFF.dat", "rb");
   fpIdxVecFF = fopen("idxVecFF.dat", "rb");
   fpNpostNeuronsFF = fopen("nPostNeuronsFF.dat", "rb");
   dummy = fread(nPostNeuronsFF, sizeof(*nPostNeuronsFF), NFF, fpNpostNeuronsFF);
@@ -193,15 +202,18 @@ int main(int argc, char *argv[]) {
   for(i = 0; i < NFF; ++i) {
     nConnectionsFF += nPostNeuronsFF[i];
   }
+
   cudaCheck(cudaMalloc((void **)&dev_sparseConVecFFPtr,  nConnectionsFF * sizeof(int)));
   cudaCheck(cudaMallocHost((void **)&sparseConVecFF, nConnectionsFF * sizeof(int)));
 
   devPtrs.dev_sparseConVecFF = dev_sparseConVecFFPtr;
+  printf("hello\n");        
   //  dummy = fread(sparseConVecFF, sizeof(*sparseConVecFF), N_NEURONS * (2ULL * (unsigned long long)(CFF * K) + 1), fpSparseConVecFF);
   dummy = fread(sparseConVecFF, sizeof(*sparseConVecFF), nConnectionsFF, fpSparseConVecFF);
   fclose(fpSparseConVecFF);
+
   if(dummy != nConnectionsFF) {
-    printf("%d, sparseConvecFF read error ? \n", dummy);
+    printf("%d, %d sparseConvecFF read error ? \n", dummy, nConnections);
   }
   dummy = fread(idxVecFF, sizeof(*idxVecFF), NFF, fpIdxVecFF);
   fclose(fpIdxVecFF);

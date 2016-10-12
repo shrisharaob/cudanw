@@ -13,7 +13,7 @@
 #define STORE_LAST_T_MILLISEC 1.0
 #define STORE_LAST_N_STEPS (STORE_LAST_T_MILLISEC / DT)
 #define HOST_CONTRAST 100.0
-#define HOST_CFF 0.2 // KFF = CFF * K
+#define HOST_CFF 0.1 // KFF = CFF * K
 
 
 #define N_NEURONS_TO_STORE_START 0
@@ -31,7 +31,7 @@
 #define PATCH_CENTER_X 0.5
 #define PATCH_CENTER_Y 0.5
 #define L 1.0
-#define CON_SIGMA 0.20
+#define CON_SIGMA 0.18
 #define CON_SIGMA_X CON_SIGMA
 #define CON_SIGMA_Y CON_SIGMA
 #define PI 3.14159265359
