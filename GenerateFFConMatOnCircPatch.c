@@ -100,31 +100,22 @@ void ConProbPreFactorRec(double *convec) {
     preFactorI2All = 0.0;
     preFactorE2All = 0.0;
   }
-  
-  /* preFactorI2All = (double)K / preFactorI2All; */
-  /* preFactorE2All = (double)K / preFactorE2All; */
-  /* /\* now multiply the prefactor *\/ */
-  /* for(i = 0; i < N_NEURONS; ++i) { */
-  /*   for(j = 0; j < N_NEURONS; ++j) {     */
-  /*     if(i < NE) { */
-  /*       convec[i + j * N_NEURONS] *= preFactorE2All; */
-  /*     } */
-  /*     else { */
-  /*       convec[i + j * N_NEURONS] *= preFactorI2All; */
-  /*     } */
-  /*   } */
-  /* } */
-
 }
 
 
 void GetXYAngle(double *xCords, double *yCords, float *angles, unsigned long nCordinates) {
   unsigned long i;
+  double tmpAngle = 0;
   for(i = 0; i < nCordinates; ++i) {
-    angles[i] = 0.5 * (atan2(yCords[i] - PATCH_CENTER_Y, xCords[i] - PATCH_CENTER_X)) + PI * 0.5;
-    //    printf("%f %f %f\n", yCords[i] - PATCH_CENTER_Y, xCords[i] - PATCH_CENTER_X, angles[i]);
+    tmpAngle = atan2(yCords[i] - PATCH_CENTER_Y, xCords[i] - PATCH_CENTER_X);
+    if(tmpAngle < 0) {
+	tmpAngle += 2 * PI;
+      }
+    angles[i] = 0.5 * tmpAngle;
   }
 }
+
+
 
 void GenXYCordinate(double *ffXcord, double *ffYcord, unsigned long nCordinates) {
   unsigned long i;
@@ -132,15 +123,15 @@ void GenXYCordinate(double *ffXcord, double *ffYcord, unsigned long nCordinates)
   gsl_rng *gslRGNStateXY;
   int IS_VALID;
   double xCord, yCord;
-  //  gsl_rng_env_setup();
+  // gsl_rng_env_setup();
   TXY = gsl_rng_default;
   gslRGNStateXY = gsl_rng_alloc(TXY);
   gsl_rng_set(gslRGNStateXY, time(NULL));
   for(i = 0; i < nCordinates; ++i) {
     IS_VALID = 0;
     while(!IS_VALID) {
-      xCord = gsl_rng_uniform(gslRGNStateXY) - PATCH_CENTER_X;
-      yCord = gsl_rng_uniform(gslRGNStateXY) - PATCH_CENTER_Y;
+      xCord = 2.0 * PATCH_RADIUS * gsl_rng_uniform(gslRGNStateXY) - PATCH_CENTER_X; // shift origin to pinwheel center for checking 
+      yCord = 2.0 * PATCH_RADIUS * gsl_rng_uniform(gslRGNStateXY) - PATCH_CENTER_Y;
       if((xCord * xCord) + (yCord * yCord) <= PATCH_RADIUS_SQRD) {
 	ffXcord[i] = xCord + PATCH_CENTER_X;
 	ffYcord[i] = yCord + PATCH_CENTER_Y;
@@ -152,23 +143,50 @@ void GenXYCordinate(double *ffXcord, double *ffYcord, unsigned long nCordinates)
 }
 
 double Gaussian1D(double x, double xMean, double xSigma) {
-  return (1.0 / sqrt(2.0 * PI)) * exp(-1 * ((x - xMean) * (x - xMean)) / (2.0 * xSigma * xSigma));
+  return (1.0 / sqrt(2.0 * PI * xSigma)) * exp(-1 * ((x - xMean) * (x - xMean)) / (2.0 * xSigma * xSigma));
+}
+
+double Gaussian2D(double x, double y, double xMean, double yMean, double xSigma, double ySigma) {
+  return Gaussian1D(x, xMean, xSigma) * Gaussian1D(y, yMean, ySigma);
+}
+
+double Afunc(double x, double y, double radius) { //double xMean, double yMean, double xSigma, double ySigma, double radius) {
+  double r = 0;
+  // ORIGIN AT PINWHEEL CENTER 
+  r = sqrt(x * x + y * y);
+  return (2 * radius  - r) / r;
+}
+
+double Afunc2(double x, double y, double radius) { //double xMean, double yMean, double xSigma, double ySigma, double radius) {
+  double r = 0;
+  double episilon = PATCH_RADIUS / 20.0;
+  // ORIGIN AT PINWHEEL CENTER 
+  r = sqrt(x * x + y * y);
+  return (2 * radius - r) / (r + episilon);
+}
+
+void ReflectedCords(double *x, double *y, double radius) {
+  double tmpA = 0;
+  tmpA = Afunc(*x, *y, radius);
+  *x *= tmpA;
+  *y *= tmpA;
+}
+
+void ShiftOrigin(double *x, double *y) {
+  *x -= PATCH_CENTER_X;
+  *y -= PATCH_CENTER_Y;
 }
 
 double ConProb(double xCord0, double xCord1, double xSigma, double yCord0, double yCord1, double ySigma) {
-  double boundryX0, boundryX1, boundryY0, boundryY1;
-  double fx, fy;
-  boundryX0 = PATCH_RADIUS - sqrt(PATCH_RADIUS_SQRD - pow(yCord0 - PATCH_CENTER_Y, 2));
-  boundryX1 = PATCH_RADIUS + sqrt(PATCH_RADIUS_SQRD - pow(yCord0 - PATCH_CENTER_Y, 2));  
-  fx = Gaussian1D(xCord1, xCord0, xSigma) + Gaussian1D(xCord1, 2 * boundryX0 - xCord0, xSigma) + Gaussian1D(xCord1, 2 * boundryX1 - xCord0, xSigma);
-  boundryY0 = PATCH_RADIUS - sqrt(PATCH_RADIUS_SQRD - pow(xCord0 - PATCH_CENTER_X, 2));
-  boundryY1 = PATCH_RADIUS + sqrt(PATCH_RADIUS_SQRD - pow(xCord0 - PATCH_CENTER_X, 2));
-  fy = Gaussian1D(yCord1, yCord0, ySigma) + Gaussian1D(yCord1, 2 * boundryY0 - yCord0, ySigma) + Gaussian1D(yCord1, 2 * boundryY1 - yCord0, ySigma);
-  //  printf("%f %f %f %f", xCord0, xCord1, yCord0, yCord1);
-  /* printf("%f %f %f    ", PATCH_RADIUS_SQRD, yCord0, PATCH_CENTER_Y); */
-  /* printf("%f %f %f %f\n", boundryX0, boundryX1, boundryY0, boundryY1); */
-  /* printf("%f %f\n", fx, fy); */
-  return fx * fy;
+  // Centered on (xCord0, yCord0)
+  double xReflected, yReflected;
+  ShiftOrigin(&xCord0, &yCord0);
+  ShiftOrigin(&xCord1, &yCord1);
+  xReflected = xCord1;
+  yReflected = yCord1;
+  ReflectedCords(&xReflected, &yReflected, PATCH_RADIUS);
+  return Gaussian2D(xCord1, yCord1, xCord0, yCord0, xSigma, ySigma) +
+    Afunc2(xCord1, yCord1, PATCH_RADIUS) * Gaussian2D(xReflected, yReflected, xCord0, yCord0, xSigma, ySigma);
 }
 
 int main (void)
@@ -238,8 +256,12 @@ int main (void)
     fclose(fpconmat);
   }
   /* GENERATE CONNECTIVITY MATRIX */
+  unsigned npgtone = 0;
   for(i = 0; i < NFF; ++i) {
     for(j = 0; j < N_NEURONS; ++j) {
+      if(conMatFF[i + j * NFF] >= 1.0) {
+	npgtone += 1;
+      }
       if(conMatFF[i + j * NFF] > gsl_rng_uniform(gslRGNState)) {
         conMatFF[i + j * NFF] = 1.0;
       }
@@ -248,6 +270,9 @@ int main (void)
       }
     }
   }
+
+  printf("\n#PROB GREATER THAN half %u\n", npgtone);
+
   /* GENERATE SPARSE REPRESENTATIONS */
   int idxVecFF[NFF], nPostNeuronsFF[NFF];
   int *sparseConVecFF;
@@ -316,7 +341,7 @@ int main (void)
   printf("\n Generating recurrent connection matrix ... "); fflush(stdout);
   for(i = 0; i < N_NEURONS; i++) {
     for(j = 0; j < N_NEURONS; j++) {
-           conMat[i + j * N_NEURONS] = ConProb(xCord[i], xCord[j], CON_SIGMA_X, yCord[i], yCord[j], CON_SIGMA_Y);      // i to j
+           conMat[i + j * N_NEURONS] = ConProb(xCord[j], xCord[i], CON_SIGMA_X, yCord[j], yCord[i], CON_SIGMA_Y);      // i to j
       /* conMat[i + j * N_NEURONS] = ConProb(0.1, 0.5, CON_SIGMA_X, 0.5, 0.0, CON_SIGMA_Y);      // i to j */
       /* printf("%f \n", conMat[i + j * N_NEURONS]);    */
     }
@@ -343,8 +368,15 @@ int main (void)
 
   
   /* GENERATE CONNECTIVITY MATRIX */
+  unsigned *npgtoneRec = NULL;
+  npgtone = 0;
+  npgtoneRec = (unsigned *)malloc(N_NEURONS * sizeof(unsigned));
   for(i = 0; i < N_NEURONS; ++i) {
+    npgtone = 0;
     for(j = 0; j < N_NEURONS; ++j) {
+      if(conMat[i + j * N_NEURONS] >= 1.0) {
+	npgtone += 1;
+      }
       if(conMat[i + j * N_NEURONS] >= gsl_rng_uniform(gslRGNState)) {
         conMat[i + j * N_NEURONS] = 1.0;
       }
@@ -352,7 +384,15 @@ int main (void)
         conMat[i + j * N_NEURONS] = 0.0;
       }
     }
+    npgtoneRec[i] = npgtone;
   }
+  FILE *fpRecRows = fopen("recrows.dat", "wb");
+  nElementsWritten = fwrite(npgtoneRec, sizeof(unsigned), N_NEURONS, fpRecRows);
+  fclose(fpRecRows);
+  free(npgtoneRec);
+  printf("\n-----------------------------------------------\n");
+  printf("\n#PROB GREATER THAN half, REC:  %u\n", npgtone);
+  printf("\n-----------------------------------------------\n") ; 
   //
   nConnections = 0;  
   for(i = 0; i < N_NEURONS; ++i) {
