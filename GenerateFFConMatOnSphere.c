@@ -117,27 +117,24 @@ void GetXYAngle(double *xCords, double *yCords, float *angles, unsigned long nCo
 
 
 
-void GenXYCordinate(double *ffXcord, double *ffYcord, unsigned long nCordinates) {
+void GenXYZCordinate(double *ffXcord, double *ffYcord, double *ffZcord, unsigned long nCordinates) {
   unsigned long i;
   const gsl_rng_type * TXY;
   gsl_rng *gslRGNStateXY;
   int IS_VALID;
-  double xCord, yCord;
+  double xCord, yCord, zCord, tmpR;
   // gsl_rng_env_setup();
   TXY = gsl_rng_default;
   gslRGNStateXY = gsl_rng_alloc(TXY);
   gsl_rng_set(gslRGNStateXY, time(NULL));
   for(i = 0; i < nCordinates; ++i) {
-    IS_VALID = 0;
-    while(!IS_VALID) {
-      xCord = 2.0 * PATCH_RADIUS * gsl_rng_uniform(gslRGNStateXY) - PATCH_CENTER_X; // shift origin to pinwheel center for checking 
-      yCord = 2.0 * PATCH_RADIUS * gsl_rng_uniform(gslRGNStateXY) - PATCH_CENTER_Y;
-      if((xCord * xCord) + (yCord * yCord) <= PATCH_RADIUS_SQRD) {
-	ffXcord[i] = xCord + PATCH_CENTER_X;
-	ffYcord[i] = yCord + PATCH_CENTER_Y;
-	IS_VALID = 1;
-      }
-    }
+      xCord = gsl_ran_gaussian(gslRGNStateXY, 1.0); 
+      yCord = gsl_ran_gaussian(gslRGNStateXY, 1.0);
+      zCord = gsl_ran_gaussian(gslRGNStateXY, 1.0) ;
+      tmpR = sqrt(xCord * xCord + yCord * yCord + zCord * zCord);
+      ffXcord[i] = (xCord / tmpR) + PATCH_CENTER_X; // shift spear center from 0, 0 to X, Y, Z
+      ffYcord[i] = (yCord / tmpR) + PATCH_CENTER_Y;
+      ffZcord[i] = (zCord / tmpR) + PATCH_CENTER_Z;
   }
   gsl_rng_free(gslRGNStateXY);  
 }
@@ -172,21 +169,27 @@ void ReflectedCords(double *x, double *y, double radius) {
   *y *= tmpA;
 }
 
-void ShiftOrigin(double *x, double *y) {
+void ShiftOrigin(double *x, double *y, double *z) {
   *x -= PATCH_CENTER_X;
   *y -= PATCH_CENTER_Y;
+  *z -= PATCH_CENTER_Z;  
 }
 
-double ConProb(double xCord0, double xCord1, double xSigma, double yCord0, double yCord1, double ySigma) {
-  // Centered on (xCord0, yCord0)
+double VonMisses(double meanX, double meanY, double meanZ, double x, double y, double z, double kappa) {
+  return exp(kappa * (meanX * x + meanY * y + meanZ * z));
+}
+
+double VonMissesPrefactor(double kappa) {
+  return kappa / (2 * PI * (exp(kappa) - exp(-1.0 * kappa)));
+}
+
+
+double ConProb(double xCord0, double xCord1, double yCord0, double yCord1, double zCord0, double zCord1, double kappa) {
+  // Centered on (xCord0, yCord0, zCord0)
   double xReflected, yReflected;
-  ShiftOrigin(&xCord0, &yCord0);
-  ShiftOrigin(&xCord1, &yCord1);
-  xReflected = xCord1;
-  yReflected = yCord1;
-  ReflectedCords(&xReflected, &yReflected, PATCH_RADIUS);
-  return Gaussian2D(xCord1, yCord1, xCord0, yCord0, xSigma, ySigma) +
-    Afunc2(xCord1, yCord1, PATCH_RADIUS) * Gaussian2D(xReflected, yReflected, xCord0, yCord0, xSigma, ySigma);
+  ShiftOrigin(&xCord0, &yCord0, &zCord0); // shift origint to sphere center
+  ShiftOrigin(&xCord1, &yCord1, &zCord1);
+  return VonMisses(xCord0, yCord0, zCord0, xCord1, yCord1, zCord1, kappa);
 }
 
 int main (void)
@@ -194,7 +197,7 @@ int main (void)
   const gsl_rng_type * T;
   gsl_rng *gslRGNState;
   double *conMatFF = NULL, xa, ya;
-  double *xCord = NULL, *yCord = NULL, *xCordFF = NULL, *yCordFF = NULL;
+  double *xCord = NULL, *yCord = NULL, *zCord = NULL, *xCordFF = NULL, *yCordFF = NULL, *zCordFF = NULL;
   float *xyAnglesFF = NULL, *xyAngles = NULL;
   int i, j, n = 10;
   int IF_PERIODIC = 0, IF_PRINT_CM_TO_FILE = 0;
@@ -205,27 +208,31 @@ int main (void)
   //  double u = gsl_rng_uniform (r);
   xCordFF = (double *)malloc((unsigned long long)NFF * sizeof(double));
   yCordFF = (double *)malloc((unsigned long long)NFF * sizeof(double));
+  zCordFF = (double *)malloc((unsigned long long)NFF * sizeof(double));  
   xyAnglesFF = (float *)malloc((unsigned long long)NFF * sizeof(float));  
   xCord = (double *)malloc((unsigned long long)N_NEURONS * sizeof(double));
   yCord = (double *)malloc((unsigned long long)N_NEURONS * sizeof(double));
+  zCord = (double *)malloc((unsigned long long)N_NEURONS * sizeof(double));  
   xyAngles = (float *)malloc((unsigned long long)N_NEURONS * sizeof(float));
-  GenXYCordinate(xCordFF, yCordFF, NFF);
-  GenXYCordinate(xCord, yCord, N_NEURONS);
+  GenXYZCordinate(xCordFF, yCordFF, zCordFF, NFF);
+  GenXYZCordinate(xCord, yCord, zCordFF, N_NEURONS);
 
   GetXYAngle(xCord, yCord, xyAngles, N_NEURONS);   
   GetXYAngle(xCordFF, yCordFF, xyAnglesFF, NFF);
 
   conMatFF = (double *)malloc((unsigned long long)NFF * N_NEURONS * sizeof(double));
   printf("\n Generating feed forward connection matrix ... "); fflush(stdout);
+
+  double kappa = 1.0 / (FF_CON_SIGMA * FF_CON_SIGMA);
+  double C3Kappa = VonMissesPrefactor(kappa);
   for(i = 0; i < N_NEURONS; i++) {
     for(j = 0; j < NFF; j++) {
-      conMatFF[i + j * N_NEURONS] = ConProb(xCord[i], xCordFF[j], FF_CON_SIGMA_X, yCord[i], yCordFF[j], FF_CON_SIGMA_Y);
+      conMatFF[i + j * N_NEURONS] = ConProb(xCord[i], xCordFF[j], yCord[i], yCordFF[j], zCord[i], zCordFF[j], kappa);
         /* conMatFF[i + j * N_NEURONS] = ConProb(0.1, 0.5, FF_CON_SIGMA_X, 0.5, 0, FF_CON_SIGMA_Y);       */
-
     }
   }
 
-
+  
   /* for(i = 0; i < N_NEURONS; i++) { */
   /*   for(j = 0; j < NFF; j++) { */
   /*         printf("%f \n", conMatFF[i + j * N_NEURONS]); */
@@ -283,8 +290,8 @@ int main (void)
   GenSparseMat(conMatFF, NFF, N_NEURONS, sparseConVecFF, idxVecFF, nPostNeuronsFF);
   /* WRITE SPARSEVEC TO BINARY FILE */
   FILE *fpSparseConVecFF = NULL, *fpIdxVecFF = NULL, *fpNpostNeuronsFF = NULL;
-  FILE *fpXcordsFF = NULL, *fpYcordsFF = NULL, *fpAnglesFF = NULL;
-  FILE *fpXcords = NULL, *fpYcords = NULL, *fpAngles = NULL;
+  FILE *fpXcordsFF = NULL, *fpYcordsFF = NULL, *fpZcordsFF = NULL, *fpAnglesFF = NULL;
+  FILE *fpXcords = NULL, *fpYcords = NULL, *fpZcords = NULL, *fpAngles = NULL;
   /* FILE *testFloat; */
   /* testFloat = fopen("tstfloat.dat", "wb"); */
   /* float tstfltrray[3] = {0.1, 0.93, 1.8098}; */
@@ -315,6 +322,9 @@ int main (void)
   fpYcordsFF = fopen("yCordsFF.dat", "wb");
   fwrite(yCordFF, sizeof(double), NFF, fpYcordsFF);
   fclose(fpYcordsFF);
+  fpZcordsFF = fopen("zCordsFF.dat", "wb");
+  fwrite(zCordFF, sizeof(double), NFF, fpZcordsFF);
+  fclose(fpZcordsFF);    
   fpAnglesFF = fopen("poAnglesFF.dat", "wb");
   fwrite(xyAnglesFF, sizeof(float), NFF, fpAnglesFF);
   fclose(fpAnglesFF);
@@ -325,10 +335,13 @@ int main (void)
   fpYcords = fopen("yCords.dat", "wb");
   fwrite(yCord, sizeof(double), N_NEURONS, fpYcords);
   fclose(fpYcords);
+  fpZcords = fopen("zCords.dat", "wb");
+  fwrite(zCord, sizeof(double), N_NEURONS, fpZcords);
+  fclose(fpZcords);
   fpAngles = fopen("poAngles.dat", "wb");
   fwrite(xyAngles, sizeof(float), N_NEURONS, fpAngles);
   fclose(fpAngles);
-    
+  
   printf("done\n");
   free(conMatFF);
   free(sparseConVecFF);
@@ -339,21 +352,19 @@ int main (void)
   double *conMat = NULL;
   conMat = (double *)malloc((unsigned long long)N_NEURONS * N_NEURONS * sizeof(double)); // RECURRENT
   printf("\n Generating recurrent connection matrix ... "); fflush(stdout);
+  kappa = 1.0 / (CON_SIGMA * CON_SIGMA);
+  C3Kappa = VonMissesPrefactor(kappa);
   for(i = 0; i < N_NEURONS; i++) {
     for(j = 0; j < N_NEURONS; j++) {
-      conMat[i + j * N_NEURONS] =  ConProb(xCord[j], xCord[i], CON_SIGMA_X, yCord[j], yCord[i], CON_SIGMA_Y);      // i to j
-
+      conMat[i + j * N_NEURONS] =  C3Kappa * ConProb(xCord[j], xCord[i], yCord[j], yCord[i], zCord[j], zCord[i], kappa);      // i to j
       //            conMat[i + j * N_NEURONS] = ConProb(xCord[i], xCord[j], CON_SIGMA_X, yCord[i], yCord[j], CON_SIGMA_Y);      // i to j	   
       /* conMat[i + j * N_NEURONS] = ConProb(0.1, 0.5, CON_SIGMA_X, 0.5, 0.0, CON_SIGMA_Y);      // i to j */
       /* printf("%f \n", conMat[i + j * N_NEURONS]);    */
     }
   }
   printf("done\n");  
-
   printf("\n computing prefactors ... "); fflush(stdout);
-
   ConProbPreFactorRec(conMat);
-
   printf("done\n");
 
   /* double preFactorI2All = 0.0,  preFactorE2All = 0.0; */
@@ -370,8 +381,6 @@ int main (void)
   /* } */
   /* printf("\n\n ===>%f %f \n", preFactorI2All, preFactorE2All); */
 
-
-  
   /* GENERATE CONNECTIVITY MATRIX */
   unsigned *npgtoneRec = NULL;
   npgtone = 0;
@@ -435,7 +444,6 @@ int main (void)
   fclose(fpNpostNeurons);
   printf("done\n");
 
-
   FILE *fp, *fp01;
   fp01 = fopen("countI.csv", "w");
   fp = fopen("countE.csv", "w");
@@ -459,8 +467,6 @@ int main (void)
   fclose(fp);   
   fclose(fp01);
 
-  
-
   free(conMat);
   free(idxVec);
   free(nPostNeurons);
@@ -468,8 +474,10 @@ int main (void)
   
   free(xCord);
   free(yCord);
+  free(zCord);    
   free(xCordFF);
-  free(yCordFF);  
+  free(yCordFF);
+  free(zCordFF);      
   gsl_rng_free(gslRGNState);
   return 0;
 }
