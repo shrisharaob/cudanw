@@ -87,16 +87,27 @@ void ConProbPreFactorRec(double *convec) {
 	preFactorI2All += convec[i + j * N_NEURONS];
       }
     }
-    preFactorI2All = 2.0 * (double)K / preFactorI2All;
-    preFactorE2All = 2.0 * (double)K / preFactorE2All;
+    if( i < NE) {
+      preFactorE2All = (double)K / preFactorE2All;
+    }
+    else {
+      preFactorI2All = (double)K / preFactorI2All;
+    }
     for(j = 0; j < N_NEURONS; ++j) {
       if(i < NE) {
+	if(j == 0) {
+	  printf("%f\n", preFactorE2All);
+	}
         convec[i + j * N_NEURONS] *= preFactorE2All;
       }
       else {
+	if(j == 0) {
+	  printf("%f\n", preFactorI2All);
+	}
         convec[i + j * N_NEURONS] *= preFactorI2All;
       }
     }
+
     preFactorI2All = 0.0;
     preFactorE2All = 0.0;
   }
@@ -123,7 +134,7 @@ void GenXYZCordinate(double *ffXcord, double *ffYcord, double *ffZcord, unsigned
   gsl_rng *gslRGNStateXY;
   int IS_VALID;
   double xCord, yCord, zCord, tmpR;
-  // gsl_rng_env_setup();
+  gsl_rng_env_setup();
   TXY = gsl_rng_default;
   gslRGNStateXY = gsl_rng_alloc(TXY);
   gsl_rng_set(gslRGNStateXY, time(NULL));
@@ -139,35 +150,35 @@ void GenXYZCordinate(double *ffXcord, double *ffYcord, double *ffZcord, unsigned
   gsl_rng_free(gslRGNStateXY);  
 }
 
-double Gaussian1D(double x, double xMean, double xSigma) {
-  return (1.0 / sqrt(2.0 * PI * xSigma)) * exp(-1 * ((x - xMean) * (x - xMean)) / (2.0 * xSigma * xSigma));
-}
+/* double Gaussian1D(double x, double xMean, double xSigma) { */
+/*   return (1.0 / sqrt(2.0 * PI * xSigma)) * exp(-1 * ((x - xMean) * (x - xMean)) / (2.0 * xSigma * xSigma)); */
+/* } */
 
-double Gaussian2D(double x, double y, double xMean, double yMean, double xSigma, double ySigma) {
-  return Gaussian1D(x, xMean, xSigma) * Gaussian1D(y, yMean, ySigma);
-}
+/* double Gaussian2D(double x, double y, double xMean, double yMean, double xSigma, double ySigma) { */
+/*   return Gaussian1D(x, xMean, xSigma) * Gaussian1D(y, yMean, ySigma); */
+/* } */
 
-double Afunc(double x, double y, double radius) { //double xMean, double yMean, double xSigma, double ySigma, double radius) {
-  double r = 0;
-  // ORIGIN AT PINWHEEL CENTER 
-  r = sqrt(x * x + y * y);
-  return (2 * radius  - r) / r;
-}
+/* double Afunc(double x, double y, double radius) { //double xMean, double yMean, double xSigma, double ySigma, double radius) { */
+/*   double r = 0; */
+/*   // ORIGIN AT PINWHEEL CENTER  */
+/*   r = sqrt(x * x + y * y); */
+/*   return (2 * radius  - r) / r; */
+/* } */
 
-double Afunc2(double x, double y, double radius) { //double xMean, double yMean, double xSigma, double ySigma, double radius) {
-  double r = 0;
-  double episilon = 0; //PATCH_RADIUS / .0001;
-  // ORIGIN AT PINWHEEL CENTER 
-  r = sqrt(x * x + y * y);
-  return (2 * radius + episilon - r) / (r + episilon);
-}
+/* double Afunc2(double x, double y, double radius) { //double xMean, double yMean, double xSigma, double ySigma, double radius) { */
+/*   double r = 0; */
+/*   double episilon = 0; //PATCH_RADIUS / .0001; */
+/*   // ORIGIN AT PINWHEEL CENTER  */
+/*   r = sqrt(x * x + y * y); */
+/*   return (2 * radius + episilon - r) / (r + episilon); */
+/* } */
 
-void ReflectedCords(double *x, double *y, double radius) {
-  double tmpA = 0;
-  tmpA = Afunc(*x, *y, radius);
-  *x *= tmpA;
-  *y *= tmpA;
-}
+/* void ReflectedCords(double *x, double *y, double radius) { */
+/*   double tmpA = 0; */
+/*   tmpA = Afunc(*x, *y, radius); */
+/*   *x *= tmpA; */
+/*   *y *= tmpA; */
+/* } */
 
 void ShiftOrigin(double *x, double *y, double *z) {
   *x -= PATCH_CENTER_X;
@@ -186,7 +197,8 @@ double VonMissesPrefactor(double kappa) {
 
 double ConProb(double xCord0, double xCord1, double yCord0, double yCord1, double zCord0, double zCord1, double kappa) {
   // Centered on (xCord0, yCord0, zCord0)
-  double xReflected, yReflected;
+  //  double xReflected, yReflected;
+  double out = 0;
   ShiftOrigin(&xCord0, &yCord0, &zCord0); // shift origint to sphere center
   ShiftOrigin(&xCord1, &yCord1, &zCord1);
   return VonMisses(xCord0, yCord0, zCord0, xCord1, yCord1, zCord1, kappa);
@@ -214,8 +226,9 @@ int main (void)
   yCord = (double *)malloc((unsigned long long)N_NEURONS * sizeof(double));
   zCord = (double *)malloc((unsigned long long)N_NEURONS * sizeof(double));  
   xyAngles = (float *)malloc((unsigned long long)N_NEURONS * sizeof(float));
+
   GenXYZCordinate(xCordFF, yCordFF, zCordFF, NFF);
-  GenXYZCordinate(xCord, yCord, zCordFF, N_NEURONS);
+  GenXYZCordinate(xCord, yCord, zCord, N_NEURONS);
 
   GetXYAngle(xCord, yCord, xyAngles, N_NEURONS);   
   GetXYAngle(xCordFF, yCordFF, xyAnglesFF, NFF);
@@ -225,9 +238,13 @@ int main (void)
 
   double kappa = 1.0 / (FF_CON_SIGMA * FF_CON_SIGMA);
   double C3Kappa = VonMissesPrefactor(kappa);
+  double x0, y0, z0, x1, y1, z1;
   for(i = 0; i < N_NEURONS; i++) {
     for(j = 0; j < NFF; j++) {
-      conMatFF[i + j * N_NEURONS] = ConProb(xCord[i], xCordFF[j], yCord[i], yCordFF[j], zCord[i], zCordFF[j], kappa);
+      x1 = xCord[i]; x0 = xCordFF[j];
+      y1 = yCord[i]; y0 = yCordFF[j];
+      z1 = zCord[i]; z0 = zCordFF[j];
+      conMatFF[i + j * N_NEURONS] = C3Kappa * ConProb(x1, x0, y1, y0, z1, z0, kappa);
         /* conMatFF[i + j * N_NEURONS] = ConProb(0.1, 0.5, FF_CON_SIGMA_X, 0.5, 0, FF_CON_SIGMA_Y);       */
     }
   }
@@ -356,7 +373,14 @@ int main (void)
   C3Kappa = VonMissesPrefactor(kappa);
   for(i = 0; i < N_NEURONS; i++) {
     for(j = 0; j < N_NEURONS; j++) {
-      conMat[i + j * N_NEURONS] =  C3Kappa * ConProb(xCord[j], xCord[i], yCord[j], yCord[i], zCord[j], zCord[i], kappa);      // i to j
+
+      x1 = xCord[i]; x0 = xCord[j];
+      y1 = yCord[i]; y0 = yCord[j];
+      z1 = zCord[i]; z0 = zCord[j];
+      conMat[i + j * N_NEURONS] = C3Kappa * ConProb(x1, x0, y1, y0, z1, z0, kappa);
+
+      
+      //      conMat[i + j * N_NEURONS] =  C3Kappa * ConProb(xCord[j], xCord[i], yCord[j], yCord[i], zCord[j], zCord[i], kappa);      // i to j
       //            conMat[i + j * N_NEURONS] = ConProb(xCord[i], xCord[j], CON_SIGMA_X, yCord[i], yCord[j], CON_SIGMA_Y);      // i to j	   
       /* conMat[i + j * N_NEURONS] = ConProb(0.1, 0.5, CON_SIGMA_X, 0.5, 0.0, CON_SIGMA_Y);      // i to j */
       /* printf("%f \n", conMat[i + j * N_NEURONS]);    */

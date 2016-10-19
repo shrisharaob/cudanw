@@ -87,8 +87,8 @@ void ConProbPreFactorRec(double *convec) {
 	preFactorI2All += convec[i + j * N_NEURONS];
       }
     }
-    preFactorI2All = 2.0 * (double)K / preFactorI2All;
-    preFactorE2All = 2.0 * (double)K / preFactorE2All;
+    preFactorI2All = (double)K / preFactorI2All;
+    preFactorE2All = (double)K / preFactorE2All;
     for(j = 0; j < N_NEURONS; ++j) {
       if(i < NE) {
         convec[i + j * N_NEURONS] *= preFactorE2All;
@@ -159,7 +159,7 @@ double Afunc(double x, double y, double radius) { //double xMean, double yMean, 
 
 double Afunc2(double x, double y, double radius) { //double xMean, double yMean, double xSigma, double ySigma, double radius) {
   double r = 0;
-  double episilon = 0; //PATCH_RADIUS / .0001;
+  double episilon = PATCH_RADIUS / 100.0;
   // ORIGIN AT PINWHEEL CENTER 
   r = sqrt(x * x + y * y);
   return (2 * radius + episilon - r) / (r + episilon);

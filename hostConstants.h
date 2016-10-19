@@ -1,11 +1,11 @@
 #ifndef _HOST_CONSTANTS_
 #define _HOST_CONSTANTS_
 
-#define NE 20000ULL
-#define NI 20000ULL
+#define NE 5000ULL
+#define NI 5000ULL
 #define N_Neurons (NE + NI)
 #define N_NEURONS N_Neurons
-#define K 100.0
+#define K 1000.0
 #define DT 0.05 /* ms*/ /* CHANGE EXP+SUM WHEN DT CHANGES   */
 #define TAU_SYNAP 3.0
 #define EXP_SUM exp(-1 * DT /TAU_SYNAP)  /*exp(-1 * DT / TAU_SYNAP !!!!!!!!!!! GENERALIZE !!!!!!! */
@@ -32,7 +32,7 @@
 #define PATCH_CENTER_Y PATCH_RADIUS
 #define PATCH_CENTER_Z PATCH_RADIUS
 #define L 1.0
-#define CON_SIGMA 0.2
+#define CON_SIGMA 0.20
 #define CON_SIGMA_X CON_SIGMA
 #define CON_SIGMA_Y CON_SIGMA
 #define PI 3.14159265359
@@ -43,6 +43,6 @@
 #define FF_CON_SIGMA (L_FF * 0.21)
 #define FF_CON_SIGMA_X FF_CON_SIGMA
 #define FF_CON_SIGMA_Y FF_CON_SIGMA  
-#define NFF 20000ULL
+#define NFF 500ULL
 
 #endif
