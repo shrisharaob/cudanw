@@ -1,8 +1,8 @@
 #ifndef _HOST_CONSTANTS_
 #define _HOST_CONSTANTS_
 
-#define NE 5000ULL
-#define NI 5000ULL
+#define NE 20000ULL
+#define NI 20000ULL
 #define N_Neurons (NE + NI)
 #define N_NEURONS N_Neurons
 #define K 1000.0
@@ -26,13 +26,13 @@
 #define ALPHA 0.0 //  probability of Bi-directional connections
 
 /* params patch */
-#define PATCH_RADIUS 1.0
+#define PATCH_RADIUS 0.5
 #define PATCH_RADIUS_SQRD (PATCH_RADIUS * PATCH_RADIUS)
 #define PATCH_CENTER_X PATCH_RADIUS
 #define PATCH_CENTER_Y PATCH_RADIUS
 #define PATCH_CENTER_Z PATCH_RADIUS
 #define L 1.0
-#define CON_SIGMA 0.20
+#define CON_SIGMA 0.25
 #define CON_SIGMA_X CON_SIGMA
 #define CON_SIGMA_Y CON_SIGMA
 #define PI 3.14159265359
@@ -40,9 +40,9 @@
 /* feed forward patch parameters */
 #define CFF HOST_CFF
 #define L_FF 1.0
-#define FF_CON_SIGMA (L_FF * 0.21)
+#define FF_CON_SIGMA (L_FF * 0.30)
 #define FF_CON_SIGMA_X FF_CON_SIGMA
 #define FF_CON_SIGMA_Y FF_CON_SIGMA  
-#define NFF 500ULL
+#define NFF 20000ULL
 
 #endif

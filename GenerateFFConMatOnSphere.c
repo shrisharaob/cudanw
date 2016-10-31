@@ -60,6 +60,19 @@ void MatTranspose(double *m, int w, int h) {
 void ConProbPreFactor(double *conProbMat) {
   double preFactor = 0.0;
   int i, j;
+  /* for(i = 0; i < N_NEURONS; ++i) { */
+  /*   for(j = 0; j < NFF; ++j) { */
+  /*     preFactor += conProbMat[i + j * NFF]; */
+  /*   } */
+  /*   preFactor =  2.0 * (CFF * K) / preFactor; // FACTOR OF TWO BECAUSE BOTH POPULATIONS ARE CONSIDERED */
+  /*   for(j = 0; j < NFF; ++j) { */
+  /*     conProbMat[i + j * NFF] *= preFactor; */
+  /*   } */
+  /*   preFactor = 0.0; */
+  /* } */
+
+
+  
   for(j = 0; j < N_NEURONS; ++j) {
     for(i = 0; i < NFF; ++i) {
       preFactor += conProbMat[i + j * NFF];
@@ -78,32 +91,35 @@ void ConProbPreFactorRec(double *convec) {
   double preFactorE2All, preFactorI2All;
   preFactorI2All = 0.0;
   preFactorE2All = 0.0;
-  for(i = 0; i < N_NEURONS; ++i) { // sum over rows
-    for(j = 0; j < N_NEURONS; ++j) {
-      if(i < NE) {
+  for(j = 0; j < N_NEURONS; ++j) { // sum over rows
+    for(i = 0; i < N_NEURONS; ++i) {
+      //      printf("%llu \n", i + j * N_NEURONS);
+      if(j < NE) {
 	preFactorE2All += convec[i + j * N_NEURONS];
       }
       else {
 	preFactorI2All += convec[i + j * N_NEURONS];
       }
     }
-    if( i < NE) {
+    if( j < NE) {
       preFactorE2All = (double)K / preFactorE2All;
+      preFactorE2All *= 2.0;
     }
     else {
       preFactorI2All = (double)K / preFactorI2All;
+      preFactorI2All *= 2.0;
     }
-    for(j = 0; j < N_NEURONS; ++j) {
-      if(i < NE) {
-	if(j == 0) {
-	  printf("%f\n", preFactorE2All);
-	}
+    for(i = 0; i < N_NEURONS; ++i) {
+      if(j < NE) {
+	/* if(j == 0) { */
+	/*   printf("%f\n", preFactorE2All); */
+	/* } */
         convec[i + j * N_NEURONS] *= preFactorE2All;
       }
       else {
-	if(j == 0) {
-	  printf("%f\n", preFactorI2All);
-	}
+	/* if(j == 0) { */
+	/*   printf("%f\n", preFactorI2All); */
+	/* } */
         convec[i + j * N_NEURONS] *= preFactorI2All;
       }
     }
@@ -111,6 +127,43 @@ void ConProbPreFactorRec(double *convec) {
     preFactorI2All = 0.0;
     preFactorE2All = 0.0;
   }
+
+
+  
+  /* for(i = 0; i < N_NEURONS; ++i) { // sum over rows */
+  /*   for(j = 0; j < N_NEURONS; ++j) { */
+  /*     printf("%llu \n", i + j * N_NEURONS); */
+  /*     if(i < NE) { */
+  /* 	preFactorE2All += convec[i + j * N_NEURONS]; */
+  /*     } */
+  /*     else { */
+  /* 	preFactorI2All += convec[i + j * N_NEURONS]; */
+  /*     } */
+  /*   } */
+  /*   if( i < NE) { */
+  /*     preFactorE2All = (double)K / preFactorE2All; */
+  /*   } */
+  /*   else { */
+  /*     preFactorI2All = (double)K / preFactorI2All; */
+  /*   } */
+  /*   for(j = 0; j < N_NEURONS; ++j) { */
+  /*     if(i < NE) { */
+  /* 	/\* if(j == 0) { *\/ */
+  /* 	/\*   printf("%f\n", preFactorE2All); *\/ */
+  /* 	/\* } *\/ */
+  /*       convec[i + j * N_NEURONS] *= preFactorE2All; */
+  /*     } */
+  /*     else { */
+  /* 	/\* if(j == 0) { *\/ */
+  /* 	/\*   printf("%f\n", preFactorI2All); *\/ */
+  /* 	/\* } *\/ */
+  /*       convec[i + j * N_NEURONS] *= preFactorI2All; */
+  /*     } */
+  /*   } */
+
+  /*   preFactorI2All = 0.0; */
+  /*   preFactorE2All = 0.0; */
+  /* } */
 }
 
 
@@ -143,9 +196,9 @@ void GenXYZCordinate(double *ffXcord, double *ffYcord, double *ffZcord, unsigned
       yCord = gsl_ran_gaussian(gslRGNStateXY, 1.0);
       zCord = gsl_ran_gaussian(gslRGNStateXY, 1.0) ;
       tmpR = sqrt(xCord * xCord + yCord * yCord + zCord * zCord);
-      ffXcord[i] = (xCord / tmpR) + PATCH_CENTER_X; // shift spear center from 0, 0 to X, Y, Z
-      ffYcord[i] = (yCord / tmpR) + PATCH_CENTER_Y;
-      ffZcord[i] = (zCord / tmpR) + PATCH_CENTER_Z;
+      ffXcord[i] = PATCH_RADIUS * (xCord / tmpR) + PATCH_CENTER_X; // set Radius of the sphere
+      ffYcord[i] = PATCH_RADIUS * (yCord / tmpR) + PATCH_CENTER_Y; //   and shift spear center from 0, 0 to X, Y, Z 
+      ffZcord[i] = PATCH_RADIUS * (zCord / tmpR) + PATCH_CENTER_Z;
   }
   gsl_rng_free(gslRGNStateXY);  
 }
@@ -217,6 +270,8 @@ int main (void)
   T = gsl_rng_default;
   gslRGNState = gsl_rng_alloc(T);
   gsl_rng_set(gslRGNState, time(NULL));
+
+  printf("K = %f\n", K);
   //  double u = gsl_rng_uniform (r);
   xCordFF = (double *)malloc((unsigned long long)NFF * sizeof(double));
   yCordFF = (double *)malloc((unsigned long long)NFF * sizeof(double));
@@ -295,7 +350,7 @@ int main (void)
     }
   }
 
-  printf("\n#PROB GREATER THAN half %u\n", npgtone);
+  printf("\n#PROB GREATER THAN one %u\n", npgtone);
 
   /* GENERATE SPARSE REPRESENTATIONS */
   int idxVecFF[NFF], nPostNeuronsFF[NFF];
@@ -373,17 +428,10 @@ int main (void)
   C3Kappa = VonMissesPrefactor(kappa);
   for(i = 0; i < N_NEURONS; i++) {
     for(j = 0; j < N_NEURONS; j++) {
-
       x1 = xCord[i]; x0 = xCord[j];
       y1 = yCord[i]; y0 = yCord[j];
       z1 = zCord[i]; z0 = zCord[j];
       conMat[i + j * N_NEURONS] = C3Kappa * ConProb(x1, x0, y1, y0, z1, z0, kappa);
-
-      
-      //      conMat[i + j * N_NEURONS] =  C3Kappa * ConProb(xCord[j], xCord[i], yCord[j], yCord[i], zCord[j], zCord[i], kappa);      // i to j
-      //            conMat[i + j * N_NEURONS] = ConProb(xCord[i], xCord[j], CON_SIGMA_X, yCord[i], yCord[j], CON_SIGMA_Y);      // i to j	   
-      /* conMat[i + j * N_NEURONS] = ConProb(0.1, 0.5, CON_SIGMA_X, 0.5, 0.0, CON_SIGMA_Y);      // i to j */
-      /* printf("%f \n", conMat[i + j * N_NEURONS]);    */
     }
   }
   printf("done\n");  
@@ -391,26 +439,12 @@ int main (void)
   ConProbPreFactorRec(conMat);
   printf("done\n");
 
-  /* double preFactorI2All = 0.0,  preFactorE2All = 0.0; */
-  /* for(i = 0; i < N_NEURONS; ++i) { // sum over rows */
-  /*   for(j = 0; j < N_NEURONS; ++j) { */
-  
-  /*     if(i < NE) { */
-  /* 	preFactorE2All += conMat[i + j * N_NEURONS]; */
-  /*     } */
-  /*     else { */
-  /* 	preFactorI2All += conMat[i + j * N_NEURONS]; */
-  /*     } */
-  /*   } */
-  /* } */
-  /* printf("\n\n ===>%f %f \n", preFactorI2All, preFactorE2All); */
-
   /* GENERATE CONNECTIVITY MATRIX */
   unsigned *npgtoneRec = NULL;
   npgtone = 0;
   npgtoneRec = (unsigned *)malloc(N_NEURONS * sizeof(unsigned));
   for(i = 0; i < N_NEURONS; ++i) {
-    npgtone = 0;
+    /* npgtone = 0; */
     for(j = 0; j < N_NEURONS; ++j) {
       if(conMat[i + j * N_NEURONS] >= 1.0) {
 	npgtone += 1;
@@ -429,7 +463,7 @@ int main (void)
   fclose(fpRecRows);
   free(npgtoneRec);
   printf("\n-----------------------------------------------\n");
-  printf("\n#PROB GREATER THAN half, REC:  %u\n", npgtone);
+  printf("\n#PROB GREATER THAN one, REC:  %u\n", npgtone);
   printf("\n-----------------------------------------------\n") ; 
   //
   nConnections = 0;  

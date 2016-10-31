@@ -38,7 +38,7 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
 }
 
 int main(int argc, char *argv[]) {
-  double tStart = 0.0, tStop = 12000.0;
+  double tStart = 0.0, tStop = 52000.0;
   double *spkTimes, *vm = NULL, host_theta = 0.0, theta_degrees; /* *vstart; 500 time steps */
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   double *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
@@ -64,10 +64,12 @@ int main(int argc, char *argv[]) {
   // char frfilename[128];
 
   firingrate = (double *) malloc(sizeof(double) * N_NEURONS);
+
+  printf("sigma FF = %f, sigma REC = %f\n", FF_CON_SIGMA, CON_SIGMA);
   
   
   cudaCheck(cudaStreamCreate(&stream1));
-  printf("old tstop = %f\n", tStop);
+  printf("old tstop = %f\n K = %f", tStop, K);
   idxVecFF = (int *)malloc((unsigned long long)NFF * sizeof(int));
   nPostNeuronsFF = (int *)malloc((unsigned long long)NFF * sizeof(int));
   //  cudaCheck(cudaMalloc((void **)&idxVecFF,  NFF * sizeof(*idxVecFF)));

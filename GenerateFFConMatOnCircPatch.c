@@ -78,28 +78,62 @@ void ConProbPreFactorRec(double *convec) {
   double preFactorE2All, preFactorI2All;
   preFactorI2All = 0.0;
   preFactorE2All = 0.0;
-  for(i = 0; i < N_NEURONS; ++i) { // sum over rows
-    for(j = 0; j < N_NEURONS; ++j) {
-      if(i < NE) {
+  for(j = 0; j < N_NEURONS; ++j) { // sum over rows
+    for(i = 0; i < N_NEURONS; ++i) {
+      //      printf("%llu \n", i + j * N_NEURONS);
+      if(j < NE) {
 	preFactorE2All += convec[i + j * N_NEURONS];
       }
       else {
 	preFactorI2All += convec[i + j * N_NEURONS];
       }
     }
-    preFactorI2All = (double)K / preFactorI2All;
-    preFactorE2All = (double)K / preFactorE2All;
-    for(j = 0; j < N_NEURONS; ++j) {
-      if(i < NE) {
+    if( j < NE) {
+      preFactorE2All = (double)K / preFactorE2All;
+    }
+    else {
+      preFactorI2All = (double)K / preFactorI2All;
+    }
+    for(i = 0; i < N_NEURONS; ++i) {
+      if(j < NE) {
+	/* if(j == 0) { */
+	/*   printf("%f\n", preFactorE2All); */
+	/* } */
         convec[i + j * N_NEURONS] *= preFactorE2All;
       }
       else {
+	/* if(j == 0) { */
+	/*   printf("%f\n", preFactorI2All); */
+	/* } */
         convec[i + j * N_NEURONS] *= preFactorI2All;
       }
     }
+
     preFactorI2All = 0.0;
     preFactorE2All = 0.0;
   }
+  /* for(i = 0; i < N_NEURONS; ++i) { // sum over rows */
+  /*   for(j = 0; j < N_NEURONS; ++j) { */
+  /*     if(i < NE) { */
+  /* 	preFactorE2All += convec[i + j * N_NEURONS]; */
+  /*     } */
+  /*     else { */
+  /* 	preFactorI2All += convec[i + j * N_NEURONS]; */
+  /*     } */
+  /*   } */
+  /*   preFactorI2All = (double)K / preFactorI2All; */
+  /*   preFactorE2All = (double)K / preFactorE2All; */
+  /*   for(j = 0; j < N_NEURONS; ++j) { */
+  /*     if(i < NE) { */
+  /*       convec[i + j * N_NEURONS] *= preFactorE2All; */
+  /*     } */
+  /*     else { */
+  /*       convec[i + j * N_NEURONS] *= preFactorI2All; */
+  /*     } */
+  /*   } */
+  /*   preFactorI2All = 0.0; */
+  /*   preFactorE2All = 0.0; */
+  /* } */
 }
 
 
