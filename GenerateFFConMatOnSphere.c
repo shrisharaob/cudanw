@@ -169,13 +169,22 @@ void ConProbPreFactorRec(double *convec) {
 
 void GetXYAngle(double *xCords, double *yCords, float *angles, unsigned long nCordinates) {
   unsigned long i;
-  double tmpAngle = 0;
+  double tmpAngle = 0, jitter = 0.0;
+  double maxJitter = 5.0 * PI / 180.0; // 5 degrees 
+  const gsl_rng_type * Tangle;
+  gsl_rng *gslRGNStateAngle;
+  gsl_rng_env_setup();
+  Tangle = gsl_rng_default;
+  gslRGNStateAngle = gsl_rng_alloc(Tangle);
+  gsl_rng_set(gslRGNStateAngle, time(NULL));
+  
   for(i = 0; i < nCordinates; ++i) {
     tmpAngle = atan2(yCords[i] - PATCH_CENTER_Y, xCords[i] - PATCH_CENTER_X);
     if(tmpAngle < 0) {
 	tmpAngle += 2 * PI;
       }
-    angles[i] = 0.5 * tmpAngle;
+    jitter = (2.0 * maxJitter) * gsl_rng_uniform(gslRGNStateAngle) + maxJitter; // [-maxJitter, maxJitter]
+    angles[i] = 0.5 * tmpAngle + jitter;
   }
 }
 
