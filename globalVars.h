@@ -83,7 +83,7 @@ __device__ double dev_gE[N_NEURONS], dev_gI[N_NEURONS], dev_isynap[N_NEURONS], d
 __device__ int dev_IF_SPK[N_NEURONS], curConter = 0;
 
 #define SAVE_CURRENT_FOR_NEURON 0
-#define N_CURRENT_STEPS_TO_STORE 2  //  = Tms2store / DT
+#define N_CURRENT_STEPS_TO_STORE 100000  //  = Tms2store / DT
 
 __device__ float dev_totalAvgEcurrent2I[N_I_2BLOCK_NA_CURRENT], dev_totalAvgIcurrent2I[N_I_2BLOCK_NA_CURRENT];
 
