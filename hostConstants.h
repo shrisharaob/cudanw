@@ -5,7 +5,7 @@
 #define NI 20000ULL
 #define N_Neurons (NE + NI)
 #define N_NEURONS N_Neurons
-#define K 1000.0
+#define K 500.0
 #define DT 0.05 /* ms*/ /* CHANGE EXP+SUM WHEN DT CHANGES   */
 #define TAU_SYNAP 3.0
 #define EXP_SUM exp(-1 * DT /TAU_SYNAP)  /*exp(-1 * DT / TAU_SYNAP !!!!!!!!!!! GENERALIZE !!!!!!! */
