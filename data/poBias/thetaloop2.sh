@@ -8,9 +8,6 @@ extn=".csv"
 DEVICE_ID=0
 IF_SAVE=1
 
-# make
-./genconvec.out 0
-
 THETA_START=0
 THETA_STEP=22.5
 
@@ -22,7 +19,7 @@ fi
 
 #screen -dmS pc$THETA_START_
 
-for THETA in 0 22.5 45 67.5 90 112.5 135 157.5; #(( THETA = $THETA_START; $THETA<180; THETA=$THETA+${THETA_STEP} ))
+for THETA in 90 112.5 135 157.5; #(( THETA = $THETA_START; $THETA<180; THETA=$THETA+${THETA_STEP} ))
 do
     echo $THETA
     if [ $THETA == 315 ]; then

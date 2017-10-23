@@ -147,7 +147,7 @@ __global__ void computeConductance() {
 //   }
 // }
 
-__global__ void computeIsynap(double t) {
+__global__ void computeIsynap(double t, devPtr_t devPtrs) {
   // THIS IS THE FUNCTION BEING USED CURRENTLY
   unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   double vm, tempCurE = 0, tempCurI = 0;
@@ -173,20 +173,37 @@ __global__ void computeIsynap(double t) {
       dev_totalAvgIcurrent2I[mNeuron - NE] += tempCurI / ((TSTOP / DT) - (TSTOP - N_I_AVGCUR_STORE_START_TIME)/DT);
     }
     
-    if(mNeuron == SAVE_CURRENT_FOR_NEURON) {
-      localCurConter = curConter;
-      if(localCurConter < N_CURRENT_STEPS_TO_STORE) {
-	glbCurE[localCurConter] = tempCurE;
-	glbCurI[localCurConter] = tempCurI;
-	curConter += 1;
+    // if(mNeuron == SAVE_CURRENT_FOR_NEURON) {
+      // localCurConter = curConter;
+      // if(localCurConter < N_CURRENT_STEPS_TO_STORE) {
+      // if(curConter < N_CURRENT_STEPS_TO_STORE) {	
+	// glbCurE[localCurConter] = tempCurE;
+	// glbCurI[localCurConter] = tempCurI;
+	// STORE CONDUCTANCES
+	// curConter += 1;
+      // }
+    // }
+      if(t > DISCARDTIME) {
+        devPtrs.dev_conductanceFF[mNeuron] += gFF[mNeuron];
+	if(mNeuron < NE) {
+	  devPtrs.dev_conductanceE[mNeuron] += dev_gE[mNeuron] * (1/sqrt(K)) * G_EE ;
+	  devPtrs.dev_conductanceI[mNeuron] += dev_gI[mNeuron] * (1/sqrt(K)) * G_EI ;
+	}
+	else {
+	  devPtrs.dev_conductanceE[mNeuron] += dev_gE[mNeuron] * (1/sqrt(K)) * G_IE ;
+	  devPtrs.dev_conductanceI[mNeuron] += dev_gI[mNeuron] * (1/sqrt(K)) * G_II ;
+	}
       }
-    }
+
+    
     	/* bg current */
 	/*	ibg = bgCur(vmOld); /* make sure AuxRffTotal<<<  >>> is run begore calling bgCur */
 	/* FF input current*/
     RffTotal(t);
     Gff(t);
     dev_iffCurrent[mNeuron] = IFF(vm);
+    
+ 
   }
 }
 #endif

@@ -1,7 +1,7 @@
 #ifndef _HOST_CONSTANTS_
 #define _HOST_CONSTANTS_
 
-#define NE 40000ULL
+#define NE 1ULL
 #define NI 10000ULL
 #define N_Neurons (NE + NI)
 #define N_NEURONS N_Neurons

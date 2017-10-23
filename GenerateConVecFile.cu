@@ -492,9 +492,9 @@ int main(int argc, char *argv[]) {
 
   fclose(fpConVec);
   cudaFreeHost(conVec);
-  int idxVec[N_NEURONS], nPostNeurons[N_NEURONS];
-  int *sparseConVec;
-  sparseConVec = (int *)malloc((unsigned long long)N_NEURONS * (2ULL + (unsigned long long)K + N_NEURONS) * sizeof(int));
+  unsigned int idxVec[N_NEURONS], nPostNeurons[N_NEURONS];
+  unsigned int *sparseConVec;
+  sparseConVec = (unsigned int *)malloc((unsigned long long)N_NEURONS * (2ULL + (unsigned long long)K + N_NEURONS) * sizeof(int));
   printf("generating sparse representation ..."); fflush(stdout);
   GenSparseMat(fullConVec, N_NEURONS, N_NEURONS, sparseConVec, idxVec, nPostNeurons);
   FILE *fpSparseConVec, *fpIdxVec, *fpNpostNeurons;

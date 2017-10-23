@@ -43,6 +43,7 @@ int main(int argc, char *argv[]) {
   double *spkTimes, *vm = NULL, host_theta = 0.0, theta_degrees; /* *vstart; 500 time steps */
   int *nSpks, *spkNeuronIds, nSteps, i, k, lastNStepsToStore;
   double *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
+  double *dev_conductanceE, *dev_conductanceI, *dev_conductanceFF;
   int *dev_conVec = NULL, *dev_nSpks, *dev_spkNeuronIds;
   FILE *fp, *fpConMat, *fpSpkTimes, *fpElapsedTime;
   double *host_isynap, *synapticCurrent = NULL;
@@ -58,10 +59,18 @@ int main(int argc, char *argv[]) {
   int IF_SAVE = 1;
   cudaStream_t stream1;
   char filetag[16];
-  double *firingrate;
+  double *firingrate, *conductanceE, *conductanceI, *conductanceFF;
 
   printf("\n \n bg I  = %f \n", K*K_REC_I_PREFACTOR*G_IB*RB_I);
   firingrate = (double *) malloc(sizeof(double) * N_NEURONS);
+  //
+  cudaCheck(cudaMallocHost((void **)&conductanceE, N_NEURONS * sizeof(double)));
+  cudaCheck(cudaMallocHost((void **)&conductanceI, N_NEURONS * sizeof(double)));
+  cudaCheck(cudaMallocHost((void **)&conductanceFF, N_NEURONS * sizeof(double)));
+  // double *host_conductanceE, *host_conductanceI;  
+  // cudaCheck(cudaMallocHost((void **)&host_conductanceE, N_NEURONS * sizeof(double)));
+  // cudaCheck(cudaMallocHost((void **)&host_conductanceI, N_NEURONS * sizeof(double)));  
+  //
   cudaCheck(cudaStreamCreate(&stream1));
   //  printf("old tstop = %f\n", tStop);
   /*PARSE INPUTS*/
@@ -242,6 +251,11 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaMalloc((void **)&dev_spkNeuronIds, MAX_SPKS * sizeof(*dev_spkNeuronIds)));
   cudaCheck(cudaMemset(dev_spkTimes, 0, MAX_SPKS * sizeof(*dev_spkTimes)));
   cudaCheck(cudaMemset(dev_spkNeuronIds, 0.0f, MAX_SPKS * sizeof(*dev_spkNeuronIds)));
+  //
+  cudaCheck(cudaMalloc((void **)&dev_conductanceE, N_NEURONS * sizeof(double)));
+  cudaCheck(cudaMalloc((void **)&dev_conductanceI, N_NEURONS * sizeof(double)));
+  cudaCheck(cudaMalloc((void **)&dev_conductanceFF, N_NEURONS * sizeof(double)));
+  //
   printf(" GPU memory allocation successful ! \n ");
   devPtrs.dev_conVec = dev_conVec;
   devPtrs.dev_spkNeuronIds = dev_spkNeuronIds;
@@ -251,6 +265,9 @@ int main(int argc, char *argv[]) {
   devPtrs.dev_spkTimes = dev_spkTimes;
   devPtrs.synapticCurrent = synapticCurrent;
   devPtrs.devStates = devStates;
+  devPtrs.dev_conductanceE = dev_conductanceE;
+  devPtrs.dev_conductanceI = dev_conductanceI;
+  devPtrs.dev_conductanceFF = dev_conductanceFF;
   /*  devPtrs.dev_sparseConVec = dev_sparseVec;
   devPtrs.dev_nPostNeurons = dev_nPostneuronsPtr;
   devPtrs.dev_sparseIdx = dev_idxVec;*/
@@ -284,6 +301,7 @@ int main(int argc, char *argv[]) {
 
   // int *dev_prevStepSpkIdxPtr = NULL;
   int *dev_IF_SPK_Ptr = NULL,  *host_IF_SPK = NULL, *host_prevStepSpkIdx = NULL, *dev_nEPtr = NULL, *dev_nIPtr = NULL;
+
   int nSpksInPrevStep;
   cudaCheck(cudaMallocHost((void **)&host_IF_SPK, N_NEURONS * sizeof(int)));
   cudaCheck(cudaMallocHost((void **)&host_prevStepSpkIdx, N_NEURONS * sizeof(int)));
@@ -294,6 +312,8 @@ int main(int argc, char *argv[]) {
   for(i = 0; i < N_NEURONS; ++i) {
     host_IF_SPK[i] = 0;
     firingrate[i] = 0.0;
+    conductanceE[i] = 0.0;
+    conductanceI[i] = 0.0;
   }
   /* TIME LOOP */
   size_t sizeOfInt = sizeof(int);
@@ -426,7 +446,8 @@ int main(int argc, char *argv[]) {
     fprintf(fpCur, "\n");
     computeConductanceHist<<<(N_NEURONS + 512 - 1) / 512, 512>>>(dev_histCountE, dev_histCountI);
     cudaCheckLastError("g");
-    computeIsynap<<<BlocksPerGrid, ThreadsPerBlock>>>(k*DT);
+    // computeIsynap<<<BlocksPerGrid, ThreadsPerBlock>>>(k*DT);
+    computeIsynap<<<BlocksPerGrid, ThreadsPerBlock>>>(k*DT, devPtrs);
     cudaCheckLastError("isyp");
   }
   cudaCheck(cudaFreeHost(histVec));
@@ -469,9 +490,13 @@ int main(int argc, char *argv[]) {
   fpElapsedTime = fopen("elapsedTime.csv", "a+");
   fprintf(fpElapsedTime, "%llu %f %d\n", N_NEURONS, elapsedTime, *nSpks);
   fclose(fpElapsedTime);
-
-  cudaCheck(cudaMemcpy(hostPtr_totalAvgEcurrent2I, devPtr_totalAvgEcurrent2I,N_I_2BLOCK_NA_CURRENT * sizeof(*hostPtr_totalAvgEcurrent2I), cudaMemcpyDeviceToHost));
-  cudaCheck(cudaMemcpy(hostPtr_totalAvgIcurrent2I, devPtr_totalAvgIcurrent2I,N_I_2BLOCK_NA_CURRENT * sizeof(*hostPtr_totalAvgIcurrent2I), cudaMemcpyDeviceToHost));
+  // COPY CONDUCTANCES
+  cudaCheck(cudaMemcpy(conductanceE, dev_conductanceE, N_NEURONS * sizeof(double), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(conductanceI, dev_conductanceI, N_NEURONS * sizeof(double), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(conductanceFF, dev_conductanceFF, N_NEURONS * sizeof(double), cudaMemcpyDeviceToHost)); 
+  //
+  cudaCheck(cudaMemcpy(hostPtr_totalAvgEcurrent2I, devPtr_totalAvgEcurrent2I, N_I_2BLOCK_NA_CURRENT * sizeof(*hostPtr_totalAvgEcurrent2I), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(hostPtr_totalAvgIcurrent2I, devPtr_totalAvgIcurrent2I, N_I_2BLOCK_NA_CURRENT * sizeof(*hostPtr_totalAvgIcurrent2I), cudaMemcpyDeviceToHost));
 
   strcpy(filename, "avgNaBlockedECur");
   sprintf(fileSuffix, "_xi%1.1f_theta%d_%.2f_%1.1f_cntrst%.1f_%d_tr%s", ETA_E, (int)theta_degrees, ALPHA, TAU_SYNAP_E, HOST_CONTRAST, (int)(tStop),filetag);
@@ -519,6 +544,33 @@ int main(int argc, char *argv[]) {
     fprintf(fpFiringrate, "%f\n", firingrate[i] / ((tStop - DISCARDTIME) * 0.001));
   }
   fclose(fpFiringrate);
+  //////////////////////// WRITING CONDUCTANCES TO DISK  /////////////////////////
+  strcpy(filename, "conductanceE");
+  sprintf(fileSuffix, "_xi%1.1f_theta%d_%.2f_%1.1f_cntrst%.1f_%d_tr%s", ETA_E, (int)theta_degrees, ALPHA, TAU_SYNAP_E, HOST_CONTRAST, (int)(tStop),filetag);
+  strcat(filename, fileSuffix);
+  FILE *fpConductance = fopen(strcat(filename, ".csv"),"w");
+  for(i = 0; i < N_NEURONS; ++i) {
+    fprintf(fpConductance, "%f\n", conductanceE[i] / ((tStop - DISCARDTIME) * 0.001));
+  }
+  fclose(fpConductance);
+  strcpy(filename, "conductanceI");
+  sprintf(fileSuffix, "_xi%1.1f_theta%d_%.2f_%1.1f_cntrst%.1f_%d_tr%s", ETA_E, (int)theta_degrees, ALPHA, TAU_SYNAP_E, HOST_CONTRAST, (int)(tStop),filetag);
+  strcat(filename, fileSuffix);
+  fpConductance = fopen(strcat(filename, ".csv"),"w");
+  for(i = 0; i < N_NEURONS; ++i) {
+    fprintf(fpConductance, "%f\n", conductanceI[i] / ((tStop - DISCARDTIME) * 0.001));
+  }
+  fclose(fpConductance);
+  strcpy(filename, "conductanceFF");
+  sprintf(fileSuffix, "_xi%1.1f_theta%d_%.2f_%1.1f_cntrst%.1f_%d_tr%s", ETA_E, (int)theta_degrees, ALPHA, TAU_SYNAP_E, HOST_CONTRAST, (int)(tStop),filetag);
+  strcat(filename, fileSuffix);
+  fpConductance = fopen(strcat(filename, ".csv"),"w");
+  for(i = 0; i < N_NEURONS; ++i) {
+    fprintf(fpConductance, "%f\n", conductanceFF[i] / ((tStop - DISCARDTIME) * 0.001));
+  }
+  fclose(fpConductance);  
+  ///////////////////////////////////////////////////////////
+  
   printf("saving vm to disk ....");
   fflush(stdout);
   if(IF_SAVE) {
@@ -547,7 +599,8 @@ int main(int argc, char *argv[]) {
       // fprintf(fpCur, "%f\n", ibgCur[i]);
       // fprintf(fpCur, "%f;%f;%f;%f\n", curE[i], curI[i], ibgCur[i], curIff[i]);
       /*      fprintf(fpCur, "%f\n", curIff[i]);*/
-      fprintf(fpCurEI, "%f;%f\n", curE[i] + ibgCur[i] + curIff[i], curI[i] );      
+      fprintf(fpCurEI, "%f;%f\n", curE[i], curI[i]);            
+      //fprintf(fpCurEI, "%f;%f\n", curE[i] + ibgCur[i] + curIff[i], curI[i] );      
     }
     fclose(fpCurbg);
     fclose(fpCur);
@@ -566,6 +619,11 @@ int main(int argc, char *argv[]) {
   printf("done\n");
   /*================== CLEANUP ===================================================================*/
   free(firingrate);
+  //
+  cudaCheck(cudaFreeHost(conductanceE));
+  cudaCheck(cudaFreeHost(conductanceI));
+  cudaCheck(cudaFreeHost(conductanceFF));
+  //
   cudaCheck(cudaFreeHost(vm));
   cudaCheck(cudaFreeHost(host_time));
   /*  cudaCheck(cudaFreeHost(host_isynap));*/
@@ -586,6 +644,9 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaFreeHost(host_IF_SPK));
   cudaCheck(cudaFreeHost(host_prevStepSpkIdx));
   /*  cudaDeviceReset()*/
+  cudaCheck(cudaFree(dev_conductanceE));
+  cudaCheck(cudaFree(dev_conductanceI));
+  cudaCheck(cudaFree(dev_conductanceFF));
   return EXIT_SUCCESS;
 }
 
