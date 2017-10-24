@@ -7,7 +7,7 @@
 #define MAX_SPKS 80000000
 #define PI 3.14159265359
 #define SQRT_DT sqrt(DT)
-
+#define DISCARDTIME 1000 // ms, discard time to compute the firing rate
 
 #define Cm 1.0 /* microF / cm^2  */
 #define E_Na 55.0 /* mV */
@@ -130,5 +130,7 @@ typedef struct {
   double tStart, tStop;
   int nSteps;
 } kernelParams_t;
+
+
 
 #endif
