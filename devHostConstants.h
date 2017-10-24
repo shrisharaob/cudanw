@@ -1,11 +1,11 @@
 #ifndef _NEURON_COUNTS
 #define _NEURON_COUNTS
 
-#define NE 20000ULL
-#define NI 20000ULL
+#define NE 10000ULL
+#define NI 10000ULL
 #define N_Neurons (NE + NI)
 #define N_NEURONS N_Neurons
-#define K 2000.0
+#define K 1000.0
 #define DT 0.05 /* ms*/ /* CHANGE EXP+SUM WHEN DT CHANGES   */
 #define TAU_SYNAP 3.0  /* ms*/
 #define EXP_SUM 0.98347145382161749  /* 0.991701292638875*/    /**/ /**/ /*exp(-1 * DT / TAU_SYNAP) !!!!!!!!!!! GENERALIZE !!!!!!! */
