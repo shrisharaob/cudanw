@@ -44,6 +44,7 @@ int main(int argc, char *argv[]) {
   int *dev_conVec = NULL, *dev_nSpks, *dev_spkNeuronIds;
   FILE *fp, *fpConMat, *fpSpkTimes, *fpElapsedTime;
   double *host_isynap, *synapticCurrent;
+  double *dev_conductanceE, *dev_conductanceI, *dev_conductanceFF;  
   /*  int *conVec;*/
   curandState *devStates, *devNormRandState;
   cudaEvent_t start0, stop0;
