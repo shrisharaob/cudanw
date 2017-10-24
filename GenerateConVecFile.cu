@@ -181,7 +181,13 @@ int main() {
   printf("done\n writing to file ... "); fflush(stdout);
   FILE *fpSparseConVec, *fpIdxVec, *fpNpostNeurons;
   fpSparseConVec = fopen("sparseConVec.dat", "wb");
-  fwrite(sparseConVec, sizeof(*sparseConVec), N_NEURONS * (2 * (int)K + N_NEURONS), fpSparseConVec);
+  unsigned long int nElementsWritten, nConnections = 0;
+  for(i = 0; i < N_NEURONS; ++i) {
+    nConnections += nPostNeurons[i];
+  }
+  printf("done\n#connections = %lu\n", nConnections);
+  nElementsWritten = fwrite(sparseConVec, sizeof(*sparseConVec), nConnections, fpSparseConVec);  
+  //  fwrite(sparseConVec, sizeof(*sparseConVec), N_NEURONS * (2 * (int)K + N_NEURONS), fpSparseConVec);
   fclose(fpSparseConVec);
   fpIdxVec = fopen("idxVec.dat", "wb");
   fwrite(idxVec, sizeof(*idxVec), N_NEURONS,  fpIdxVec);
