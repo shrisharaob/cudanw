@@ -60,14 +60,20 @@
 #define R0 0.002
 #define R1 0.02
 #define INP_FREQ (0.004 * PI)
-#define ETA_E 0.8
-#define ETA_I 0.8
+#define ETA_E 1.2
+#define ETA_I 1.2
 #define MU_E 0.0
 #define MU_I 0.0
 
 
-#define GFF_E (CONDUCTANCE_GLOBAL_PREFACTOR * 0.95 * sqrt(K_REC_E_PREFACTOR) / (sqrt(K) * K_FF_EI_PREFACTOR * PREFACTOR_REC_BG * K_FF_E_PREFACTOR ))
-#define GFF_I (CONDUCTANCE_GLOBAL_PREFACTOR * 1.26 * sqrt(K_REC_I_PREFACTOR) / (PREFACTOR_REC_BG * K_FF_I_PREFACTOR * K_FF_EI_PREFACTOR * sqrt(K)))
+#define GFF_E (0.95 / sqrt(K))
+#define GFF_I (1.26 / sqrt(K))
+
+
+  
+/* #define GFF_E (CONDUCTANCE_GLOBAL_PREFACTOR * 0.95 * sqrt(K_REC_E_PREFACTOR) / (sqrt(K) * K_FF_EI_PREFACTOR * PREFACTOR_REC_BG * K_FF_E_PREFACTOR )) */
+/* #define GFF_I (CONDUCTANCE_GLOBAL_PREFACTOR * 1.26 * sqrt(K_REC_I_PREFACTOR) / (PREFACTOR_REC_BG * K_FF_I_PREFACTOR * K_FF_EI_PREFACTOR * sqrt(K))) */
+
 //#define KFF 100.0
 //#define GE_FF (0.95 * 4.0)
 //#define GI_FF (1.26 * 4.0)
