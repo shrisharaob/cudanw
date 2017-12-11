@@ -7,7 +7,7 @@
 #define MAX_SPKS 80000000
 #define PI 3.14159265359
 #define SQRT_DT sqrt(DT)
-
+#define DISCARDTIME 1000
 
 #define Cm 1.0 /* microF / cm^2  */
 #define E_Na 55.0 /* mV */
@@ -58,8 +58,8 @@
 #define R0 0.002
 #define R1 0.02
 #define INP_FREQ (0.004 * PI)
-#define ETA_E 1.2
-#define ETA_I 1.2
+#define ETA_E 0.4
+#define ETA_I 0.4
 #define MU_E 0.0
 #define MU_I 0.0
 #define GFF_E (0.95 / sqrt(K))
@@ -83,8 +83,10 @@ __device__ double rTotal[N_Neurons], gFF[N_Neurons]; /* rTotalPrev[N_Neurons];*/
 __device__ double gaussNoiseE[NE], gaussNoiseI[NI];
 __device__ curandState bgCurNoiseGenState[N_NEURONS], iffNormRandState[N_NEURONS];
 __device__ double dev_bgCur[N_CURRENT_STEPS_TO_STORE], dev_iff[N_CURRENT_STEPS_TO_STORE];
-__device__ int dev_nPostNeurons[N_NEURONS], dev_sparseIdx[N_NEURONS]; 
-__device__ int dev_sparseConVec[N_NEURONS * 2 * (int)K + N_NEURONS];
+__device__ int dev_nPostNeurons[N_NEURONS], dev_sparseIdx[N_NEURONS];
+__device__ int *dev_sparseConVec = NULL;
+
+/* __device__ int dev_sparseConVec[N_NEURONS * 2 * (int)K + N_NEURONS]; */
 
 #define N_SPKS_IN_PREV_STEP 3000
 __device__ int dev_prevStepSpkIdx[N_NEURONS], /*this will hold the row id in the matrix dev_spksCountMat*/
@@ -120,7 +122,7 @@ typedef struct
 } sparseMat;
 
 typedef struct {
-  int *dev_conVec, *dev_nSpks, *dev_spkNeuronIds, k;
+  int *dev_conVec, *dev_nSpks, *dev_spkNeuronIds, k, *dev_sparseConVec;
   double *dev_vm, *synapticCurrent, *dev_spkTimes, *dev_time;
   curandState *devStates;
 } devPtr_t;

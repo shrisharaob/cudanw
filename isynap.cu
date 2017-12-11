@@ -61,6 +61,7 @@ __global__ void expDecay() {
 __global__ void computeConductance() {
   unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
   int kNeuron;
+  kNeuron = 0;
   if(mNeuron < N_NEURONS) {
      if(dev_IF_SPK[mNeuron]) {  
       for(kNeuron = 0; kNeuron < dev_nPostNeurons[mNeuron]; ++kNeuron) { 
