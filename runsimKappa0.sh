@@ -49,7 +49,6 @@ IF_SAVE=0
     eval sed "-i 's^#define K .*^#define K ${K}.0^' devHostConstants.h"
     eval sed "-i 's^#define TSTOP .*^#define TSTOP ${T_STOP}^' devHostConstants.h"
     eval sed "-i 's^#define IF_REWIRE .*^#define IF_REWIRE ${IF_REWIRE}^' devHostConstants.h"
-    # eval sed "-i 's^#define JI_FACTOR .*^#define JI_FACTOR ${JIFACTOR}^' devHostConstants.h"
     make
     fldr="${baseFldr}/data/rewire/N${N}K${K}/kappa0/p${pString}gamma${gString}/T${tString}/tr${trNo}"
     mkdir -p $fldr

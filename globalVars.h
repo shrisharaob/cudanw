@@ -35,7 +35,7 @@
 #define G_EI 2.00
 #define G_IE 0.45
 #define G_II 3.0
-#define rewiredEEWeight 1.0
+
 
 /*
 #define G_EE 3.0
