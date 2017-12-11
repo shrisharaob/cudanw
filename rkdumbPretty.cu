@@ -47,6 +47,7 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
       rTotal[mNeuron] = 0.0;
       gffItgrl[mNeuron] = 0.0;
       dev_sparseConVec = devPtrs.dev_sparseConVec;
+      dev_IS_REWIRED_LINK = devPtrs.dev_IS_REWIRED_LINK;
     }
     localLastNSteps = nstep - STORE_LAST_N_STEPS;
     /* TIMELOOP */

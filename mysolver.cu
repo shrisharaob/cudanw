@@ -108,8 +108,6 @@ int main(int argc, char *argv[]) {
 
 
 
-
-
   
   /* gENERATE CONNECTION MATRIX */
   /*  cudaCheck(cudaMalloc((void **)&dev_conVec, N_NEURONS * N_NEURONS * sizeof(int)));*/
@@ -160,28 +158,34 @@ int main(int argc, char *argv[]) {
   dummy = fread(sparseConVec, sizeof(*sparseConVec), nConnections, fpSparseConVec);
   fclose(fpSparseConVec);
   printf("\n #connections = %lu, nElements read  = %lu", nConnections, dummy); fflush(stdout);
-  
   if(dummy != nConnections) {
     printf("sparseConvec read error ? \n");
   }
-  
-  
   cudaCheck(cudaMalloc((void **)&dev_sparseVec,  nConnections * sizeof(int)));
   devPtrs.dev_sparseConVec = dev_sparseVec;
-  
-  /*
-    for(i = 0; i < N_NEURONS; ++i) {
-      printf("neuron %d projects to : ", i);
-      for(int j = 0; j < nPostNeurons[i]; ++j) {
-	printf("%d ", sparseConVec[idxVec[i] + j]);
-      }
-      printf("\n");
-    }
-  */
-
   cudaCheck(cudaMemcpy(dev_sparseVec, sparseConVec, nConnections * sizeof(int), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_idxVec, idxVec, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
   cudaCheck(cudaMemcpy(dev_nPostneuronsPtr, nPostNeurons, N_NEURONS * sizeof(int), cudaMemcpyHostToDevice));
+ ////////////////////////////////////////////////////////////////////////////////
+  devPtrs.dev_IS_REWIRED_LINK = NULL;
+  if(IF_REWIRE) {
+    unsigned long nElementsRead = 0;
+    FILE *fpRewired;
+    unsigned int *IS_REWIRED_LINK = NULL; 
+    cudaCheck(cudaMallocHost((void **)&IS_REWIRED_LINK,  nConnections * sizeof(unsigned int)));
+    fpRewired = fopen("newPostNeurons.dat", "rb");
+    nElementsRead = fread(IS_REWIRED_LINK, sizeof(*IS_REWIRED_LINK), nConnections, fpRewired);
+    fclose(fpRewired);
+    if(nConnections != nElementsRead) {
+      printf("rewired read error ? \n");
+    }
+    printf("done\n");
+    unsigned int *dev_IS_REWIRED_LINKPtr = NULL;
+    cudaCheck(cudaMalloc((void **)&dev_IS_REWIRED_LINKPtr,  nConnections * sizeof(unsigned int)));
+    devPtrs.dev_IS_REWIRED_LINK = dev_IS_REWIRED_LINKPtr;
+    cudaCheck(cudaMemcpy(dev_IS_REWIRED_LINKPtr, IS_REWIRED_LINK, nConnections * sizeof(unsigned int), cudaMemcpyHostToDevice));
+    cudaCheck(cudaFreeHost(IS_REWIRED_LINK));    
+  }
   //  devPtrs.dev_sparseConVec = dev_sparseVec;
  /* ================= ALLOCATE PAGELOCKED MEMORY ON HOST =========================*/
   cudaCheck(cudaMallocHost((void **)&spkTimes, MAX_SPKS  * sizeof(*spkTimes)));
@@ -427,6 +431,9 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaFreeHost(host_IF_SPK));
   cudaCheck(cudaFreeHost(host_prevStepSpkIdx));
   /*  cudaDeviceReset()*/
+  if(IF_REWIRE) {
+    cudaCheck(cudaFree(devPtrs.dev_IS_REWIRED_LINK));
+  }  
   return EXIT_SUCCESS;
 }
 

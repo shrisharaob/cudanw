@@ -34,7 +34,8 @@
 #define G_EE 0.15
 #define G_EI 2.00
 #define G_IE 0.45
-#define G_II 3.0 
+#define G_II 3.0
+#define rewiredEEWeight 1.0
 
 /*
 #define G_EE 3.0
@@ -85,6 +86,7 @@ __device__ curandState bgCurNoiseGenState[N_NEURONS], iffNormRandState[N_NEURONS
 __device__ double dev_bgCur[N_CURRENT_STEPS_TO_STORE], dev_iff[N_CURRENT_STEPS_TO_STORE];
 __device__ int dev_nPostNeurons[N_NEURONS], dev_sparseIdx[N_NEURONS];
 __device__ int *dev_sparseConVec = NULL;
+__device__ unsigned int *dev_IS_REWIRED_LINK = NULL;
 
 /* __device__ int dev_sparseConVec[N_NEURONS * 2 * (int)K + N_NEURONS]; */
 
@@ -125,6 +127,7 @@ typedef struct {
   int *dev_conVec, *dev_nSpks, *dev_spkNeuronIds, k, *dev_sparseConVec;
   double *dev_vm, *synapticCurrent, *dev_spkTimes, *dev_time;
   curandState *devStates;
+  unsigned int *dev_IS_REWIRED_LINK;
 } devPtr_t;
 
 typedef struct {

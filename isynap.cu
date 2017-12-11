@@ -60,13 +60,22 @@ __global__ void expDecay() {
 
 __global__ void computeConductance() {
   unsigned int mNeuron = threadIdx.x + blockDim.x * blockIdx.x;
-  int kNeuron;
-  kNeuron = 0;
+  int kNeuron, tmpIdx;
+  unsigned int IS_STRENGTHENED = 0;  
   if(mNeuron < N_NEURONS) {
      if(dev_IF_SPK[mNeuron]) {  
-      for(kNeuron = 0; kNeuron < dev_nPostNeurons[mNeuron]; ++kNeuron) { 
-        if(mNeuron < NE) {       
-          atomicAdd(&dev_gE[dev_sparseConVec[dev_sparseIdx[mNeuron] + kNeuron]], (double)1.0); /*atomic double add WORKS ONLY ON CC >= 2.0 */
+      for(kNeuron = 0; kNeuron < dev_nPostNeurons[mNeuron]; ++kNeuron) {
+        if(mNeuron < NE) {
+	  tmpIdx = dev_sparseConVec[dev_sparseIdx[mNeuron] + kNeuron];
+	    if(IF_REWIRE) {
+	      IS_STRENGTHENED = dev_IS_REWIRED_LINK[tmpIdx];
+	    }
+	    if(IS_STRENGTHENED) {
+	      atomicAdd(&dev_gE[tmpIdx], (double)(rewiredEEWeight));
+	    }
+	    else {
+	      atomicAdd(&dev_gE[tmpIdx], (double)1.0); /*atomic double add WORKS ONLY ON CC >= 2.0 */
+	    }
        }
         else
           atomicAdd(&dev_gI[dev_sparseConVec[dev_sparseIdx[mNeuron] + kNeuron]], (double)1.0);
