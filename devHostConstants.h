@@ -14,9 +14,7 @@
 #define STORE_LAST_T_MILLISEC 1.0
 #define STORE_LAST_N_STEPS (STORE_LAST_T_MILLISEC / DT)
 #define HOST_CONTRAST 100.0
-#define IF_REWIRE 0
-#define rewiredEEWeight 1.0
 
-__constant__ double CONTRAST = HOST_CONTRAST;
-__constant__ double theta;
+#define IF_REWIRE 1
+
 #endif

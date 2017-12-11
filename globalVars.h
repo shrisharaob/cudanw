@@ -88,6 +88,10 @@ __device__ int dev_nPostNeurons[N_NEURONS], dev_sparseIdx[N_NEURONS];
 __device__ int *dev_sparseConVec = NULL;
 __device__ unsigned int *dev_IS_REWIRED_LINK = NULL;
 
+__constant__ double CONTRAST = HOST_CONTRAST;
+__constant__ double theta, rewiredEEWeight;
+
+
 /* __device__ int dev_sparseConVec[N_NEURONS * 2 * (int)K + N_NEURONS]; */
 
 #define N_SPKS_IN_PREV_STEP 3000

@@ -56,7 +56,8 @@ int main(int argc, char *argv[]) {
   int IF_SAVE = 1;
   cudaStream_t stream1;
   char filetag[16];
-  double *firingrate = NULL;  
+  double *firingrate = NULL;
+  double host_rewiredEEWeight = 1;
   cudaCheck(cudaStreamCreate(&stream1));
 
   firingrate = (double *) malloc(sizeof(double) * N_NEURONS);
@@ -74,8 +75,15 @@ int main(int argc, char *argv[]) {
   if(argc > 4) {
     strcpy(filetag, argv[4]);
   }
+  // if(argc > 5) {
+  //     kappa = atof(argv[2]);
+  // }
+  if(argc > 5) {
+      host_rewiredEEWeight = atof(argv[5]);
+  }
 
-  
+  cudaMemcpyToSymbol(rewiredEEWeight, &host_rewiredEEWeight, sizeof(host_rewiredEEWeight));
+
   printf("\n Computing on GPU%d \n", deviceId);
   cudaCheck(cudaSetDevice(deviceId));
   host_theta = PI * host_theta / (180.0); /* convert to radians */

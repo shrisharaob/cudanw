@@ -1,11 +1,13 @@
 #!/bin/bash
 #set -x
+kappa=$1
+rewiredWeight=$2
+
 # mExt=$1
 # mExtOne=$2
 p=0
 gamma=0
-kappa=$1
-rewiredWeight=$2
+
 
 JIFACTOR=1
 N=10000
@@ -33,7 +35,7 @@ tString=${tStringTmp%.*}
 
 baseFldr='/homecentral/srao/cuda'
 trNo0=0
-python WritePOToFile.py 0 ${mExt} ${mExtOne} ${trNo0} ${K}
+python WritePOToFile.py 0 ${trNo0} ${K}
 
 for trNo in 10;
 do
@@ -46,7 +48,8 @@ do
     eval sed "-i 's^#define K .*^#define K ${K}.0^' devHostConstants.h"
     eval sed "-i 's^#define TSTOP .*^#define TSTOP ${T_STOP}^' devHostConstants.h"
     eval sed "-i 's^#define IF_REWIRE .*^#define IF_REWIRE ${IF_REWIRE}^' devHostConstants.h"
-    eval sed "-i 's^#define rewiredEEWeight .*^#define rewiredEEWeight ${rewiredEEWeight}^' devHostConstants.h"    
+    # eval sed "-i 's^#define rewiredEEWeight .*^#define rewiredEEWeight ${rewiredEEWeight}^' devHostConstants.h"
+    # eval sed "-i 's^#define kappa .*^#define kappa ${kappa}^' devHostConstants.h"    
     make
     kStringTmp="$(echo "${kappa}*$ten" | bc)";
     kString=${kStringTmp%.*}
@@ -54,14 +57,22 @@ do
     mkdir -p $fldr
     fldrForTr0="${baseFldr}/data/rewire/N${N}K${K}/kappa0/p${pString}gamma${gString}/T${tString}/tr${trNo0}/*.dat"	    
     mv a.out $fldr
-    mv 
+    mv nw.out $fldr
     for phi in 0 22.5 45 67.5 90 112.5 135 157.5 180;
     do	
 	cd $fldr
 	pwd
-        ln -snf -t $fldr $fldrForTr0
-	screen -dm ./nw.out 0 0 ${THETA} ${trNo}
+	if [ $THETA == 0 ] 
+	then
+            ln -snf -t $fldr $fldrForTr0
+	    ./a.out $THETA $kappa ${rewiredEEWeight}
+	    screen -dm ./nw.out 0 0 ${THETA} ${trNo} ${rewiredEEWeight} 
+	    sleep 14m
+	else
+	    screen -dm ./nw.out 0 0 ${THETA} ${trNo} ${rewiredEEWeight}
+	    sleep 14m
+	fi
     done
-    sleep 15m
-    cd $baseFldr    
+    cd $baseFldr
+    sleep 15m    
 done
