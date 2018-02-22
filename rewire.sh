@@ -4,8 +4,6 @@ kappa=$1
 rewiredEEWeight=$2
 trNo=$3
 
-XI=0.2
-
 # mExt=$1
 # mExtOne=$2
 p=0
@@ -16,15 +14,15 @@ JIFACTOR=1
 N=10000
 K=1000
 T_STOP=10000
-TSTOP0=51000
+
 
 thousand=1000
 
-# m0StringTmp="$(echo "$mExt*$thousand" | bc)";
-# m0String=${m0StringTmp%.*}
+m0StringTmp="$(echo "$mExt*$thousand" | bc)";
+m0String=${m0StringTmp%.*}
 
-# m1StringTmp="$(echo "$mExtOne*$thousand" | bc)";
-# m1String=${m1StringTmp%.*}
+m1StringTmp="$(echo "$mExtOne*$thousand" | bc)";
+m1String=${m1StringTmp%.*}
 
 ten=10
 pStringTmp="$(echo "$p*$ten" | bc)";
@@ -36,13 +34,9 @@ mille=0.001
 tStringTmp="$(echo "$T_STOP*$mille" | bc)";
 tString=${tStringTmp%.*}
 
-tStringTmp0="$(echo "$TSTOP0*$mille" | bc)";
-tString0=${tStringTmp0%.*}
-
-
 baseFldr='/homecentral/srao/cuda'
 trNo0=0
-python WritePOToFile.py 0 ${trNo0} ${K} ${TSTOP0} ${XI}
+python WritePOToFile.py 0 ${trNo0} ${K}
 
 # for trNo in 10;
 # do
@@ -62,7 +56,7 @@ python WritePOToFile.py 0 ${trNo0} ${K} ${TSTOP0} ${XI}
     kString=${kStringTmp%.*}
     fldr="${baseFldr}/data/rewire/N${N}K${K}/kappa${kString}/p${pString}gamma${gString}/T${tString}/tr${trNo}"
     mkdir -p $fldr
-    fldrForTr0="${baseFldr}/data/rewire/N${N}K${K}/kappa0/p${pString}gamma${gString}/T${tString0}/tr${trNo0}/*.dat"	    
+    fldrForTr0="${baseFldr}/data/rewire/N${N}K${K}/kappa0/p${pString}gamma${gString}/T${tString}/tr${trNo0}/*.dat"	    
     mv a.out $fldr
     mv nw.out $fldr
     for THETA in 0 22.5 45 67.5 90 112.5 135 157.5 180;

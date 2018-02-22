@@ -11,6 +11,7 @@
 #include <time.h>
 #include "globalVars.h"
 #include "aux.cu"
+#include <iostream>
 
 void __cudaCheck(cudaError err, const char* file, const int line);
 #define cudaCheck(err) __cudaCheck (err, __FILE__, __LINE__)
@@ -35,6 +36,20 @@ void __cudaCheckLastError(const char *errorMessage, const char *file, const int 
     exit(-1);
   }
 }
+
+void ProgressBar(float progress, float me, float mi) {
+    int barWidth = 31;
+    std::cout << "Progress: [";
+    int pos = barWidth * progress;
+    for (int i = 0; i < barWidth; ++i) {
+      if (i < pos)  std::cout << "\u25a0"; //std::cout << "=";
+      else std::cout << " ";
+    }
+    std::cout << "] " << int(progress * 100.0) << "% done | mE = " << me << " mI = " << mi << "\r";
+    std::cout.flush();
+    if(progress == 1.) std::cout << std::endl;
+}
+
 
 int main(int argc, char *argv[]) {
   double tStart = 0.0, tStop = TSTOP;
@@ -277,6 +292,8 @@ int main(int argc, char *argv[]) {
   cudaEventRecord(start0, 0);
   unsigned int spksE = 0, spksI = 0;
   FILE *fpIFR = fopen("instant_fr.csv", "w");
+  std::cout << "\n" << std::endl;  
+  std::cout << "----------------------------------------------------------------------------" << std::endl;
   for(k = 0; k < nSteps; ++k) { 
     /*    cudaCheck(cudaMemsetAsync(dev_nEPtr, 0, N_NEURONS * N_SPKS_IN_PREV_STEP * sizeOfInt, stream1));
 	  cudaCheck(cudaMemsetAsync(dev_nIPtr, 0, N_NEURONS * N_SPKS_IN_PREV_STEP * sizeOfInt, stream1));*/
@@ -285,7 +302,8 @@ int main(int argc, char *argv[]) {
     rkdumbPretty<<<BlocksPerGrid, ThreadsPerBlock>>> (kernelParams, devPtrs);
     cudaCheckLastError("rk");
     cudaCheck(cudaMemcpy(host_IF_SPK, dev_IF_SPK_Ptr, N_NEURONS * sizeOfInt, cudaMemcpyDeviceToHost));
-  
+
+
     for(i = 0; i < N_NEURONS; ++i) {
       if(host_IF_SPK[i]) {
 	if(k * DT >= DISCARDTIME) {
@@ -302,8 +320,10 @@ int main(int argc, char *argv[]) {
       }
     }
     if(!(k%1000)) {
-      fprintf(fpIFR, "%f %f \n", ((double)spksE) / (0.05 * (double)NE), ((double)spksI) / (0.05 * (double)NI));fflush(fpIFR);
-      fprintf(stdout, "%f %f \n", ((double)spksE) / (0.05 * (double)NE), ((double)spksI) / (0.05 * (double)NI));
+      // fprintf(fpIFR, "%f %f \n", ((double)spksE) / (0.05 * (double)NE), ((double)spksI) / (0.05 * (double)NI));fflush(fpIFR);
+      // fprintf(stdout, "%f %f \n", ((double)spksE) / (0.05 * (double)NE), ((double)spksI) / (0.05 * (double)NI));
+      // ProgressBar((float)k / nSteps, ((double)spksE) / (DT * (double)NE), ((double)spksI) / (DT * (double)NI));
+      ProgressBar((float)k / nSteps, ((double)spksE) / (0.05 * (double)NE), ((double)spksI) / (0.05 * (double)NI));      
       spksE = 0; 
       spksI = 0;
     }

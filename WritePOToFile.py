@@ -62,7 +62,7 @@ def LoadFr(p=0, gamma=0, phi=0, mExt=0, mExtOne=0, rewireType = 'rand', trNo = 0
     return np.loadtxt(baseFldr + filename)
 
 
-def GetTuningCurves(p=0, gamma=0, nPhis=8, mExt = 0, mExtOne = 0, rewireType = 'rand', trNo = 0, N = 10000, K = 1000, nPop = 2, T = 1000, kappa = 0, IF_SUCCESS = False, xi = 0.4):
+def GetTuningCurves(p=0, gamma=0, nPhis=8, mExt = 0, mExtOne = 0, rewireType = 'rand', trNo = 0, N = 10000, K = 1000, nPop = 2, T = 1000, kappa = 0, IF_SUCCESS = False, xi = 0.2):
     NE = N
     NI = N
     tc = np.zeros((NE + NI, nPhis))
@@ -112,10 +112,10 @@ def GetPhase(firingRate, atTheta, IF_IN_RANGE = False):
     return out * 0.5
 
         
-def WritePOToTr0FolderBeforeRewiring(kappa, mExt = 0, mExtOne = 0, trNo =0, p = 0, gamma = 0, nPhis=8, rewireType='rand', N=10000, K=1000, nPop=2, T=10000):
+def WritePOToTr0FolderBeforeRewiring(kappa, mExt = 0, mExtOne = 0, trNo =0, p = 0, gamma = 0, nPhis=8, rewireType='rand', N=10000, K=1000, nPop=2, T=10000, xi = .2):
     out = np.nan
     try:
-	tcOut = GetTuningCurves(p, gamma, nPhis, mExt, mExtOne, rewireType, trNo, N, K, nPop, T, kappa)
+	tcOut = GetTuningCurves(p, gamma, nPhis, mExt, mExtOne, rewireType, trNo, N, K, nPop, T, kappa, xi=xi)
         po = POofPopulation(tcOut, IF_IN_RANGE = 1)
         requires = ['CONTIGUOUS', 'ALIGNED']
         po = np.require(po, np.float64, requires) * np.pi / 180.0
@@ -132,8 +132,9 @@ if __name__ == "__main__":
     kappa = float(sys.argv[1])
     trNo = int(sys.argv[2])
     K=int(sys.argv[3])
-    T=10000
-    WritePOToTr0FolderBeforeRewiring(kappa, 0, 0, trNo, K=K, T=T)
+    T=int(sys.argv[4])
+    xi=float(sys.argv[5])
+    WritePOToTr0FolderBeforeRewiring(kappa, 0, 0, trNo, K=K, T=T, xi=xi, nPhis=18)
     
     
     

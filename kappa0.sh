@@ -10,7 +10,7 @@ p=0
 gamma=0
 N=10000
 JIFACTOR=1.0
-T_STOP=11000
+T_STOP=10000
 thousand=1000
 # m0StringTmp="$(echo "$mExt*$thousand" | bc)";
 # m0String=${m0StringTmp%.*}
@@ -55,7 +55,7 @@ IF_SAVE=0
     cd $fldr
     pwd
     echo ${IF_SAVE}    
-    for THETA in {0..90..10}; #0 22.5 45 67.5 90 112.5 135 157.5 180;
+    for THETA in 0 22.5 45 67.5 90 112.5 135 157.5 180;
     do
 	echo ${IF_SAVE}
 	if [ $THETA == 0 ] 

@@ -31,10 +31,10 @@
 #define INV_TAU_SYNAP (1 / TAU_SYNAP)
 #define V_E 0.0
 #define V_I -80.0
-#define G_EE 0.15
-#define G_EI 2.00
-#define G_IE 0.45
-#define G_II 3.0
+#define G_EE (0.15 / 1.0)
+#define G_EI (2.00 / 2.5)
+#define G_IE (0.45 / 1.0)
+#define G_II (3.0 / 2.5)
 
 
 /*
@@ -59,8 +59,8 @@
 #define R0 0.002
 #define R1 0.02
 #define INP_FREQ (0.004 * PI)
-#define ETA_E 0.4
-#define ETA_I 0.4
+#define ETA_E 0.28
+#define ETA_I 0.28
 #define MU_E 0.0
 #define MU_I 0.0
 #define GFF_E (0.95 / sqrt(K))

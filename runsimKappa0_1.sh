@@ -40,22 +40,22 @@ IF_SAVE=0
 # for trNo in 1999; #{100..111};
 # do
     cd $baseFldr
-    make clean
+    # make clean
     eval sed "-i 's^#define NE .*^#define NE ${N}ULL^' devHostConstants.h"
     eval sed "-i 's^#define NI .*^#define NI ${N}ULL^' devHostConstants.h"
     # eval sed "-i 's^#define NFF .*^#define NFF ${N}^' devHostConstants.h"
     eval sed "-i 's^#define K .*^#define K ${K}.0^' devHostConstants.h"
     eval sed "-i 's^#define TSTOP .*^#define TSTOP ${T_STOP}^' devHostConstants.h"
     eval sed "-i 's^#define IF_REWIRE .*^#define IF_REWIRE ${IF_REWIRE}^' devHostConstants.h"
-    make
+    # make
     fldr="${baseFldr}/data/rewire/N${N}K${K}/kappa0/p${pString}gamma${gString}/T${tString}/tr${trNo}"
-    mkdir -p $fldr
-    mv genconvec.out $fldr
-    mv nw.out $fldr    
+    # mkdir -p $fldr
+    # mv genconvec.out $fldr
+    # mv nw.out $fldr    
     cd $fldr
     pwd
     echo ${IF_SAVE}    
-    for THETA in {0..90..10}; #0 22.5 45 67.5 90 112.5 135 157.5 180;
+    for THETA in {100..170..10}; #0 22.5 45 67.5 90 112.5 135 157.5 180;
     do
 	echo ${IF_SAVE}
 	if [ $THETA == 0 ] 
