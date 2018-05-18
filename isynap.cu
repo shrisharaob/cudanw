@@ -183,6 +183,7 @@ __global__ void computeIsynap(double t, devPtr_t devPtrs) {
 	// curConter += 1;
       // }
     // }
+
       if(t > DISCARDTIME) {
         devPtrs.dev_conductanceFF[mNeuron] += gFF[mNeuron];
 	if(mNeuron < NE) {

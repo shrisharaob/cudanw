@@ -106,6 +106,7 @@ int main(int argc, char *argv[]) {
   printf(" theta = %2.3f \n contrast = %2.1f\n ksi = %f\n dt = %f \n tau E = %f , tau I = %f \n EXP_SUM_E = %.16f, EXP_SUM_I = %.16f\n Conductance glb prefactor = %f", host_theta * 180.0 / PI, HOST_CONTRAST, ETA_E, DT, TAU_SYNAP_E, TAU_SYNAP_I, EXP_SUM_E, EXP_SUM_I, CONDUCTANCE_GLOBAL_PREFACTOR);
   printf("\n tau FF = %f", TAU_FF);
   printf("\n alpha = %f, RHO = %f\n", ALPHA, RHO);
+
   
   /* choose 256 threads per block for high occupancy */
   int ThreadsPerBlock = 128;
@@ -519,7 +520,7 @@ int main(int argc, char *argv[]) {
   sprintf(fileSuffix, "_xi%1.1f_theta%d_%.2f_%1.1f_cntrst%.1f_%d_tr%s", ETA_E, (int)theta_degrees, ALPHA, TAU_SYNAP_E, HOST_CONTRAST, (int)(tStop),filetag);
   strcat(filename, fileSuffix);
   fpSpkTimes = fopen(strcat(filename, ".csv"),"w");
-  /*  fpSpkTimes = fopen("spkTimes.csv", "w");*/
+   fpSpkTimes = fopen("spkTimes.csv", "w");
   int totalNSpks = *nSpks;
   printf(" saving spikes ...");
   fflush(stdout);
@@ -527,12 +528,27 @@ int main(int argc, char *argv[]) {
     totalNSpks = MAX_SPKS;
     printf("\n ***** WARNING MAX_SPKS EXCEEDED limit of %ul *****\n", MAX_SPKS);
   }
+
+
+
+  FILE *fptest = fopen("spkTimes.csv", "w");
+      for(i = 1; i <= 10; ++i) {
+	fprintf(fpSpkTimes, "%f;%f\n", spkTimes[i], (double)spkNeuronIds[i]);
+        printf("%f;%f\n", spkTimes[i], (double)spkNeuronIds[i]);
+	// fprintf(fptest, "%f;%f\n", spkTimes[i], (double)spkNeuronIds[i]);	
+      }
+  
   // if(IF_SAVE) {
       for(i = 1; i <= totalNSpks; ++i) {
         fprintf(fpSpkTimes, "%f;%f\n", spkTimes[i], (double)spkNeuronIds[i]);
+        fprintf(fptest, "%f;%f\n", spkTimes[i], (double)spkNeuronIds[i]);	
+
       }
       //  }
   fclose(fpSpkTimes);
+  fclose(fptest);
+
+  //////////////////////////////////////////////////
   printf("done\n");
   printf("computing firing rates ....");
   fflush(stdout);

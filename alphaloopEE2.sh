@@ -8,13 +8,10 @@ counterTau=0
 #tau=(3 6 12 24 48)
 tau=(3)
 p=(8)
-baseFldr="/homecentral/srao/cuda/data/pub/KEE100KII500/i2i/N1E4/T5/"
-DEVICE_ID=0
-IF_SAVE=1
-
+baseFldr="/homecentral/srao/cuda/data/pub/mOne0/e2e/N1E4/T5/"
 for tt in 3; #3 6 12 24 48
 do
-    for n in 0.80; #0.85 0.9 0.95 #0.7 0.75 0.8 0.85 0.9 0.95
+    for n in 0.8; #0.85 0.9 0.95 #0.7 0.75 0.8 0.85 0.9 0.95
     do
 	cd /homecentral/srao/cuda
 	echo "-==================-"
@@ -30,19 +27,10 @@ do
  	nvcc -arch=sm_35 -O2 GenerateConVecFile.cu -o genconvec.out    
  	mv genconvec.out ${baseFldr}tau${tau[counterTau]}/p${p[counter]}
 	cd ${baseFldr}tau${tau[counterTau]}/p${p[counter]}
-	./genconvec.out 0 0
+	./genconvec.out 3 1
+	./nw.out 0 0 0 0 
 
-	for THETA in 0 22.5 45 67.5 90 112.5 135 157.5; 
-	do
-	    echo $THETA
-	    if [ $THETA == 315 ]; then
-    		./nw.out $DEVICE_ID 1 $THETA 0
-	    else
-    		./nw.out $DEVICE_ID $IF_SAVE $THETA 0
-	    fi
-	done	
-
-	counter=$((counter+1))
+    counter=$((counter+1))
     done
     counter=0
     counterTau=$((counterTau+1))     	
