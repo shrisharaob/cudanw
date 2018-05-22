@@ -1,25 +1,24 @@
 #ifndef _NEURON_COUNTS
 #define _NEURON_COUNTS
 
-#define NE 20000ULL
-#define NI 20000ULL
+#define NE 10000ULL
+#define NI 10000ULL
 #define N_Neurons (NE + NI)
 #define N_NEURONS N_Neurons
 
-#define K_REC_I_PREFACTOR 0.25 // beta_I
-#define K_FF_I_PREFACTOR  .5 // alpha_I
+#define K_REC_I_PREFACTOR 1.0 //0.25 // beta_I
+#define K_FF_I_PREFACTOR  1.0 //.5 // alpha_I
 
 #define K_REC_E_PREFACTOR K_REC_I_PREFACTOR // beta_E
-#define K_FF_E_PREFACTOR  .5 // K_FF_I_PREFACTOR // alpha_E
+#define K_FF_E_PREFACTOR  1.0 //2.0 //.5 // K_FF_I_PREFACTOR // alpha_E
 
 #define K_FF_EI_PREFACTOR 1.0
 #define PREFACTOR_REC_BG 1.0
 
-//#define K (2000.0 / (PREFACTOR_REC_BG * PREFACTOR_REC_BG))
-#define K 2000.0
-#define DT 0.025 /* ms*/ /* CHANGE EXP+SUM WHEN DT CHANGES   */
-#define TSTOP 12000.0 //ms
-#define TAU_SYNAP_E 12.0
+#define K 500.0
+#define DT 0.05 /* ms*/ /* CHANGE EXP+SUM WHEN DT CHANGES   */
+#define TSTOP 1000.0 //ms
+#define TAU_SYNAP_E 3.0
 #define TAU_SYNAP_I TAU_SYNAP_E
 #define TAU_SYNAP_EE TAU_SYNAP_E
 /* #define TAU_SYNAP_IE TAU_SYNAP_EE */
@@ -36,7 +35,7 @@
 #define HOST_CONTRAST 100.0
 
 #define N_NEURONS_TO_STORE_START 0  // store membrane voltage
-#define N_NEURONS_TO_STORE_END 80
+#define N_NEURONS_TO_STORE_END 2
 #define N_NEURONS_TO_STORE (N_NEURONS_TO_STORE_END - N_NEURONS_TO_STORE_START)
 #define N_E_2BLOCK_NA_CURRENT 1 // number of first n neurons to have their Na2+ currents blocked
 #define N_I_2BLOCK_NA_CURRENT 1

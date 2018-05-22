@@ -1,0 +1,20 @@
+#!/bin/bash
+set -eu
+#set -x
+FILETAG=0
+
+for PHI in 0 22.5 45 67.5; # 90 112.5 135 157.5;
+do
+    if [ $PHI -eq 0 ]
+    then
+	if [ ${p[counter]} -eq 0 ]
+	then
+	    ./genconvec.out 0 0 0
+	else
+	    ./genconvec.out 3 3
+	fi
+	./nw.out 0 0 $PHI $FILETAG		
+    else
+        ./nw.out 0 0 $PHI $FILETAG
+    fi
+done

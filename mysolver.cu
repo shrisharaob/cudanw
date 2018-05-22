@@ -44,7 +44,8 @@ int main(int argc, char *argv[]) {
   double *dev_vm = NULL, *dev_spkTimes, *dev_time = NULL, *host_time;
   int *dev_conVec = NULL, *dev_nSpks, *dev_spkNeuronIds;
   FILE *fp, *fpConMat, *fpSpkTimes, *fpElapsedTime;
-  double *host_isynap, *synapticCurrent = NULL;
+  double *host_isynap, *synapticCurrent = NULL, *host_totalIsynap = NULL, *dev_totalIsynap = NULL;
+  double *host_IOft, *dev_IOFt; 
   /*  int *conVec;*/
   curandState *devStates, *devNormRandState;
   cudaEvent_t start0, stop0;
@@ -56,13 +57,16 @@ int main(int argc, char *argv[]) {
   kernelParams_t kernelParams;
   int IF_SAVE = 1;
   cudaStream_t stream1;
+  cudaStream_t stream2;  
   char filetag[16];
   double *firingrate;
+  char fileSuffix[128], filename[128];
 
 
   printf("\n \n bg I  = %f \n", K*K_REC_I_PREFACTOR*G_IB*RB_I);
   firingrate = (double *) malloc(sizeof(double) * N_NEURONS);
   cudaCheck(cudaStreamCreate(&stream1));
+  cudaCheck(cudaStreamCreate(&stream2));  
   //  printf("old tstop = %f\n", tStop);
   /*PARSE INPUTS*/
   if(argc > 1) {
@@ -82,6 +86,12 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaSetDevice(deviceId));
   theta_degrees = host_theta;
   host_theta = PI * host_theta / (180.0); /* convert to radians */
+
+  strcpy(filename, "current_ioft_");
+  sprintf(fileSuffix, "_xi%1.1f_theta%d_%.2f_%1.1f_cntrst%.1f_%d_tr%s", ETA_E, (int)theta_degrees, ALPHA, TAU_SYNAP_E, HOST_CONTRAST, (int)(tStop),filetag);
+  strcat(filename, fileSuffix);
+  FILE *fpIoft = fopen(strcat(filename, ".csv"),"w");
+  
   /* ======SIMULATING EYE TILTE ========== */
   // srand(time(NULL));
   // double tmprnd = ((double) rand() / (RAND_MAX + 1.0)) * (5.0) - (2.5); // simulatinge eye tilt
@@ -154,8 +164,6 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaGetSymbolAddress((void **)&devPtr_totalAvgIcurrent2I, dev_totalAvgIcurrent2I));
 
 
-
-  
   /* gENERATE CONNECTION MATRIX */
   /*  cudaCheck(cudaMalloc((void **)&dev_conVec, N_NEURONS * N_NEURONS * sizeof(int)));*/
   /*  cudaCheck(cudaMallocHost((void **)&conVec, N_NEURONS * N_NEURONS * sizeof(int)));  */
@@ -232,6 +240,8 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaMallocHost((void **)&host_time,  lastNStepsToStore * sizeof(*vm)));
   cudaCheck(cudaMallocHost((void **)&nSpks, sizeof(*nSpks)));
   cudaCheck(cudaMallocHost((void **)&spkNeuronIds, MAX_SPKS * sizeof(*spkNeuronIds)));
+  cudaCheck(cudaMallocHost((void **)&host_totalIsynap, N_NEURONS * sizeof(double))); 
+  cudaCheck(cudaMallocHost((void **)&host_IOft, N_NEURONS * sizeof(double)));   
   /* ================= ALLOCATE GLOBAL MEMORY ON DEVICE ===========================*/
   /*cudaCheck(cudaMalloc((void **)&dev_conVec, N_NEURONS * N_NEURONS * sizeof(int)));*/
   cudaCheck(cudaMalloc((void **)&dev_vm, lastNStepsToStore * N_NEURONS_TO_STORE * sizeof(double)));
@@ -240,6 +250,9 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaMalloc((void **)&dev_spkTimes, MAX_SPKS * sizeof(*dev_spkTimes)));
   cudaCheck(cudaMalloc((void **)&dev_nSpks, sizeof(int)));
   cudaCheck(cudaMalloc((void **)&dev_spkNeuronIds, MAX_SPKS * sizeof(*dev_spkNeuronIds)));
+  cudaCheck(cudaMalloc((void **)&dev_totalIsynap, N_NEURONS * sizeof(double)));
+  cudaCheck(cudaMalloc((void **)&dev_IOFt, N_NEURONS * sizeof(double)));
+  //=================================================================================//
   cudaCheck(cudaMemset(dev_spkTimes, 0, MAX_SPKS * sizeof(*dev_spkTimes)));
   cudaCheck(cudaMemset(dev_spkNeuronIds, 0.0f, MAX_SPKS * sizeof(*dev_spkNeuronIds)));
   printf(" GPU memory allocation successful ! \n ");
@@ -251,6 +264,8 @@ int main(int argc, char *argv[]) {
   devPtrs.dev_spkTimes = dev_spkTimes;
   devPtrs.synapticCurrent = synapticCurrent;
   devPtrs.devStates = devStates;
+  devPtrs.dev_totalIsynap = dev_totalIsynap;
+  devPtrs.dev_IOFt = dev_IOFt;
   /*  devPtrs.dev_sparseConVec = dev_sparseVec;
   devPtrs.dev_nPostNeurons = dev_nPostneuronsPtr;
   devPtrs.dev_sparseIdx = dev_idxVec;*/
@@ -324,7 +339,7 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaMalloc((void **)&dev_histCountI, sizeof(int) * N_NEURONS));
   cudaCheck(cudaMallocHost((void **)&histCountI, sizeof(int) * N_NEURONS));
   int tmp;
-  char fileSuffix[128], filename[128];
+
   strcpy(filename, "currents");
   sprintf(fileSuffix, "_%1.1f_te%1.f_ti%1.f", ALPHA, TAU_SYNAP_E, TAU_SYNAP_I);
   strcat(filename, fileSuffix);
@@ -348,8 +363,19 @@ int main(int argc, char *argv[]) {
     if(k > 0) {
       /*      cudaCheck(cudaMemcpy(host_IF_SPK, dev_IF_SPK_Ptr, N_NEURONS * sizeOfInt, cudaMemcpyDeviceToHost));*/
       cudaCheck(cudaMemcpyAsync(host_IF_SPK, dev_IF_SPK_Ptr, N_NEURONS * sizeOfInt, cudaMemcpyDeviceToHost, stream1));
-      cudaCheck(cudaMemcpyAsync(host_isynap, synapticCurrent, N_I_SAVE_CUR * sizeOfDbl, cudaMemcpyDeviceToHost, stream1));
+      cudaCheck(cudaMemcpyAsync(host_isynap, synapticCurrent, N_I_SAVE_CUR * sizeOfDbl, cudaMemcpyDeviceToHost, stream1)); 
     }
+
+    if((int)(k * dt) >= DISCARDTIME) {
+      cudaCheck(cudaMemcpyAsync(host_IOft, dev_IOFt, N_NEURONS * sizeof(double), cudaMemcpyDeviceToHost, stream2));
+      cudaCheck(cudaStreamSynchronize(stream2));
+      for(unsigned int iiii = 0; iiii < N_NEURONS; ++iiii) {
+	fprintf(fpIoft, "%f\n", host_IOft[iiii]);
+	if(iiii < 10) { printf("%f  " , host_IOft[iiii]); }
+      }
+      
+    }
+    
     cudaCheck(cudaStreamSynchronize(stream1));
     /*instantaneous firing rate, rect non-overlapping window */
     for(i = 0; i < N_NEURONS; ++i) {
@@ -437,6 +463,7 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaFreeHost(histCountI));
   fclose(fpIFR);
   cudaCheck(cudaStreamDestroy(stream1));
+  cudaCheck(cudaStreamDestroy(stream2));  
   cudaCheckLastError("rkdumb kernel failed");
   cudaEventRecord(stop0, 0);
   cudaEventSynchronize(stop0);
@@ -451,6 +478,7 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaMemcpy(spkTimes, dev_spkTimes, MAX_SPKS * sizeof(double), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(spkNeuronIds, dev_spkNeuronIds, MAX_SPKS * sizeof(int), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(vm, dev_vm, lastNStepsToStore * N_NEURONS_TO_STORE * sizeof(double), cudaMemcpyDeviceToHost));
+  cudaCheck(cudaMemcpy(host_totalIsynap, dev_totalIsynap, N_NEURONS * sizeof(double), cudaMemcpyDeviceToHost));
   cudaCheck(cudaMemcpy(host_time, dev_time, lastNStepsToStore * sizeof(double), cudaMemcpyDeviceToHost));
   /*  cudaCheck(cudaMemcpy(host_isynap, synapticCurrent, lastNStepsToStore * N_NEURONS * sizeof(double), cudaMemcpyDeviceToHost));*/
   /*  cudaCheck(cudaMemcpy(vm, dev_vm, lastNStepsToStore * N_NEURONS * sizeof(double), cudaMemcpyDeviceToHost));*/
@@ -502,11 +530,11 @@ int main(int argc, char *argv[]) {
     totalNSpks = MAX_SPKS;
     printf("\n ***** WARNING MAX_SPKS EXCEEDED limit of %ul *****\n", MAX_SPKS);
   }
-  // if(IF_SAVE) {
+  if(IF_SAVE) {
       for(i = 1; i <= totalNSpks; ++i) {
         fprintf(fpSpkTimes, "%f;%f\n", spkTimes[i], (double)spkNeuronIds[i]);
       }
-      //  }
+  }
   fclose(fpSpkTimes);
   printf("done\n");
   printf("computing firing rates ....");
@@ -519,6 +547,19 @@ int main(int argc, char *argv[]) {
     fprintf(fpFiringrate, "%f\n", firingrate[i] / ((tStop - DISCARDTIME) * 0.001));
   }
   fclose(fpFiringrate);
+  ///////////////// WRITING TOTAL CURRENTS TO DISK ////////////////
+  printf("done\n");
+  printf("writing currents to disk ....");
+  fflush(stdout);
+  strcpy(filename, "total_synaptic_cur");
+  sprintf(fileSuffix, "_xi%1.1f_theta%d_%.2f_%1.1f_cntrst%.1f_%d_tr%s", ETA_E, (int)theta_degrees, ALPHA, TAU_SYNAP_E, HOST_CONTRAST, (int)(tStop),filetag);
+  strcat(filename, fileSuffix);
+  FILE *fpTotalCurrent = fopen(strcat(filename, ".csv"),"w");
+  for(i = 0; i < N_NEURONS; ++i) {
+    fprintf(fpTotalCurrent, "%f\n", host_totalIsynap[i]);
+  }
+  fclose(fpTotalCurrent);
+  ///////////////////////////////////////////////////////////////////////////  
   printf("saving vm to disk ....");
   fflush(stdout);
   if(IF_SAVE) {
@@ -565,6 +606,7 @@ int main(int argc, char *argv[]) {
   }
   printf("done\n");
   /*================== CLEANUP ===================================================================*/
+  fclose(fpIoft);
   free(firingrate);
   cudaCheck(cudaFreeHost(vm));
   cudaCheck(cudaFreeHost(host_time));
@@ -580,11 +622,13 @@ int main(int argc, char *argv[]) {
   cudaCheck(cudaFree(dev_nSpks));
   cudaCheck(cudaFree(devStates));
   cudaCheck(cudaFree(dev_sparseVec));
+  cudaCheck(cudaFree(dev_totalIsynap));  
       /*
   cudaCheck(cudaFree(dev_idxVec));
   cudaCheck(cudaFree(dev_nPostneuronsPtr));*/
   cudaCheck(cudaFreeHost(host_IF_SPK));
   cudaCheck(cudaFreeHost(host_prevStepSpkIdx));
+  cudaCheck(cudaFreeHost(host_totalIsynap));  
   /*  cudaDeviceReset()*/
   return EXIT_SUCCESS;
 }

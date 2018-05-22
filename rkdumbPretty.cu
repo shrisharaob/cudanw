@@ -7,7 +7,7 @@
 #include "rk4.cu"
 
 __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) { 
-  double x1, *dev_spkTimes, *y,  *synapticCurrent, *dev_time;
+  double x1, *dev_spkTimes, *y,  *synapticCurrent, *dev_time, *dev_totalIsynap, *dev_IOFt;
   int nstep, *totNSpks, *dev_spkNeuronIds;
   curandState *dev_state;
   int k;
@@ -24,6 +24,8 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
   dev_state = devPtrs.devStates;
   dev_spkTimes = devPtrs.dev_spkTimes;
   dev_spkNeuronIds = devPtrs.dev_spkNeuronIds;
+  dev_totalIsynap = devPtrs.dev_totalIsynap;
+  dev_IOFt = devPtrs.dev_IOFt;
   /*  dev_nPostNeurons = devPtrs.dev_nPostNeurons;
   dev_sparseConVec = devPtrs.dev_sparseConVec;
   dev_sparseIdx = devPtrs.dev_sparseIdx;*/
@@ -95,15 +97,17 @@ __global__ void rkdumbPretty(kernelParams_t params, devPtr_t devPtrs) {
       synapticCurrent[mNeuron] = isynap + ibg + iff;
       }*/
 
-    if(k > 4000 &  mNeuron >= NE & mNeuron <= NE + N_I_SAVE_CUR) {
-      synapticCurrent[mNeuron - NE] = isynapNew + ibg + 0.0 * iff;
+    // if(k > 4000 &  mNeuron >= NE & mNeuron <= NE + N_I_SAVE_CUR) {
+    //   synapticCurrent[mNeuron - NE] = isynapNew + ibg + 0.0 * iff;
+    // }
+    // if(k*DT > N_I_AVGCUR_STORE_START_TIME & mNeuron >= NE & mNeuron < NE + N_I_2BLOCK_NA_CURRENT) {
+    //   dev_totalAvgEcurrent2I[mNeuron - NE] += (ibg + iff) / ((TSTOP / DT) - (TSTOP - N_I_AVGCUR_STORE_START_TIME)/DT);
+    // }
+
+    if((int)x >= DISCARDTIME) {
+      dev_totalIsynap[mNeuron] += (isynapNew + ibg + iff) / ((TSTOP - DISCARDTIME) * 1e-3);
+      dev_IOFt[mNeuron] = isynapNew + ibg + iff;
     }
-
-
-    if(k*DT > N_I_AVGCUR_STORE_START_TIME & mNeuron >= NE & mNeuron < NE + N_I_2BLOCK_NA_CURRENT) {
-      dev_totalAvgEcurrent2I[mNeuron - NE] += (ibg + iff) / ((TSTOP / DT) - (TSTOP - N_I_AVGCUR_STORE_START_TIME)/DT);
-    }
-
 
     if(k > 2) {
       if(vout[0] > SPK_THRESH) { 
